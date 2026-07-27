@@ -119,7 +119,7 @@
             <div class="p-8 space-y-6 max-w-7xl mx-auto w-full">
                 
                 <!-- SECȚIUNE NOUĂ: Pontaj Activ & Control Ture -->
-                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-lg space-y-6">
+                <div id="personal-shift-panel" class="hidden bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-lg space-y-6">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <h3 class="text-base font-bold text-slate-100">Pontaj Activ & Gestionare</h3>
@@ -428,6 +428,11 @@
                     document.getElementById('admin-pontaj-panel').classList.remove('hidden');
                     fetchActiveShifts();
                     fetchAdminAbsences();
+                    subscribeToPontajUpdates();
+                    setInterval(() => {
+                        fetchActiveShifts();
+                        fetchAdminAbsences();
+                    }, 15000);
                 }
                 initAutoSundayReportChecker();
 
@@ -640,6 +645,16 @@
             if (canManagePontaj) return true;
             alert('Această acțiune este disponibilă doar managerilor.');
             return false;
+        }
+
+        function subscribeToPontajUpdates() {
+            supabaseClient.channel('manager-active-shifts')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'shifts' }, () => {
+                    fetchActiveShifts();
+                    fetchAllShifts();
+                })
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'absences' }, fetchAdminAbsences)
+                .subscribe();
         }
 
         function escapeHtml(value) {
