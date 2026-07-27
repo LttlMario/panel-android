@@ -191,7 +191,7 @@
         </main>
     </div>
 
-    <!-- Scriptul logic actualizat complet cu restaurarea stării din Supabase -->
+    <!-- Scriptul logic actualizat complet cu restaurarea stării, unică tură activă și cronometru bazat strict pe start_time din Supabase -->
     <script>
         const SUPABASE_URL = "https://vkvsabbbawyiurnaiugo.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdnNhYmJiYXd5aXVybmFpdWdvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NTA0Njk1NiwiZXhwIjoyMTAwNjIyOTU2fQ.1D67DT0lul6bgcRSmbr5-JEHZmErTNvCXB4Up1g3zWw";
@@ -281,12 +281,12 @@
                 });
             }
 
-            // 5. Verificare și Restaurare Tură Activă din Supabase (dacă utilizatorul a plecat și a revenit)
+            // 5. Restaurare tură activă din Supabase la încărcare / schimbare pagină (un singur rând activ permis)
             await checkAndRestoreActiveShift();
             fetchShiftsHistory();
         });
 
-        // Funcție dedicată care caută dacă există o tură neîncheiată (end_time is null) pentru userul curent
+        // Funcție dedicată care caută în Supabase dacă utilizatorul are o tură neîncheiată (end_time is null sau gol)
         async function checkAndRestoreActiveShift() {
             try {
                 let { data, error } = await supabaseClient
@@ -299,47 +299,46 @@
                 if (error) throw error;
 
                 if (data) {
-                    // S-a găsit o tură activă în baza de date! O restaurăm.
                     selectedShiftType = data.shift_type;
                     
-                    // Reconstituim obiectul Data de start combinând data și start_time din DB
+                    // Reconstituim data de start combinând data și start_time primite din DB
                     shiftStartTime = new Date(`${data.date}T${data.start_time}`);
                     
-                    // Calculăm câte secunde au trecut de la start până în prezent
+                    // Calculul secundelor scurse se face strict pe baza timpului real scurs de la start_time până în prezent
                     const now = new Date();
                     const diffMs = now - shiftStartTime;
                     secondsElapsed = Math.floor(diffMs / 1000);
                     if (secondsElapsed < 0) secondsElapsed = 0;
 
-                    // Actualizăm interfața (UI) corespunzător stării active
+                    // Actualizăm starea butoanelor și UI-ul pentru tura activă
                     document.getElementById('btn-start').disabled = true;
                     document.getElementById('btn-pause').disabled = false;
                     document.getElementById('btn-stop').disabled = false;
-                    document.getElementById('current-shift-status').textContent = `Tura de ${selectedShiftType.toUpperCase()} este activă (Restaurată)...`;
+                    document.getElementById('current-shift-status').textContent = `Tura de ${selectedShiftType.toUpperCase()} este activă (Restaurată din Supabase)...`;
 
-                    // Evidențiem vizual butonul de tură selectat
                     if (selectedShiftType === 'zi') {
                         document.getElementById('btn-shift-day').className = 'px-5 py-2.5 rounded-xl text-xs font-semibold border transition cursor-pointer bg-emerald-600 border-emerald-500 text-white shadow-md';
                     } else if (selectedShiftType === 'noapte') {
                         document.getElementById('btn-shift-night').className = 'px-5 py-2.5 rounded-xl text-xs font-semibold border transition cursor-pointer bg-indigo-600 border-indigo-500 text-white shadow-md';
                     }
 
-                    // Pornim din nou cronometrul în browser
+                    // Pornim intervalul local care sincronizează afișajele secundă cu secundă
                     updateTimerDisplay();
                     timerInterval = setInterval(() => {
                         if (!isPaused) {
-                            secondsElapsed++;
+                            // Recalculăm dinamic direct din `shiftStartTime` pentru a evita orice decalaj de drift sau variabile JS locale pierdute
+                            const currentTime = new Date();
+                            secondsElapsed = Math.floor((currentTime - shiftStartTime) / 1000);
                             updateTimerDisplay();
                         }
                     }, 1000);
                 }
             } catch (err) {
-                console.error('Erore la verificarea turei active:', err);
+                console.error('Erore la restaurarea turei active:', err);
             }
         }
 
         function selectShiftType(type) {
-            // Dacă deja avem o tură activă, nu lăsăm utilizatorul să schimbe selecția
             if (timerInterval && !isPaused) return;
 
             const now = new Date();
@@ -389,6 +388,24 @@
                 return;
             }
 
+            // Ne asigurăm înainte de inserare că nu există nicio altă tură activă deschisă pentru acest utilizator (garantează o singură tură activă)
+            try {
+                let { data: existingActive } = await supabaseClient
+                    .from('shifts')
+                    .select('id')
+                    .eq('discord_id', currentUser.discord_id)
+                    .or('end_time.is.null,end_time.eq.,end_time.eq.00:00:00')
+                    .maybeSingle();
+
+                if (existingActive) {
+                    alert('Ai deja o tură activă pornită!');
+                    await checkAndRestoreActiveShift();
+                    return;
+                }
+            } catch (err) {
+                console.error('Verificare tură activă existentă:', err);
+            }
+
             shiftStartTime = new Date();
             secondsElapsed = 0;
             isPaused = false;
@@ -400,7 +417,8 @@
 
             timerInterval = setInterval(() => {
                 if (!isPaused) {
-                    secondsElapsed++;
+                    const currentTime = new Date();
+                    secondsElapsed = Math.floor((currentTime - shiftStartTime) / 1000);
                     updateTimerDisplay();
                 }
             }, 1000);
@@ -435,6 +453,9 @@
                 document.getElementById('current-shift-status').textContent = 'Tura este în PAUZĂ';
                 await sendGeneralDiscordWebhook("⏸️ Pontaj Pauză", `Mecanicul **${currentUser.display_name}** a pus tura de **${selectedShiftType.toUpperCase()}** pe **pauză** la timpul: **${formatTime(secondsElapsed)}**`, 16776960);
             } else {
+                // Dacă se dă reluare, actualizăm shiftStartTime decalându-l cu durata pauzei pentru ca calculul bazat pe start_time să rămână perfect exact
+                const now = new Date();
+                shiftStartTime = new Date(now.getTime() - (secondsElapsed * 1000));
                 pauseText.textContent = 'Pauză';
                 document.getElementById('current-shift-status').textContent = `Tura de ${selectedShiftType.toUpperCase()} este activă...`;
                 await sendGeneralDiscordWebhook("▶️ Pontaj Reluat", `Mecanicul **${currentUser.display_name}** a reluat tura de **${selectedShiftType.toUpperCase()}**.`, 3066993);
@@ -451,6 +472,7 @@
             const startTimeStr = shiftStartTime ? shiftStartTime.toTimeString().split(' ')[0] : '00:00:00';
 
             try {
+                // Actualizăm tura activă din Supabase setând end_time și durata finală
                 let { error } = await supabaseClient
                     .from('shifts')
                     .update({
