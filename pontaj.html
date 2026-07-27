@@ -708,6 +708,34 @@
         let autoStopInProgress = false;
         let globalPontajConfig = null;
 
+        function saveActiveFallback(record) {
+            localStorage.setItem(ACTIVE_SHIFT_STORAGE_KEY, JSON.stringify({
+                userId: currentUser.discord_id,
+                shiftType: record.shift_type,
+                startedAt: record.started_at,
+                autoStopAt: record.auto_stop_at,
+                status: record.status,
+                pausedAt: record.paused_at || null,
+                pausedSeconds: Number(record.paused_seconds) || 0,
+                activeShiftId: record.id || null
+            }));
+        }
+
+        function getActiveFallback() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(ACTIVE_SHIFT_STORAGE_KEY));
+                if (!saved || saved.userId !== currentUser.discord_id || !saved.startedAt || !saved.shiftType) return null;
+                return {
+                    id: saved.activeShiftId || null, discord_id: currentUser.discord_id,
+                    shift_type: saved.shiftType, started_at: saved.startedAt, auto_stop_at: saved.autoStopAt,
+                    status: saved.status || 'active', paused_at: saved.pausedAt || null,
+                    paused_seconds: Number(saved.pausedSeconds) || 0,
+                    date: getRomanianDate(new Date(saved.startedAt)), start_time: getRomanianTime(new Date(saved.startedAt)),
+                    end_time: null, duration: '00:00:00', duration_ms: 0
+                };
+            } catch (_) { return null; }
+        }
+
         async function loadGlobalPontajConfig() {
             try {
                 const { data, error } = await supabaseClient.from('app_settings').select('value').eq('key', 'pontaj_config').maybeSingle();
@@ -798,18 +826,28 @@
         async function restoreActiveShift() {
             try {
                 activeShiftRecord = await findActiveShift();
-                if (!activeShiftRecord) { resetTimerState(); return; }
+                if (!activeShiftRecord) {
+                    const fallback = getActiveFallback();
+                    if (!fallback) { resetTimerState(); return; }
+                    const deadline = new Date(fallback.auto_stop_at);
+                    if (!Number.isFinite(deadline.getTime()) || deadline.getTime() <= Date.now()) { resetTimerState(); return; }
+                    const { id: ignoredId, ...fallbackData } = fallback;
+                    const { data, error } = await supabaseClient.from('shifts').insert([fallbackData]).select('*').single();
+                    activeShiftRecord = error ? fallback : data;
+                }
                 const deadline = new Date(activeShiftRecord.auto_stop_at);
                 if (!Number.isFinite(deadline.getTime()) || deadline.getTime() <= Date.now()) {
                     await stopActiveShift(true);
                     return;
                 }
-                localStorage.setItem(ACTIVE_SHIFT_STORAGE_KEY, JSON.stringify({ activeShiftId: activeShiftRecord.id }));
+                saveActiveFallback(activeShiftRecord);
                 syncActiveShiftUI();
                 startTimer();
             } catch (error) {
                 console.error('Eroare la restaurarea pontajului:', error);
-                resetTimerState();
+                const fallback = getActiveFallback();
+                if (fallback) { activeShiftRecord = fallback; syncActiveShiftUI(); startTimer(); }
+                else resetTimerState();
             }
         }
 
@@ -826,11 +864,12 @@
                     duration: '00:00:00', duration_ms: 0, shift_type: selectedShiftType, created_at: now.toISOString(),
                     started_at: now.toISOString(), auto_stop_at: autoStopAt.toISOString(), status: 'active', paused_seconds: 0, paused_at: null, stop_reason: null
                 };
+                saveActiveFallback(newShift);
                 const { data, error } = await supabaseClient.from('shifts').insert([newShift]).select('*').single();
                 if (error) throw error;
                 activeShiftRecord = data;
                 activeShiftId = data.id;
-                localStorage.setItem(ACTIVE_SHIFT_STORAGE_KEY, JSON.stringify({ activeShiftId: data.id }));
+                saveActiveFallback(data);
                 syncActiveShiftUI(); startTimer();
                 await sendGeneralDiscordWebhook('▶️ Pontaj Start', `Mecanicul **${currentUser.display_name}** a pornit tura de **${selectedShiftType.toUpperCase()}**.`, 3066993);
             } catch (error) { console.error('Eroare pornire pontaj:', error); alert('Pontajul nu a putut fi pornit.'); }
@@ -850,6 +889,7 @@
                 const { data, error } = await supabaseClient.from('shifts').update(update).eq('id', activeShiftRecord.id).select('*').single();
                 if (error) throw error;
                 activeShiftRecord = data; syncActiveShiftUI();
+                saveActiveFallback(activeShiftRecord);
                 await sendGeneralDiscordWebhook(activeShiftRecord.status === 'paused' ? '⏸️ Pontaj Pauză' : '▶️ Pontaj Reluat', `Mecanicul **${currentUser.display_name}** a ${activeShiftRecord.status === 'paused' ? 'pus tura pe pauză' : 'reluat tura'}.`, activeShiftRecord.status === 'paused' ? 16776960 : 3066993);
             } catch (error) { console.error('Eroare pauză pontaj:', error); alert('Starea pauzei nu a putut fi salvată.'); }
             finally { isActionProcessing = false; }
@@ -861,7 +901,15 @@
             if (!activeShiftRecord || isActionProcessing) return;
             isActionProcessing = true; autoStopInProgress = automatic;
             try {
-                const record = activeShiftRecord;
+                let record = activeShiftRecord;
+                if (!record.id) {
+                    const { id: ignoredId, ...fallbackData } = record;
+                    const { data: recreated, error: recreateError } = await supabaseClient.from('shifts').insert([fallbackData]).select('*').single();
+                    if (recreateError) throw recreateError;
+                    record = recreated;
+                    activeShiftRecord = recreated;
+                    saveActiveFallback(recreated);
+                }
                 const now = new Date();
                 const workedSeconds = getWorkedSeconds(record, now);
                 const reason = automatic ? 'Încheiere automată – program maxim atins' : 'Încheiere manuală';
