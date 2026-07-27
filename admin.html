@@ -105,7 +105,7 @@
             <header class="h-16 border-b border-slate-800 bg-slate-900/50 backdrop-blur px-8 flex items-center justify-between sticky top-0 z-20">
                 <h2 class="text-lg font-bold text-slate-100 flex items-center space-x-2">
                     <span>👑</span>
-                    <span>Panou de Administrare & Setări Globale</span>
+                    <span>Panou de Administrare & Setări Globale Avansate</span>
                 </h2>
                 <div>
                     <button onclick="saveAllAdminSettings()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2 rounded-xl text-xs font-semibold transition shadow-md cursor-pointer flex items-center space-x-2">
@@ -179,7 +179,7 @@
                     </div>
                 </div>
 
-                <!-- Secțiunea 2: Setări Dedicate pentru Fiecare Pagină în Parte -->
+                <!-- Secțiunea 2: Configurare Pagini Web -->
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-6">
                     <div>
                         <h3 class="text-base font-bold text-slate-100">Configurare Pagini Web</h3>
@@ -243,7 +243,7 @@
                     </div>
                 </div>
 
-                <!-- Secțiunea 3: Setări Foarte Bine Structurate pentru Pontaje -->
+                <!-- Secțiunea 3: Setări Avansate Pontaje -->
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-6">
                     <div>
                         <h3 class="text-base font-bold text-slate-100">Setări Avansate Pontaje</h3>
@@ -270,6 +270,97 @@
                             <label class="text-xs font-medium text-slate-300">Mesaj Global / Notificare în Widget-ul de Pontaj</label>
                             <input type="text" id="pontaj-global-notice" placeholder="Ex: Program normal de lucru activ." class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-emerald-500">
                         </div>
+                    </div>
+                </div>
+
+                <!-- ========================================== -->
+                <!-- NOI SETĂRI ADMIN AVANSATE ADAUGATE -->
+                <!-- ========================================== -->
+
+                <!-- Secțiunea 4: Control Securitate & Sesiuni -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-6">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-100">🛡️ Securitate & Restricții Sesiune</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Configurează reguli de autentificare și expirare automată a sesiunilor pentru utilizatori.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-xs font-medium text-slate-300">Timp Expirare Inactivitate (Minute)</label>
+                            <input type="number" id="sec-timeout-mins" value="60" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-emerald-500">
+                            <p class="text-[10px] text-slate-500">Delogare automată după X minute de inactivitate pe pagină.</p>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-xs font-medium text-slate-300">Nivel Minim Rol pentru Acces Panou Admin</label>
+                            <select id="sec-min-role" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-emerald-500">
+                                <option value="manager">Manager / Admin / Owner</option>
+                                <option value="admin">Strict Admin și Owner</option>
+                            </select>
+                            <p class="text-[10px] text-slate-500">Restricționează cine poate vizualiza panoul de administrare.</p>
+                        </div>
+
+                        <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl flex items-center justify-between">
+                            <div>
+                                <span class="font-semibold text-slate-200 text-xs block">Forțează Global Logout</span>
+                                <span class="text-[10px] text-slate-400">Deloghează toți utilizatorii activi la următorul refresh.</span>
+                            </div>
+                            <input type="checkbox" id="sec-force-global-logout" class="w-4 h-4 accent-rose-600 rounded cursor-pointer">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Secțiunea 5: Notificări Discord Webhook Globale -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-6">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-100">🔔 Automatizări & Webhooks Discord</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Setează canalele și logurile automate transmise pe serverul de Discord.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-xs font-medium text-slate-300">URL Webhook Discord (General / Alerte)</label>
+                            <input type="text" id="discord-webhook-url" placeholder="https://discord.com/api/webhooks/..." class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-emerald-500 font-mono">
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-xs font-medium text-slate-300">URL Webhook Discord (Securitate / Admin)</label>
+                            <input type="text" id="discord-webhook-admin" placeholder="https://discord.com/api/webhooks/..." class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-emerald-500 font-mono">
+                        </div>
+
+                        <div class="flex items-center space-x-6 md:col-span-2 pt-2">
+                            <label class="flex items-center space-x-2 cursor-pointer text-xs text-slate-300">
+                                <input type="checkbox" id="webhook-notify-pontaj" class="w-4 h-4 accent-emerald-600 rounded" checked>
+                                <span>Trimite notificare pe Discord la Pornire/Oprire Tură</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer text-xs text-slate-300">
+                                <input type="checkbox" id="webhook-notify-cereri" class="w-4 h-4 accent-emerald-600 rounded" checked>
+                                <span>Trimite notificare la trimiterea unei cereri noi</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Secțiunea 6: Întreținere Sistem & Cache -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-6">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-100">⚙️ Întreținere Sistem & Mentenanță</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Instrumente de curățare a cache-ului local și resetare date temporare.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <button onclick="clearLocalStorageCache()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold py-3 px-4 rounded-xl border border-slate-700 transition cursor-pointer flex items-center justify-center space-x-2">
+                            <span>🧹</span>
+                            <span>Curăță Cache Local Storage</span>
+                        </button>
+                        <button onclick="exportSystemSettingsJson()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold py-3 px-4 rounded-xl border border-slate-700 transition cursor-pointer flex items-center justify-center space-x-2">
+                            <span>📤</span>
+                            <span>Exportă Setări (JSON)</span>
+                        </button>
+                        <button onclick="resetAllSettingsToDefault()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-semibold py-3 px-4 rounded-xl transition cursor-pointer flex items-center justify-center space-x-2">
+                            <span>⚠️</span>
+                            <span>Resetează la Valorile Implicite</span>
+                        </button>
                     </div>
                 </div>
 
@@ -508,11 +599,22 @@
                     maxHours: document.getElementById('pontaj-max-hours').value,
                     mode: document.getElementById('pontaj-mode').value,
                     globalNotice: document.getElementById('pontaj-global-notice').value
+                },
+                securityConfig: {
+                    timeoutMins: document.getElementById('sec-timeout-mins').value,
+                    minRole: document.getElementById('sec-min-role').value,
+                    forceGlobalLogout: document.getElementById('sec-force-global-logout').checked
+                },
+                webhookConfig: {
+                    urlGeneral: document.getElementById('discord-webhook-url').value,
+                    urlAdmin: document.getElementById('discord-webhook-admin').value,
+                    notifyPontaj: document.getElementById('webhook-notify-pontaj').checked,
+                    notifyCereri: document.getElementById('webhook-notify-cereri').checked
                 }
             };
 
             localStorage.setItem('workforce_admin_settings', JSON.stringify(settings));
-            alert('Toate setările administrative și configurările paginilor au fost salvate cu succes!');
+            alert('Toate setările administrative și configurările avansate au fost salvate cu succes!');
         }
 
         function loadSavedSettings() {
@@ -533,6 +635,45 @@
                 document.getElementById('pontaj-max-hours').value = saved.pontajConfig.maxHours || 12;
                 document.getElementById('pontaj-mode').value = saved.pontajConfig.mode || 'normal';
                 document.getElementById('pontaj-global-notice').value = saved.pontajConfig.globalNotice || '';
+            }
+
+            if (saved.securityConfig) {
+                document.getElementById('sec-timeout-mins').value = saved.securityConfig.timeoutMins || 60;
+                document.getElementById('sec-min-role').value = saved.securityConfig.minRole || 'manager';
+                document.getElementById('sec-force-global-logout').checked = saved.securityConfig.forceGlobalLogout || false;
+            }
+
+            if (saved.webhookConfig) {
+                document.getElementById('discord-webhook-url').value = saved.webhookConfig.urlGeneral || '';
+                document.getElementById('discord-webhook-admin').value = saved.webhookConfig.urlAdmin || '';
+                document.getElementById('webhook-notify-pontaj').checked = saved.webhookConfig.notifyPontaj ?? true;
+                document.getElementById('webhook-notify-cereri').checked = saved.webhookConfig.notifyCereri ?? true;
+            }
+        }
+
+        function clearLocalStorageCache() {
+            if (confirm('Ești sigur că vrei să cureți cache-ul local? Setările de sesiune vor fi resetate.')) {
+                localStorage.removeItem('workforce_admin_settings');
+                alert('Cache-ul local a fost curățat cu succes.');
+                location.reload();
+            }
+        }
+
+        function exportSystemSettingsJson() {
+            const saved = localStorage.getItem('workforce_admin_settings') || '{}';
+            const blob = new Blob([saved], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'admin-settings-backup.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function resetAllSettingsToDefault() {
+            if (confirm('Atenție! Toate setările personalizate vor fi pierdute și readuse la valorile implicite.')) {
+                localStorage.removeItem('workforce_admin_settings');
+                location.reload();
             }
         }
     </script>
