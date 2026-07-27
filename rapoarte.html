@@ -210,7 +210,7 @@
                             </div>
                             <button onclick="fetchActiveShifts()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer">↻ Actualizează</button>
                         </div>
-                        <div id="active-shifts-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                        <div id="active-shifts-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-96 overflow-y-auto pr-1">
                             <p class="text-xs text-slate-500">Se încarcă pontajele active...</p>
                         </div>
                     </div>
@@ -340,6 +340,16 @@
         </form>
     </div>
 
+    <div id="active-shift-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm p-4 flex items-center justify-center">
+        <form id="active-shift-form" class="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl p-6 space-y-4 shadow-2xl">
+            <div><h3 class="text-base font-bold text-slate-100">Editează pontaj activ</h3><p class="text-xs text-slate-400 mt-1">Modifică tipul, începutul sau starea fără a închide tura.</p></div>
+            <input id="active-shift-id" type="hidden">
+            <div class="grid grid-cols-2 gap-3"><label class="text-xs text-slate-300">Data<input id="active-shift-date" type="date" required class="mt-1 w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-slate-200"></label><label class="text-xs text-slate-300">Început<input id="active-shift-start" type="time" required class="mt-1 w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-slate-200"></label></div>
+            <div class="grid grid-cols-2 gap-3"><label class="text-xs text-slate-300">Tip<select id="active-shift-type" class="mt-1 w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-slate-200"><option value="zi">Zi</option><option value="noapte">Noapte</option></select></label><label class="text-xs text-slate-300">Stare<select id="active-shift-status" class="mt-1 w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-slate-200"><option value="active">Activ</option><option value="paused">Pauză</option></select></label></div>
+            <div class="flex justify-end gap-2 pt-2"><button type="button" onclick="closeActiveShiftModal()" class="px-4 py-2 rounded-xl text-xs bg-slate-800 text-slate-300">Anulează</button><button class="px-4 py-2 rounded-xl text-xs bg-emerald-600 text-white">Salvează</button></div>
+        </form>
+    </div>
+
     <script>
         const SUPABASE_URL = "https://vkvsabbbawyiurnaiugo.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdnNhYmJiYXd5aXVybmFpdWdvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NTA0Njk1NiwiZXhwIjoyMTAwNjIyOTU2fQ.1D67DT0lul6bgcRSmbr5-JEHZmErTNvCXB4Up1g3zWw";
@@ -369,6 +379,7 @@
         let currentUser = { discord_id: '', display_name: 'Mecanic', role: 'Mecanic' };
         let canManagePontaj = false;
         let adminAbsences = [];
+        let activeShiftsData = [];
 
         document.addEventListener('DOMContentLoaded', async () => {
             const currentPage = window.location.pathname.split("/").pop() || "index.html";
@@ -670,15 +681,58 @@
             if (!canManagePontaj) return;
             const container = document.getElementById('active-shifts-container');
             try {
-                const { data, error } = await supabaseClient.from('shifts').select('id, discord_id, date, start_time, shift_type, created_at').is('end_time', null).order('created_at', { ascending: false });
+                const { data, error } = await supabaseClient.from('shifts').select('*').in('status', ['active', 'paused']).order('created_at', { ascending: false });
                 if (error) throw error;
+                activeShiftsData = data || [];
                 if (!data || data.length === 0) { container.innerHTML = '<p class="text-xs text-slate-500 md:col-span-3 py-3">Nu există pontaje active în acest moment.</p>'; return; }
-                container.innerHTML = data.map(shift => {
+                container.innerHTML = activeShiftsData.map(shift => {
                     const name = usersMap[shift.discord_id] || shift.discord_id || 'Mecanic necunoscut';
-                    return `<article class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3"><div class="flex justify-between gap-2"><div><p class="font-semibold text-slate-100 text-sm">${escapeHtml(name)}</p><p class="text-[10px] text-slate-500 font-mono">${escapeHtml(shift.discord_id)}</p></div><span class="text-[10px] px-2 py-1 h-fit rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">ACTIV</span></div><div class="text-xs text-slate-400">${escapeHtml((shift.shift_type || 'tură').toUpperCase())} · început <span class="font-mono text-slate-200">${escapeHtml(shift.start_time || '--:--')}</span><br><strong class="text-emerald-400 font-mono">${formatActiveDuration(shift)}</strong></div><button onclick="forceStopActiveShift('${shift.id}')" class="w-full py-2 rounded-lg text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 cursor-pointer">Oprește pontajul</button></article>`;
+                    const stateLabel = shift.status === 'paused' ? 'PAUZĂ' : 'ACTIV';
+                    const stateClass = shift.status === 'paused' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+                    return `<article class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3"><div class="flex justify-between gap-2"><div class="min-w-0"><p class="font-semibold text-slate-100 text-sm truncate">${escapeHtml(name)}</p><p class="text-[10px] text-slate-500 font-mono truncate">${escapeHtml(shift.discord_id)}</p></div><span class="text-[10px] px-2 py-1 h-fit rounded-lg border ${stateClass}">${stateLabel}</span></div><div class="text-xs text-slate-400">${escapeHtml((shift.shift_type || 'tură').toUpperCase())} · început <span class="font-mono text-slate-200">${escapeHtml(shift.start_time || '--:--')}</span><br><strong class="text-emerald-400 font-mono">${formatActiveDuration(shift)}</strong></div><div class="grid grid-cols-2 gap-2"><button onclick="openActiveShiftModal('${shift.id}')" class="py-2 rounded-lg text-xs font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 cursor-pointer">Editează</button><button onclick="forceStopActiveShift('${shift.id}')" class="py-2 rounded-lg text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 cursor-pointer">Oprește</button></div></article>`;
                 }).join('');
             } catch (err) { console.error('Eroare la preluarea pontajelor active:', err); container.innerHTML = '<p class="text-xs text-rose-400 md:col-span-3">Nu s-au putut încărca pontajele active.</p>'; }
         }
+
+        function openActiveShiftModal(id) {
+            if (!requireManager()) return;
+            const shift = activeShiftsData.find(item => String(item.id) === String(id));
+            if (!shift) return;
+            document.getElementById('active-shift-id').value = shift.id;
+            document.getElementById('active-shift-date').value = shift.date || '';
+            document.getElementById('active-shift-start').value = (shift.start_time || '00:00:00').slice(0, 5);
+            document.getElementById('active-shift-type').value = shift.shift_type || 'zi';
+            document.getElementById('active-shift-status').value = shift.status || 'active';
+            document.getElementById('active-shift-modal').classList.remove('hidden');
+        }
+
+        function closeActiveShiftModal() { document.getElementById('active-shift-modal').classList.add('hidden'); }
+
+        document.getElementById('active-shift-form').addEventListener('submit', async event => {
+            event.preventDefault();
+            if (!requireManager()) return;
+            const id = document.getElementById('active-shift-id').value;
+            const status = document.getElementById('active-shift-status').value;
+            const currentShift = activeShiftsData.find(item => String(item.id) === String(id));
+            const update = {
+                date: document.getElementById('active-shift-date').value,
+                start_time: `${document.getElementById('active-shift-start').value}:00`,
+                shift_type: document.getElementById('active-shift-type').value,
+                status,
+                paused_at: status === 'paused' ? new Date().toISOString() : null
+            };
+            if (status === 'active' && currentShift?.status === 'paused' && currentShift.paused_at) {
+                update.paused_seconds = (Number(currentShift.paused_seconds) || 0) + Math.max(0, Math.floor((Date.now() - new Date(currentShift.paused_at).getTime()) / 1000));
+            } else if (status === 'paused' && currentShift?.status === 'paused') {
+                update.paused_at = currentShift.paused_at;
+            }
+            try {
+                const { error } = await supabaseClient.from('shifts').update(update).eq('id', id).in('status', ['active', 'paused']);
+                if (error) throw error;
+                closeActiveShiftModal(); fetchActiveShifts(); fetchAllShifts();
+                alert('Pontajul activ a fost actualizat.');
+            } catch (err) { console.error('Eroare la editarea pontajului activ:', err); alert('Pontajul activ nu a putut fi actualizat.'); }
+        });
 
         async function forceStopActiveShift(shiftId) {
             if (!requireManager() || !confirm('Oprești acest pontaj în numele mecanicului?')) return;
