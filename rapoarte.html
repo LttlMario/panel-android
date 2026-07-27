@@ -684,30 +684,12 @@
                 const { data, error } = await supabaseClient.from('shifts').select('*').in('status', ['active', 'paused']).order('created_at', { ascending: false });
                 if (error) throw error;
                 activeShiftsData = data || [];
-                // Fallback pentru navigarea imediată după Start, înainte ca cererea de rețea să se finalizeze.
-                try {
-                    const localActive = JSON.parse(localStorage.getItem('workforce_active_shift'));
-                    const alreadyListed = activeShiftsData.some(shift => String(shift.id) === String(localActive?.activeShiftId));
-                    if (localActive?.userId && localActive?.startedAt && !alreadyListed) {
-                        activeShiftsData.unshift({
-                            id: localActive.activeShiftId || `local-${localActive.userId}`,
-                            discord_id: localActive.userId, shift_type: localActive.shiftType,
-                            date: new Date(localActive.startedAt).toISOString().slice(0, 10),
-                            start_time: new Date(localActive.startedAt).toTimeString().slice(0, 8),
-                            status: localActive.status || 'active', started_at: localActive.startedAt,
-                            paused_at: localActive.pausedAt, paused_seconds: localActive.pausedSeconds || 0
-                        });
-                    }
-                } catch (_) {}
-                if (!data || data.length === 0) { container.innerHTML = '<p class="text-xs text-slate-500 md:col-span-3 py-3">Nu există pontaje active în acest moment.</p>'; return; }
+                if (!activeShiftsData.length) { container.innerHTML = '<p class="text-xs text-slate-500 md:col-span-3 py-3">Nu există pontaje active în acest moment.</p>'; return; }
                 container.innerHTML = activeShiftsData.map(shift => {
                     const name = usersMap[shift.discord_id] || shift.discord_id || 'Mecanic necunoscut';
                     const stateLabel = shift.status === 'paused' ? 'PAUZĂ' : 'ACTIV';
                     const stateClass = shift.status === 'paused' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-                    const localOnly = String(shift.id).startsWith('local-');
-                    const actions = localOnly
-                        ? '<p class="text-[10px] text-slate-500 text-center py-2">Se sincronizează cu baza de date...</p>'
-                        : `<div class="grid grid-cols-2 gap-2"><button onclick="openActiveShiftModal('${shift.id}')" class="py-2 rounded-lg text-xs font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 cursor-pointer">Editează</button><button onclick="forceStopActiveShift('${shift.id}')" class="py-2 rounded-lg text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 cursor-pointer">Oprește</button></div>`;
+                    const actions = `<div class="grid grid-cols-2 gap-2"><button onclick="openActiveShiftModal('${shift.id}')" class="py-2 rounded-lg text-xs font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 cursor-pointer">Editează</button><button onclick="forceStopActiveShift('${shift.id}')" class="py-2 rounded-lg text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 cursor-pointer">Oprește</button></div>`;
                     return `<article class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3"><div class="flex justify-between gap-2"><div class="min-w-0"><p class="font-semibold text-slate-100 text-sm truncate">${escapeHtml(name)}</p><p class="text-[10px] text-slate-500 font-mono truncate">${escapeHtml(shift.discord_id)}</p></div><span class="text-[10px] px-2 py-1 h-fit rounded-lg border ${stateClass}">${stateLabel}</span></div><div class="text-xs text-slate-400">${escapeHtml((shift.shift_type || 'tură').toUpperCase())} · început <span class="font-mono text-slate-200">${escapeHtml(shift.start_time || '--:--')}</span><br><strong class="text-emerald-400 font-mono">${formatActiveDuration(shift)}</strong></div>${actions}</article>`;
                 }).join('');
             } catch (err) { console.error('Eroare la preluarea pontajelor active:', err); container.innerHTML = '<p class="text-xs text-rose-400 md:col-span-3">Nu s-au putut încărca pontajele active.</p>'; }

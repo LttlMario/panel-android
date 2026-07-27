@@ -231,6 +231,7 @@
         let shiftStartTime = null;
         let runningSince = null;
         let activeShiftId = null;
+        let isActionProcessing = false;
         const ACTIVE_SHIFT_STORAGE_KEY = 'workforce_active_shift';
 
         document.addEventListener('DOMContentLoaded', async () => {
@@ -355,7 +356,7 @@
             document.getElementById('btn-shift-night').className = 'px-5 py-2.5 rounded-xl text-xs font-semibold border transition cursor-pointer bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700';
         }
 
-        async function startShift() {
+        async function legacyStartShift() {
             if (!selectedShiftType) {
                 alert('Te rog selectează mai întâi o tură validă!');
                 return;
@@ -379,7 +380,7 @@
             await sendGeneralDiscordWebhook("▶️ Pontaj Start", `Mecanicul **${currentUser.display_name}** a pornit tura de **${selectedShiftType.toUpperCase()}**.`, 3066993);
         }
 
-        async function pauseShift() {
+        async function legacyPauseShift() {
             isPaused = !isPaused;
             const pauseText = document.getElementById('pause-btn-text');
             if (isPaused) {
@@ -470,7 +471,7 @@
             }
         }
 
-        async function sendStopShiftDiscordWebhook(data) {
+        async function legacySendStopShiftDiscordWebhook(data) {
             const payload = {
                 embeds: [{
                     title: `⏹️ Pontaj Nou Încheiat - Tură de ${data.shift_type.toUpperCase()}`,
@@ -708,34 +709,6 @@
         let autoStopInProgress = false;
         let globalPontajConfig = null;
 
-        function saveActiveFallback(record) {
-            localStorage.setItem(ACTIVE_SHIFT_STORAGE_KEY, JSON.stringify({
-                userId: currentUser.discord_id,
-                shiftType: record.shift_type,
-                startedAt: record.started_at,
-                autoStopAt: record.auto_stop_at,
-                status: record.status,
-                pausedAt: record.paused_at || null,
-                pausedSeconds: Number(record.paused_seconds) || 0,
-                activeShiftId: record.id || null
-            }));
-        }
-
-        function getActiveFallback() {
-            try {
-                const saved = JSON.parse(localStorage.getItem(ACTIVE_SHIFT_STORAGE_KEY));
-                if (!saved || saved.userId !== currentUser.discord_id || !saved.startedAt || !saved.shiftType) return null;
-                return {
-                    id: saved.activeShiftId || null, discord_id: currentUser.discord_id,
-                    shift_type: saved.shiftType, started_at: saved.startedAt, auto_stop_at: saved.autoStopAt,
-                    status: saved.status || 'active', paused_at: saved.pausedAt || null,
-                    paused_seconds: Number(saved.pausedSeconds) || 0,
-                    date: getRomanianDate(new Date(saved.startedAt)), start_time: getRomanianTime(new Date(saved.startedAt)),
-                    end_time: null, duration: '00:00:00', duration_ms: 0
-                };
-            } catch (_) { return null; }
-        }
-
         async function loadGlobalPontajConfig() {
             try {
                 const { data, error } = await supabaseClient.from('app_settings').select('value').eq('key', 'pontaj_config').maybeSingle();
@@ -826,32 +799,21 @@
         async function restoreActiveShift() {
             try {
                 activeShiftRecord = await findActiveShift();
-                if (!activeShiftRecord) {
-                    const fallback = getActiveFallback();
-                    if (!fallback) { resetTimerState(); return; }
-                    const deadline = new Date(fallback.auto_stop_at);
-                    if (!Number.isFinite(deadline.getTime()) || deadline.getTime() <= Date.now()) { resetTimerState(); return; }
-                    const { id: ignoredId, ...fallbackData } = fallback;
-                    const { data, error } = await supabaseClient.from('shifts').insert([fallbackData]).select('*').single();
-                    activeShiftRecord = error ? fallback : data;
-                }
+                if (!activeShiftRecord) { resetTimerState(); return; }
                 const deadline = new Date(activeShiftRecord.auto_stop_at);
                 if (!Number.isFinite(deadline.getTime()) || deadline.getTime() <= Date.now()) {
                     await stopActiveShift(true);
                     return;
                 }
-                saveActiveFallback(activeShiftRecord);
                 syncActiveShiftUI();
                 startTimer();
             } catch (error) {
                 console.error('Eroare la restaurarea pontajului:', error);
-                const fallback = getActiveFallback();
-                if (fallback) { activeShiftRecord = fallback; syncActiveShiftUI(); startTimer(); }
-                else resetTimerState();
+                resetTimerState();
             }
         }
 
-        async function legacyStartShift() {
+        async function startShift() {
             if (isActionProcessing || !selectedShiftType) { if (!selectedShiftType) alert('Te rog selectează mai întâi o tură validă!'); return; }
             isActionProcessing = true;
             try {
@@ -864,19 +826,17 @@
                     duration: '00:00:00', duration_ms: 0, shift_type: selectedShiftType, created_at: now.toISOString(),
                     started_at: now.toISOString(), auto_stop_at: autoStopAt.toISOString(), status: 'active', paused_seconds: 0, paused_at: null, stop_reason: null
                 };
-                saveActiveFallback(newShift);
                 const { data, error } = await supabaseClient.from('shifts').insert([newShift]).select('*').single();
                 if (error) throw error;
                 activeShiftRecord = data;
                 activeShiftId = data.id;
-                saveActiveFallback(data);
                 syncActiveShiftUI(); startTimer();
                 await sendGeneralDiscordWebhook('▶️ Pontaj Start', `Mecanicul **${currentUser.display_name}** a pornit tura de **${selectedShiftType.toUpperCase()}**.`, 3066993);
             } catch (error) { console.error('Eroare pornire pontaj:', error); alert('Pontajul nu a putut fi pornit.'); }
             finally { isActionProcessing = false; }
         }
 
-        async function legacyPauseShift() {
+        async function pauseShift() {
             if (isActionProcessing || !activeShiftRecord) return;
             isActionProcessing = true;
             try {
@@ -889,7 +849,6 @@
                 const { data, error } = await supabaseClient.from('shifts').update(update).eq('id', activeShiftRecord.id).select('*').single();
                 if (error) throw error;
                 activeShiftRecord = data; syncActiveShiftUI();
-                saveActiveFallback(activeShiftRecord);
                 await sendGeneralDiscordWebhook(activeShiftRecord.status === 'paused' ? '⏸️ Pontaj Pauză' : '▶️ Pontaj Reluat', `Mecanicul **${currentUser.display_name}** a ${activeShiftRecord.status === 'paused' ? 'pus tura pe pauză' : 'reluat tura'}.`, activeShiftRecord.status === 'paused' ? 16776960 : 3066993);
             } catch (error) { console.error('Eroare pauză pontaj:', error); alert('Starea pauzei nu a putut fi salvată.'); }
             finally { isActionProcessing = false; }
@@ -901,15 +860,7 @@
             if (!activeShiftRecord || isActionProcessing) return;
             isActionProcessing = true; autoStopInProgress = automatic;
             try {
-                let record = activeShiftRecord;
-                if (!record.id) {
-                    const { id: ignoredId, ...fallbackData } = record;
-                    const { data: recreated, error: recreateError } = await supabaseClient.from('shifts').insert([fallbackData]).select('*').single();
-                    if (recreateError) throw recreateError;
-                    record = recreated;
-                    activeShiftRecord = recreated;
-                    saveActiveFallback(recreated);
-                }
+                const record = activeShiftRecord;
                 const now = new Date();
                 const workedSeconds = getWorkedSeconds(record, now);
                 const reason = automatic ? 'Încheiere automată – program maxim atins' : 'Încheiere manuală';
@@ -932,7 +883,7 @@
             document.getElementById('btn-start').disabled = false; document.getElementById('btn-pause').disabled = true; document.getElementById('btn-stop').disabled = true; document.getElementById('pause-btn-text').textContent = 'Pauză'; selectedShiftType = null; resetUIPlaceholder();
         }
 
-        async function legacySendStopShiftDiscordWebhook(data) {
+        async function sendStopShiftDiscordWebhook(data) {
             const payload = { embeds: [{ title: `⏹️ Pontaj Încheiat - Tură de ${data.shift_type.toUpperCase()}`, color: data.shift_type === 'zi' ? 16766720 : 65535, fields: [
                 { name: '👤 Mecanic', value: data.colleague_name, inline: true }, { name: '📅 Data', value: data.date, inline: true },
                 { name: '⏰ Interval', value: `${data.start_time} - ${data.end_time}`, inline: false }, { name: '⏳ Timp Total Lucrat', value: `**${data.duration}**`, inline: true },
