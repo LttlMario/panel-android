@@ -1,27 +1,273 @@
-create extension if not exists pg_net;
-create extension if not exists pg_cron;
+<!DOCTYPE html>
+<html lang="ro" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Panel</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#1e293b',
+                            900: '#0f172a',
+                            950: '#020617',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/permissions.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex text-sm">
 
--- Înlocuiește valorile cu cele ale proiectului tău înainte de rulare.
-select vault.create_secret('https://PROJECT_REF.supabase.co', 'project_url');
-select vault.create_secret('SUPABASE_PUBLISHABLE_KEY', 'publishable_key');
-select vault.create_secret('ALEGE_UN_SECRET_LUNG', 'cron_secret');
+    <!-- Containerul Principal -->
+    <div class="flex h-screen w-full overflow-hidden">
+        
+        <!-- Sidebar / Meniu Lateral -->
+        <aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col justify-between hidden md:flex">
+            <div class="p-6 overflow-y-auto max-h-[calc(100vh-5rem)]">
+                <h1 class="text-xl font-bold text-slate-100 tracking-tight">Panel<span class="block text-xs font-normal text-slate-400 mt-0.5">by Little Mario</span></h1>
+                
+                <nav class="mt-6 space-y-1.5" id="sidebar-nav">
+                    <a href="index.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
+                        <span>📊</span>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="pontaj.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
+                        <span>⏱️</span>
+                        <span>Pontaj</span>
+                    </a>
+                    <a href="cereri.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
+                        <span>📋</span>
+                        <span>Cereri / Absențe</span>
+                    </a>
+                    <a href="rapoarte.html" data-role="4" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
+                        <span>📈</span>
+                        <span>Rapoarte</span>
+                    </a>
+                    <a href="contracte.html" data-role="4" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
+                        <span>📜</span>
+                        <span>Contracte</span>
+                    </a>
+                    <a href="admin.html" data-role="5" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
+                        <span>👑</span>
+                        <span>Panou Admin</span>
+                    </a>
+                    <a href="calculatorilegal.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
+                        <span>🧮</span>
+                        <span>Calculator Ilegal</span>
+                    </a>
+                    <a href="craftmecanics.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
+                        <span>🔨</span>
+                        <span>Craft Mecanics</span>
+                    </a>
+                    <a href="locatiiilegale.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
+                        <span>🗺️</span>
+                        <span>Locații Ilegale</span>
+                    </a>
+                    <a href="marketplace.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
+                        <span>🛒</span>
+                        <span>Marketplace</span>
+                    </a>
+                    <a href="marketplace-ilegal.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
+                        <span>🚨</span>
+                        <span>Black Market</span>
+                    </a>
+                </nav>
+            </div>
 
-select cron.unschedule(jobid)
-from cron.job
-where jobname in ('close-expired-shifts', 'invoke-close-expired-shifts');
+            <!-- Profil Utilizator Dinamic -->
+            <div class="p-4 border-t border-slate-800 bg-slate-900/50 flex items-center justify-between">
+                <div class="flex items-center space-x-3 overflow-hidden">
+                    <img id="user-avatar" src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f468-200d-1f4bb.png" class="w-10 h-10 rounded-full border border-slate-700 flex-shrink-0 object-cover" alt="Avatar">
+                    <div class="truncate">
+                        <p id="user-display-name" class="text-sm font-semibold text-slate-200 truncate">Se încarcă...</p>
+                        <p id="user-role" class="text-xs text-emerald-400 truncate">Mecanic</p>
+                    </div>
+                </div>
+                <button id="logout-btn" title="Ieșire din cont" class="flex items-center space-x-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl transition cursor-pointer text-xs font-medium">
+                    <span></span>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
 
-select cron.schedule(
-  'invoke-close-expired-shifts',
-  '* * * * *',
-  $$
-  select net.http_post(
-    url := (select decrypted_secret from vault.decrypted_secrets where name = 'project_url') || '/functions/v1/close-expired-shifts',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'apikey', (select decrypted_secret from vault.decrypted_secrets where name = 'publishable_key'),
-      'x-cron-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'cron_secret')
-    ),
-    body := '{}'::jsonb
-  );
-  $$
-);
+        <!-- Conținut Principal Dashboard -->
+        <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+            <header class="h-16 border-b border-slate-800 bg-slate-900/50 backdrop-blur px-8 flex items-center justify-between sticky top-0 z-20">
+                <h2 class="text-lg font-bold text-slate-100">Dashboard</h2>
+                <div class="flex items-center space-x-4">
+                    <span class="text-xs text-slate-400">Bine ai revenit!</span>
+                </div>
+            </header>
+
+            <div class="p-8 space-y-6 max-w-7xl mx-auto w-full">
+                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-lg space-y-4">
+                    <h3 class="text-base font-bold text-slate-100">Panou de Control Principal</h3>
+                    <p class="text-xs text-slate-400">Folosește meniul din stânga pentru a naviga rapid către secțiunile dorite, inclusiv noul Marketplace și Black Market (Ilegal).</p>
+                </div>
+            </div>
+                <section class="px-8 pb-8 max-w-7xl mx-auto w-full space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                        <article class="bg-slate-900 border border-slate-800 rounded-2xl p-5"><p class="text-[10px] uppercase tracking-wider text-slate-500">Ture astăzi</p><p id="today-shifts-count" class="text-3xl font-black mt-2">—</p><p class="text-xs text-slate-500 mt-1">înregistrate pe contul tău</p></article>
+                        <article class="bg-slate-900 border border-slate-800 rounded-2xl p-5"><p class="text-[10px] uppercase tracking-wider text-slate-500">Timp lucrat azi</p><p id="today-worked-time" class="text-3xl font-black text-emerald-400 mt-2 font-mono">—</p><p class="text-xs text-slate-500 mt-1">fără timpul de pauză</p></article>
+                        <article class="bg-slate-900 border border-slate-800 rounded-2xl p-5"><p class="text-[10px] uppercase tracking-wider text-slate-500">Stare pontaj</p><p id="dashboard-shift-state" class="text-xl font-black mt-3">Se verifică...</p><p id="dashboard-shift-detail" class="text-xs text-slate-500 mt-2">—</p></article>
+                        <article class="bg-slate-900 border border-slate-800 rounded-2xl p-5"><p class="text-[10px] uppercase tracking-wider text-slate-500">Următoarea învoire</p><p id="next-absence" class="text-base font-bold text-indigo-400 mt-3">Niciuna</p><p id="next-absence-detail" class="text-xs text-slate-500 mt-2">Nu ai învoiri active.</p></article>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <article class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6"><div class="flex items-center justify-between gap-3"><div><p class="text-xs uppercase tracking-wider text-slate-500">Tura curentă</p><h3 id="active-shift-title" class="text-lg font-bold mt-1">Nicio tură activă</h3></div><span id="active-shift-badge" class="px-3 py-1 rounded-lg border text-[10px] font-bold bg-slate-800 text-slate-400 border-slate-700">OPRIT</span></div><div class="mt-7 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5"><div><p id="active-shift-timer" class="text-4xl font-black font-mono text-emerald-400">00:00:00</p><p id="active-shift-note" class="text-xs text-slate-500 mt-2">Pornește o tură când ești pregătit.</p></div><a href="pontaj.html" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold transition text-center">Gestionează pontajul →</a></div></article>
+                        <article class="bg-slate-900 border border-slate-800 rounded-2xl p-6"><p class="text-xs uppercase tracking-wider text-slate-500">Acces rapid</p><div class="mt-4 grid gap-2"><a href="cereri.html" class="p-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs font-semibold transition">📋 Trimite o învoire</a><a href="craftmecanics.html" class="p-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs font-semibold transition">🔨 Craft Mecanics</a><a href="marketplace.html" class="p-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs font-semibold transition">🛒 Vezi marketplace-ul</a></div></article>
+                    </div>
+                </section>
+        </main>
+    </div>
+
+    <!-- Script de integrare Supabase și interfață -->
+    <script>
+        const SUPABASE_URL = "https://vkvsabbbawyiurnaiugo.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdnNhYmJiYXd5aXVybmFpdWdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwNDY5NTYsImV4cCI6MjEwMDYyMjk1Nn0.s2R8mdsoeQzOyz7a-NJOi5SQmyDmyy98cfUMfGqLo44";
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let dashboardActiveShift = null;
+        let dashboardTimer = null;
+        let completedTodaySeconds = 0;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const currentPage = window.location.pathname.split("/").pop() || "index.html";
+            document.querySelectorAll('.nav-link').forEach(link => {
+                const linkHref = link.getAttribute('href');
+                if (linkHref === currentPage) {
+                    link.classList.remove('text-slate-300', 'hover:bg-slate-800');
+                    link.classList.add('bg-emerald-500/10', 'text-emerald-400', 'font-medium');
+                }
+            });
+
+            const cachedUser = localStorage.getItem('discord_user');
+            if (!cachedUser) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                const localData = JSON.parse(cachedUser);
+                if (!localData || !localData.discord_id) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                let { data: dbUser } = await supabaseClient
+                    .from('users')
+                    .select('*')
+                    .eq('discord_id', localData.discord_id)
+                    .maybeSingle();
+
+                let activeUser = dbUser || localData;
+
+                const displayName = activeUser.display_name || activeUser.username || 'Mecanic';
+                const role = activeUser.role || activeUser.default_role || 'Mecanic';
+                const userAvatar = activeUser.avatar || 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f468-200d-1f4bb.png';
+
+                document.getElementById('user-display-name').textContent = displayName;
+                document.getElementById('user-role').textContent = role;
+                document.getElementById('user-avatar').src = userAvatar;
+
+                const roleLower = role.toLowerCase();
+                const isPrivileged = roleLower.includes('sef') || roleLower.includes('șef') || roleLower.includes('manager') || roleLower.includes('admin') || roleLower.includes('owner');
+
+                if (isPrivileged) {
+                    const navLogs = document.getElementById('nav-logs');
+                    if (navLogs) navLogs.classList.remove('hidden');
+                }
+
+                localStorage.setItem('discord_user', JSON.stringify(activeUser));
+                await loadMechanicDashboard(activeUser.discord_id);
+
+            } catch (err) {
+                console.error('Erore sesiune:', err);
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', () => {
+                    localStorage.clear();
+                    window.location.href = 'login.html';
+                });
+            }
+        });
+
+        function romanianToday() {
+            const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Bucharest', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+            const value = Object.fromEntries(parts.filter(item => item.type !== 'literal').map(item => [item.type, item.value]));
+            return `${value.year}-${value.month}-${value.day}`;
+        }
+
+        function formatDashboardTime(seconds) {
+            const value = Math.max(0, Math.floor(seconds || 0));
+            return [Math.floor(value / 3600), Math.floor(value % 3600 / 60), value % 60].map(item => String(item).padStart(2, '0')).join(':');
+        }
+
+        function workedSeconds(shift) {
+            if (!shift?.started_at) return Number(shift?.duration_ms || 0) / 1000;
+            let seconds = Math.floor((Date.now() - new Date(shift.started_at).getTime()) / 1000) - Number(shift.paused_seconds || 0);
+            if (shift.status === 'paused' && shift.paused_at) seconds -= Math.max(0, Math.floor((Date.now() - new Date(shift.paused_at).getTime()) / 1000));
+            return Math.max(0, seconds);
+        }
+
+        function updateDashboardTimer() {
+            const active = dashboardActiveShift && ['active', 'paused'].includes(dashboardActiveShift.status);
+            const seconds = active ? workedSeconds(dashboardActiveShift) : 0;
+            document.getElementById('active-shift-timer').textContent = formatDashboardTime(seconds);
+            document.getElementById('today-worked-time').textContent = formatDashboardTime(completedTodaySeconds + seconds);
+        }
+
+        async function loadMechanicDashboard(discordId) {
+            try {
+                const [shiftsResult, absenceResult] = await Promise.all([
+                    supabaseClient.from('shifts').select('*').eq('discord_id', discordId).eq('date', romanianToday()).order('created_at', { ascending: false }),
+                    supabaseClient.from('absences').select('*').eq('discord_id', discordId).gte('end_at', new Date().toISOString()).order('start_at', { ascending: true }).limit(1)
+                ]);
+                if (shiftsResult.error) throw shiftsResult.error;
+                const shifts = shiftsResult.data || [];
+                dashboardActiveShift = shifts.find(shift => ['active', 'paused'].includes(shift.status)) || null;
+                completedTodaySeconds = shifts.filter(shift => !['active', 'paused'].includes(shift.status)).reduce((total, shift) => total + Number(shift.duration_ms || 0) / 1000, 0);
+                document.getElementById('today-shifts-count').textContent = shifts.length;
+
+                const state = document.getElementById('dashboard-shift-state');
+                const detail = document.getElementById('dashboard-shift-detail');
+                const badge = document.getElementById('active-shift-badge');
+                if (dashboardActiveShift) {
+                    const paused = dashboardActiveShift.status === 'paused';
+                    state.textContent = paused ? 'În pauză' : 'Activ';
+                    state.className = `text-xl font-black mt-3 ${paused ? 'text-amber-400' : 'text-emerald-400'}`;
+                    detail.textContent = `Tură de ${(dashboardActiveShift.shift_type || 'zi').toUpperCase()} începută la ${dashboardActiveShift.start_time || '--:--'}`;
+                    document.getElementById('active-shift-title').textContent = `Tură de ${(dashboardActiveShift.shift_type || 'zi').toUpperCase()} ${paused ? 'în pauză' : 'în desfășurare'}`;
+                    document.getElementById('active-shift-note').textContent = dashboardActiveShift.auto_stop_at ? `Oprire automată: ${new Date(dashboardActiveShift.auto_stop_at).toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })}` : 'Pontajul este salvat în baza de date.';
+                    badge.textContent = paused ? 'PAUZĂ' : 'ACTIV';
+                    badge.className = `px-3 py-1 rounded-lg border text-[10px] font-bold ${paused ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`;
+                } else {
+                    state.textContent = 'Oprit'; detail.textContent = 'Nu există o tură deschisă.';
+                }
+                const absence = absenceResult.data?.[0];
+                if (absence) {
+                    document.getElementById('next-absence').textContent = absence.notice_type || 'Învoire';
+                    document.getElementById('next-absence-detail').textContent = `Până la ${new Date(absence.end_at).toLocaleString('ro-RO', { dateStyle: 'short', timeStyle: 'short' })}`;
+                }
+                clearInterval(dashboardTimer); updateDashboardTimer(); dashboardTimer = setInterval(updateDashboardTimer, 1000);
+            } catch (error) {
+                console.error('Eroare dashboard mecanic:', error);
+                document.getElementById('dashboard-shift-state').textContent = 'Indisponibil';
+                document.getElementById('dashboard-shift-detail').textContent = 'Datele nu au putut fi încărcate momentan.';
+            }
+        }
+    </script>
+</body>
+</html>
