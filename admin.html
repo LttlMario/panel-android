@@ -118,7 +118,7 @@
             <div class="p-8 space-y-8 max-w-7xl mx-auto w-full">
                 
                 <!-- Secțiunea 1: Gestionare Utilizatori, Roluri, Kick & Acțiuni Admin -->
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-lg overflow-hidden">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-lg overflow-hidden flex flex-col">
                     <div class="p-6 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <h3 class="text-base font-bold text-slate-100">Gestionare Roluri Echipă & Administrare Utilizatori</h3>
@@ -133,15 +133,41 @@
                         </div>
                     </div>
 
-                    <div class="overflow-x-auto">
+                    <!-- Bara de Căutare și Filtrare Multiplă Avansată -->
+                    <div class="p-4 bg-slate-950/40 border-b border-slate-800 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                        <div>
+                            <input type="text" id="search-name" oninput="renderUsersTable()" placeholder="🔍 Caută după Nume..." class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2 focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <input type="text" id="search-id" oninput="renderUsersTable()" placeholder="🆔 Caută după Discord ID..." class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2 focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <select id="filter-role" onchange="renderUsersTable()" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-500 cursor-pointer">
+                                <option value="">Toate Rolurile</option>
+                                <option value="mecanic">Mecanic</option>
+                                <option value="sef mecanic">Sef Mecanic</option>
+                                <option value="manager">Manager</option>
+                                <option value="familia">Familia</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <div>
+                            <button onclick="resetFilters()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold py-2 px-3 rounded-xl border border-slate-700 transition cursor-pointer">
+                                Resetează Filtrele
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tabel Scrollabil -->
+                    <div class="overflow-x-auto max-h-[420px] overflow-y-auto relative">
                         <table class="w-full text-left border-collapse text-xs">
-                            <thead>
-                                <tr class="bg-slate-950/70 border-b border-slate-800 text-slate-400 uppercase tracking-wider font-semibold">
-                                    <th class="p-4">Discord ID</th>
-                                    <th class="p-4">Nume / Utilizator</th>
-                                    <th class="p-4">Rol Curent</th>
-                                    <th class="p-4">Setează Rol Nou</th>
-                                    <th class="p-4 text-right">Acțiuni Administrative (Kick / Salvare)</th>
+                            <thead class="sticky top-0 z-10 bg-slate-950 shadow-sm">
+                                <tr class="border-b border-slate-800 text-slate-400 uppercase tracking-wider font-semibold">
+                                    <th class="p-4 bg-slate-950">Discord ID</th>
+                                    <th class="p-4 bg-slate-950">Nume / Utilizator</th>
+                                    <th class="p-4 bg-slate-950">Rol Curent</th>
+                                    <th class="p-4 bg-slate-950">Setează Rol Nou</th>
+                                    <th class="p-4 bg-slate-950 text-right">Acțiuni Administrative (Kick / Salvare)</th>
                                 </tr>
                             </thead>
                             <tbody id="admin-users-table-body" class="divide-y divide-slate-800 text-slate-300">
@@ -346,17 +372,47 @@
             }
         }
 
+        function resetFilters() {
+            document.getElementById('search-name').value = '';
+            document.getElementById('search-id').value = '';
+            document.getElementById('filter-role').value = '';
+            renderUsersTable();
+        }
+
         function renderUsersTable() {
             const tbody = document.getElementById('admin-users-table-body');
-            document.getElementById('users-count-badge').textContent = `${allUsersData.length} utilizatori`;
+            
+            const searchName = document.getElementById('search-name').value.toLowerCase().trim();
+            const searchId = document.getElementById('search-id').value.toLowerCase().trim();
+            const filterRole = document.getElementById('filter-role').value.toLowerCase().trim();
+
+            const filteredUsers = allUsersData.filter(u => {
+                const name = (u.display_name || u.username || '').toLowerCase();
+                const id = String(u.discord_id || u.id || '').toLowerCase();
+                const role = (u.role || 'mecanic').toLowerCase();
+
+                const matchesName = name.includes(searchName);
+                const matchesId = id.includes(searchId);
+                const matchesRole = filterRole === '' || role === filterRole;
+
+                return matchesName && matchesId && matchesRole;
+            });
+
+            document.getElementById('users-count-badge').textContent = `${filteredUsers.length} / ${allUsersData.length} utilizatori`;
+
+            if (filteredUsers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-500">Nu a fost găsit niciun utilizator conform filtrelor aplicate.</td></tr>`;
+                return;
+            }
 
             let html = '';
-            allUsersData.forEach((u, index) => {
+            filteredUsers.forEach((u) => {
                 const currentRole = (u.role || 'mecanic').toLowerCase();
+                const uId = u.discord_id || u.id;
                 
                 html += `
                     <tr class="hover:bg-slate-800/40 transition">
-                        <td class="p-4 font-mono text-slate-400">${u.discord_id || u.id || 'N/A'}</td>
+                        <td class="p-4 font-mono text-slate-400">${uId || 'N/A'}</td>
                         <td class="p-4 font-semibold text-slate-200">${u.display_name || u.username || 'Utilizator'}</td>
                         <td class="p-4">
                             <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border bg-slate-800 text-slate-300 border-slate-700">
@@ -364,7 +420,7 @@
                             </span>
                         </td>
                         <td class="p-4">
-                            <select id="role-select-${index}" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer">
+                            <select id="role-select-${uId}" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer">
                                 <option value="mecanic" ${currentRole === 'mecanic' ? 'selected' : ''}>Mecanic</option>
                                 <option value="sef mecanic" ${currentRole === 'sef mecanic' ? 'selected' : ''}>Sef Mecanic</option>
                                 <option value="manager" ${currentRole === 'manager' ? 'selected' : ''}>Manager</option>
@@ -373,10 +429,10 @@
                             </select>
                         </td>
                         <td class="p-4 text-right space-x-2">
-                            <button onclick="updateUserRole('${u.discord_id || u.id}', ${index})" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer shadow">
+                            <button onclick="updateUserRole('${uId}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer shadow">
                                 Salvează Rol
                             </button>
-                            <button onclick="kickUser('${u.discord_id || u.id}', '${u.display_name || u.username || 'Utilizator'}')" class="bg-rose-600/20 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-500/30 px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer shadow">
+                            <button onclick="kickUser('${uId}', '${u.display_name || u.username || 'Utilizator'}')" class="bg-rose-600/20 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-500/30 px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer shadow">
                                 🚪 Kick / Forțează Logout
                             </button>
                         </td>
@@ -387,8 +443,10 @@
             tbody.innerHTML = html;
         }
 
-        async function updateUserRole(discordId, index) {
-            const newRole = document.getElementById(`role-select-${index}`).value;
+        async function updateUserRole(discordId) {
+            const selectEl = document.getElementById(`role-select-${discordId}`);
+            if (!selectEl) return;
+            const newRole = selectEl.value;
             
             const userObj = allUsersData.find(u => String(u.discord_id || u.id) === String(discordId));
             if (userObj) userObj.role = newRole;
