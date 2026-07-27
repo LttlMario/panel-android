@@ -1,192 +1,27 @@
-<!DOCTYPE html>
-<html lang="ro" class="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Panel</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        slate: {
-                            850: '#1e293b',
-                            900: '#0f172a',
-                            950: '#020617',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- Supabase JS Client -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/permissions.js"></script>
-</head>
-<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex text-sm">
+create extension if not exists pg_net;
+create extension if not exists pg_cron;
 
-    <!-- Containerul Principal -->
-    <div class="flex h-screen w-full overflow-hidden">
-        
-        <!-- Sidebar / Meniu Lateral -->
-        <aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col justify-between hidden md:flex">
-            <div class="p-6 overflow-y-auto max-h-[calc(100vh-5rem)]">
-                <h1 class="text-xl font-bold text-slate-100 tracking-tight">Panel<span class="block text-xs font-normal text-slate-400 mt-0.5">by Little Mario</span></h1>
-                
-                <nav class="mt-6 space-y-1.5" id="sidebar-nav">
-                    <a href="index.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>📊</span>
-                        <span>Dashboard</span>
-                    </a>
-                    <a href="pontaj.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>⏱️</span>
-                        <span>Pontaj</span>
-                    </a>
-                    <a href="cereri.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>📋</span>
-                        <span>Cereri / Absențe</span>
-                    </a>
-                    <a href="rapoarte.html" data-role="4" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>📈</span>
-                        <span>Rapoarte</span>
-                    </a>
-                    <a href="contracte.html" data-role="4" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>📜</span>
-                        <span>Contracte</span>
-                    </a>
-                    <a href="admin.html" data-role="5" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>👑</span>
-                        <span>Panou Admin</span>
-                    </a>
-                    <a href="calculatorilegal.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🧮</span>
-                        <span>Calculator Ilegal</span>
-                    </a>
-                    <a href="craftmecanics.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🔨</span>
-                        <span>Craft Mecanics</span>
-                    </a>
-                    <a href="locatiiilegale.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🗺️</span>
-                        <span>Locații Ilegale</span>
-                    </a>
-                    <a href="marketplace.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🛒</span>
-                        <span>Marketplace</span>
-                    </a>
-                    <a href="marketplace-ilegal.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🚨</span>
-                        <span>Black Market</span>
-                    </a>
-                </nav>
-            </div>
+-- Înlocuiește valorile cu cele ale proiectului tău înainte de rulare.
+select vault.create_secret('https://PROJECT_REF.supabase.co', 'project_url');
+select vault.create_secret('SUPABASE_PUBLISHABLE_KEY', 'publishable_key');
+select vault.create_secret('ALEGE_UN_SECRET_LUNG', 'cron_secret');
 
-            <!-- Profil Utilizator Dinamic -->
-            <div class="p-4 border-t border-slate-800 bg-slate-900/50 flex items-center justify-between">
-                <div class="flex items-center space-x-3 overflow-hidden">
-                    <img id="user-avatar" src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f468-200d-1f4bb.png" class="w-10 h-10 rounded-full border border-slate-700 flex-shrink-0 object-cover" alt="Avatar">
-                    <div class="truncate">
-                        <p id="user-display-name" class="text-sm font-semibold text-slate-200 truncate">Se încarcă...</p>
-                        <p id="user-role" class="text-xs text-emerald-400 truncate">Mecanic</p>
-                    </div>
-                </div>
-                <button id="logout-btn" title="Ieșire din cont" class="flex items-center space-x-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl transition cursor-pointer text-xs font-medium">
-                    <span></span>
-                    <span>Logout</span>
-                </button>
-            </div>
-        </aside>
+select cron.unschedule(jobid)
+from cron.job
+where jobname in ('close-expired-shifts', 'invoke-close-expired-shifts');
 
-        <!-- Conținut Principal Dashboard -->
-        <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
-            <header class="h-16 border-b border-slate-800 bg-slate-900/50 backdrop-blur px-8 flex items-center justify-between sticky top-0 z-20">
-                <h2 class="text-lg font-bold text-slate-100">Dashboard</h2>
-                <div class="flex items-center space-x-4">
-                    <span class="text-xs text-slate-400">Bine ai revenit!</span>
-                </div>
-            </header>
-
-            <div class="p-8 space-y-6 max-w-7xl mx-auto w-full">
-                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-lg space-y-4">
-                    <h3 class="text-base font-bold text-slate-100">Panou de Control Principal</h3>
-                    <p class="text-xs text-slate-400">Folosește meniul din stânga pentru a naviga rapid către secțiunile dorite, inclusiv noul Marketplace și Black Market (Ilegal).</p>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- Script de integrare Supabase și interfață -->
-    <script>
-        const SUPABASE_URL = "https://vkvsabbbawyiurnaiugo.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdnNhYmJiYXd5aXVybmFpdWdvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NTA0Njk1NiwiZXhwIjoyMTAwNjIyOTU2fQ.1D67DT0lul6bgcRSmbr5-JEHZmErTNvCXB4Up1g3zWw";
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        document.addEventListener('DOMContentLoaded', async () => {
-            const currentPage = window.location.pathname.split("/").pop() || "index.html";
-            document.querySelectorAll('.nav-link').forEach(link => {
-                const linkHref = link.getAttribute('href');
-                if (linkHref === currentPage) {
-                    link.classList.remove('text-slate-300', 'hover:bg-slate-800');
-                    link.classList.add('bg-emerald-500/10', 'text-emerald-400', 'font-medium');
-                }
-            });
-
-            const cachedUser = localStorage.getItem('discord_user');
-            if (!cachedUser) {
-                window.location.href = 'login.html';
-                return;
-            }
-
-            try {
-                const localData = JSON.parse(cachedUser);
-                if (!localData || !localData.discord_id) {
-                    window.location.href = 'login.html';
-                    return;
-                }
-
-                let { data: dbUser } = await supabaseClient
-                    .from('users')
-                    .select('*')
-                    .eq('discord_id', localData.discord_id)
-                    .maybeSingle();
-
-                let activeUser = dbUser || localData;
-
-                const displayName = activeUser.display_name || activeUser.username || 'Mecanic';
-                const role = activeUser.role || activeUser.default_role || 'Mecanic';
-                const userAvatar = activeUser.avatar || 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f468-200d-1f4bb.png';
-
-                document.getElementById('user-display-name').textContent = displayName;
-                document.getElementById('user-role').textContent = role;
-                document.getElementById('user-avatar').src = userAvatar;
-
-                const roleLower = role.toLowerCase();
-                const isPrivileged = roleLower.includes('sef') || roleLower.includes('șef') || roleLower.includes('manager') || roleLower.includes('admin') || roleLower.includes('owner');
-
-                if (isPrivileged) {
-                    const navLogs = document.getElementById('nav-logs');
-                    if (navLogs) navLogs.classList.remove('hidden');
-                }
-
-                localStorage.setItem('discord_user', JSON.stringify(activeUser));
-
-            } catch (err) {
-                console.error('Erore sesiune:', err);
-                window.location.href = 'login.html';
-                return;
-            }
-
-            const logoutBtn = document.getElementById('logout-btn');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', () => {
-                    localStorage.clear();
-                    window.location.href = 'login.html';
-                });
-            }
-        });
-    </script>
-</body>
-</html>
+select cron.schedule(
+  'invoke-close-expired-shifts',
+  '* * * * *',
+  $$
+  select net.http_post(
+    url := (select decrypted_secret from vault.decrypted_secrets where name = 'project_url') || '/functions/v1/close-expired-shifts',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'apikey', (select decrypted_secret from vault.decrypted_secrets where name = 'publishable_key'),
+      'x-cron-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'cron_secret')
+    ),
+    body := '{}'::jsonb
+  );
+  $$
+);
