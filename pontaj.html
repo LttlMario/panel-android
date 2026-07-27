@@ -13,7 +13,7 @@
                 extend: {
                     colors: {
                         slate: {
-                            850: '#1e293b', 
+                            850: '#1e293b',
                             900: '#0f172a',
                             950: '#020617',
                         }
@@ -287,6 +287,7 @@
                 }
 
                 localStorage.setItem('discord_user', JSON.stringify(activeUser));
+                await loadGlobalPontajConfig();
                 await restoreActiveShift();
 
             } catch (err) {
@@ -308,7 +309,11 @@
         });
 
         function selectShiftType(type) {
-            if (document.getElementById('btn-start').disabled) return;
+            if (activeShiftRecord) {
+                alert('Ai deja o tură activă. Oprește tura curentă înainte de a selecta una nouă.');
+                return;
+            }
+            document.getElementById('btn-start').disabled = false;
             const romanianTime = getRomanianDateTimeParts();
             const hours = Number(romanianTime.hour);
             const minutes = Number(romanianTime.minute);
@@ -701,6 +706,18 @@
         // Sursa unică de adevăr pentru pontaj: rândul activ din Supabase.
         let activeShiftRecord = null;
         let autoStopInProgress = false;
+        let globalPontajConfig = null;
+
+        async function loadGlobalPontajConfig() {
+            try {
+                const { data, error } = await supabaseClient.from('app_settings').select('value').eq('key', 'pontaj_config').maybeSingle();
+                if (error) throw error;
+                globalPontajConfig = data?.value || null;
+            } catch (error) {
+                console.warn('Configurația globală de pontaj nu este disponibilă:', error);
+                try { globalPontajConfig = JSON.parse(localStorage.getItem('workforce_admin_settings'))?.pontajConfig || null; } catch (_) { globalPontajConfig = null; }
+            }
+        }
 
         function getPontajMaxHours() {
             try {
@@ -721,8 +738,10 @@
 
         function getShiftDeadline(shiftType, now = new Date()) {
             const parts = getRomanianDateTimeParts(now);
-            const limitHour = shiftType === 'noapte' ? 23 : 19;
-            const limitMinute = shiftType === 'noapte' ? 0 : 59;
+            const configuredTime = shiftType === 'noapte' ? globalPontajConfig?.nightEndTime : globalPontajConfig?.dayEndTime;
+            const [configuredHour, configuredMinute] = (configuredTime || (shiftType === 'noapte' ? '23:00' : '19:59')).split(':').map(Number);
+            const limitHour = configuredHour;
+            const limitMinute = configuredMinute;
             let dateMarker = new Date(Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day)));
             let deadline = getRomanianDateAtTime(dateMarker.getUTCFullYear(), dateMarker.getUTCMonth() + 1, dateMarker.getUTCDate(), limitHour, limitMinute);
             if (deadline.getTime() <= now.getTime()) {
@@ -779,7 +798,7 @@
         async function restoreActiveShift() {
             try {
                 activeShiftRecord = await findActiveShift();
-                if (!activeShiftRecord) { localStorage.removeItem(ACTIVE_SHIFT_STORAGE_KEY); return; }
+                if (!activeShiftRecord) { resetTimerState(); return; }
                 if (new Date(activeShiftRecord.auto_stop_at).getTime() <= Date.now()) {
                     await stopActiveShift(true);
                     return;
@@ -787,7 +806,10 @@
                 localStorage.setItem(ACTIVE_SHIFT_STORAGE_KEY, JSON.stringify({ activeShiftId: activeShiftRecord.id }));
                 syncActiveShiftUI();
                 startTimer();
-            } catch (error) { console.error('Eroare la restaurarea pontajului:', error); }
+            } catch (error) {
+                console.error('Eroare la restaurarea pontajului:', error);
+                resetTimerState();
+            }
         }
 
         async function startShift() {
