@@ -117,7 +117,7 @@
 
             <div class="p-8 space-y-6 max-w-7xl mx-auto w-full">
                 
-                <!-- Secțiune Nouă: Gestionare Mecanici Activi în Tura Curentă (Manager Panel) -->
+                <!-- Secțiune Nouă: Mecanici Activi în Tura Curentă (Manager Control) -->
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-lg overflow-hidden">
                     <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-emerald-500/5">
                         <h3 class="text-sm font-bold text-emerald-400 flex items-center space-x-2">
@@ -273,7 +273,7 @@
         </main>
     </div>
 
-    <!-- Modal Editare Pontaj -->
+    <!-- Modal Editare Tură Activă -->
     <div id="edit-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
             <h3 class="text-base font-bold text-slate-100">Editează Tură Activă</h3>
@@ -351,6 +351,14 @@
                 document.getElementById('user-role').textContent = role;
                 document.getElementById('user-avatar').src = userAvatar;
 
+                const roleLower = role.toLowerCase();
+                const isPrivileged = roleLower.includes('sef') || roleLower.includes('șef') || roleLower.includes('manager') || roleLower.includes('admin') || roleLower.includes('owner');
+
+                if (isPrivileged) {
+                    const navLogs = document.getElementById('nav-logs');
+                    if (navLogs) navLogs.classList.remove('hidden');
+                }
+
                 localStorage.setItem('discord_user', JSON.stringify(activeUser));
 
                 await fetchUsersData();
@@ -415,7 +423,7 @@
             }
         }
 
-        // Preluare ture active (unde end_time este null sau gol)
+        // Preluare ture active corectată: start_time este activ (end_time gol sau null)
         async function fetchActiveShifts() {
             try {
                 let { data, error } = await supabaseClient
@@ -462,7 +470,7 @@
                         </td>
                         <td class="p-2.5">${typeBadge}</td>
                         <td class="p-2.5 text-slate-300">${shift.date || 'N/A'}</td>
-                        <td class="p-2.5 font-mono text-slate-400 text-[10px]">${shift.start_time || '00:00'}</td>
+                        <td class="p-2.5 font-mono text-emerald-300 text-[10px] font-bold">${shift.start_time || '00:00'}</td>
                         <td class="p-2.5 text-right space-x-1.5">
                             <button onclick="openEditModal('${shift.id}', '${shift.shift_type || 'zi'}', '${shift.start_time || ''}')" class="bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 px-2.5 py-1 rounded-lg text-[11px] font-medium transition cursor-pointer">Editează</button>
                             <button onclick="stopActiveShift('${shift.id}', '${shift.start_time}', '${shift.date}')" class="bg-amber-600/20 hover:bg-amber-600/40 text-amber-300 border border-amber-500/30 px-2.5 py-1 rounded-lg text-[11px] font-medium transition cursor-pointer">Oprește Tura</button>
@@ -473,7 +481,6 @@
             tbody.innerHTML = html;
         }
 
-        // Oprire tură activă de către manager
         async function stopActiveShift(shiftId, startTime, shiftDate) {
             if (!confirm('Ești sigur că vrei să oprești această tură activă?')) return;
 
@@ -483,7 +490,6 @@
             const seconds = String(now.getSeconds()).padStart(2, '0');
             const endTimeStr = `${hours}:${minutes}:${seconds}`;
 
-            // Calcul durată
             let startDateTime = new Date(`${shiftDate}T${startTime}`);
             if (isNaN(startDateTime.getTime())) {
                 startDateTime = new Date();
@@ -554,7 +560,6 @@
             }
         }
 
-        // Ștergere tură din centralizator (păstrată integral, conform cerinței)
         async function deleteShiftFromCentralizer(shiftId) {
             if (!confirm('Ești sigur că vrei să ștergi această înregistrare din centralizator?')) return;
 
