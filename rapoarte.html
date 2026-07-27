@@ -423,7 +423,7 @@
                 document.getElementById('user-avatar').src = userAvatar;
 
                 const roleLower = currentUser.role.toLowerCase();
-                canManagePontaj = roleLower.includes('manager');
+                canManagePontaj = roleLower.includes('manager') || roleLower.includes('admin') || roleLower.includes('owner');
                 const isPrivileged = roleLower.includes('sef') || roleLower.includes('șef') || roleLower.includes('manager') || roleLower.includes('admin') || roleLower.includes('owner');
 
                 if (isPrivileged) {
@@ -654,7 +654,7 @@
         // --- FUNCȚIE ȘTERGERE TURĂ (NOU) ---
         function requireManager() {
             if (canManagePontaj) return true;
-            alert('Această acțiune este disponibilă doar managerilor.');
+            alert('Această acțiune este disponibilă doar managerilor sau administratorilor.');
             return false;
         }
 
