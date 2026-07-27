@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="ro" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapoarte & Statistici - Workforce Management</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#1e293b',
+                            900: '#0f172a',
+                            950: '#020617',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/permissions.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex text-sm">
+
+    <!-- Containerul Principal -->
+    <div id="app-container" class="flex h-screen w-full overflow-hidden">
+        
+        <!-- Sidebar / Meniu Lateral -->
+        <aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col justify-between hidden md:flex">
+            <div class="p-6 overflow-y-auto max-h-[calc(100vh-5rem)]">
+                <h1 class="text-xl font-bold text-slate-100 tracking-tight">Panel<span class="block text-xs font-normal text-slate-400 mt-0.5">by Little Mario</span></h1>
+                
+                <nav class="mt-6 space-y-1.5" id="sidebar-nav">
+                    <a href="index.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
+                        <span>📊</span>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="pontaj.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
+                        <span>⏱️</span>
+                        <span>Pontaj</span>
+                    </a>
+                    <a href="cereri.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
+                        <span>📋</span>
+                        <span>Cereri / Absențe</span>
+                    </a>
+                    <a href="rapoarte.html" data-role="4" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
+                        <span>📈</span>
+                        <span>Rapoarte</span>
+                    </a>
+                    <a href="contracte.html" data-role="4" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
+                        <span>📜</span>
+                        <span>Contracte</span>
+                    </a>
+                    <a href="admin.html" data-role="5" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
+                        <span>👑</span>
+                        <span>Panou Admin</span>
+                    </a>
+                    <a href="calculatorilegal.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
+                        <span>🧮</span>
+                        <span>Calculator Ilegal</span>
+                    </a>
+                    <a href="craftmecanics.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
+                        <span>🔨</span>
+                        <span>Craft Mecanics</span>
+                    </a>
+                    <a href="locatiiilegale.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
+                        <span>🗺️</span>
+                        <span>Locații Ilegale</span>
+                    </a>
+                    <a href="marketplace.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
+                        <span>🛒</span>
+                        <span>Marketplace</span>
+                    </a>
+                    <a href="marketplace-ilegal.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
+                        <span>🚨</span>
+                        <span>Black Market</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Profil Utilizator Dinamic -->
+            <div class="p-4 border-t border-slate-800 bg-slate-900/50 flex items-center justify-between">
+                <div class="flex items-center space-x-3 overflow-hidden">
+                    <img id="user-avatar" src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f468-200d-1f4bb.png" class="w-10 h-10 rounded-full border border-slate-700 flex-shrink-0 object-cover" alt="Avatar">
+                    <div class="truncate">
+                        <p id="user-display-name" class="text-sm font-semibold text-slate-200 truncate">Se încarcă...</p>
+                        <p id="user-role" class="text-xs text-emerald-400 truncate">Mecanic</p>
+                    </div>
+                </div>
+                <button id="logout-btn" title="Ieșire din cont" class="flex items-center space-x-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl transition cursor-pointer text-xs font-medium">
+                    <span></span>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Conținut Principal -->
+        <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+            <header class="h-16 border-b border-slate-800 bg-slate-900/50 backdrop-blur px-8 flex items-center justify-between sticky top-0 z-20">
+                <h2 class="text-lg font-bold text-slate-100">Rapoarte & Statistici Ture</h2>
+                <div class="flex items-center space-x-3">
+                    <button onclick="exportToCSV()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-2 cursor-pointer">
+                        <span>📥</span>
+                        <span>Exportă CSV</span>
+                    </button>
+                    <button onclick="sendManualReport()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-2 cursor-pointer shadow-md">
+                        <span>🚀</span>
+                        <span>Trimite Raport pe Discord (Manual)</span>
+                    </button>
+                </div>
+            </header>
+
+            <div class="p-8 space-y-6 max-w-7xl mx-auto w-full">
+                
+                <!-- Panou de Filtrare Rapidă -->
+                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-lg space-y-4">
+                    <h3 class="text-base font-bold text-slate-100">Filtrare Rapidă</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-medium text-slate-400">Perioadă Raport</label>
+                            <select id="filter-period" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-emerald-500">
+                                <option value="all">Toate Turele (Istoric General)</option>
+                                <option value="today">Doar Astăzi</option>
+                                <option value="last7days">Ultimele 7 Zile</option>
+                            </select>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-medium text-slate-400">Tip Tură</label>
+                            <select id="filter-shift-type" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-emerald-500">
+                                <option value="all">Toate Turele (Zi și Noapte)</option>
+                                <option value="zi">☀️ Doar Ture de Zi</option>
+                                <option value="noapte">🌙 Doar Ture de Noapte</option>
+                            </select>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-medium text-slate-400">Caută Mecanic / ID Discord</label>
+                            <input type="text" id="filter-mechanic" placeholder="Nume sau Discord ID..." class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-emerald-500">
+                        </div>
+
+                        <div class="flex space-x-2">
+                            <button onclick="applyFilters()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-md cursor-pointer">
+                                Aplică
+                            </button>
+                            <button onclick="resetFilters()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold px-4 py-2.5 rounded-xl border border-slate-700 transition cursor-pointer" title="Resetează filtrele">
+                                🔄
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistici Sumar -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+                        <p class="text-xs text-slate-400 font-medium">Total Ture Înregistrate</p>
+                        <h4 id="stat-total-shifts" class="text-2xl font-black text-slate-100 mt-1">0</h4>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+                        <p class="text-xs text-slate-400 font-medium">Total Ore Lucrate</p>
+                        <h4 id="stat-total-hours" class="text-2xl font-black text-emerald-400 mt-1">0.00h</h4>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+                        <p class="text-xs text-slate-400 font-medium">Mecanici Activi în Perioadă</p>
+                        <h4 id="stat-total-mechanics" class="text-2xl font-black text-indigo-400 mt-1">0</h4>
+                    </div>
+                </div>
+
+                <!-- Grid Principal -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    
+                    <!-- Clasamente -->
+                    <div class="lg:col-span-5 space-y-6">
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-lg overflow-hidden flex flex-col">
+                            <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-amber-500/5">
+                                <h3 class="text-sm font-bold text-amber-400 flex items-center space-x-2">
+                                    <span>☀️</span>
+                                    <span>Top Mecanici - Ture de Zi</span>
+                                </h3>
+                                <span class="text-[10px] bg-slate-800 text-amber-300 px-2.5 py-0.5 rounded-lg border border-amber-500/20">Top Ore</span>
+                            </div>
+                            <div class="p-3 max-h-[240px] overflow-y-auto">
+                                <div id="ranking-day-container" class="space-y-2 text-xs">
+                                    <p class="text-center text-slate-500 py-4">Se calculează clasamentul...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-lg overflow-hidden flex flex-col">
+                            <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-indigo-500/5">
+                                <h3 class="text-sm font-bold text-indigo-400 flex items-center space-x-2">
+                                    <span>🌙</span>
+                                    <span>Top Mecanici - Ture de Noapte</span>
+                                </h3>
+                                <span class="text-[10px] bg-slate-800 text-indigo-300 px-2.5 py-0.5 rounded-lg border border-indigo-500/20">Top Ore</span>
+                            </div>
+                            <div class="p-3 max-h-[240px] overflow-y-auto">
+                                <div id="ranking-night-container" class="space-y-2 text-xs">
+                                    <p class="text-center text-slate-500 py-4">Se calculează clasamentul...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabel Centralizator -->
+                    <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl shadow-lg overflow-hidden flex flex-col">
+                        <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
+                            <h3 class="text-sm font-bold text-slate-100 flex items-center space-x-2">
+                                <span>📋</span>
+                                <span>Centralizator General Ture</span>
+                            </h3>
+                            <span id="table-count-badge" class="text-[10px] bg-slate-800 text-slate-300 px-2.5 py-0.5 rounded-lg border border-slate-700">0 rânduri</span>
+                        </div>
+
+                        <div class="max-h-[514px] overflow-y-auto overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead class="sticky top-0 z-10 bg-slate-950">
+                                    <tr class="bg-slate-950 border-b border-slate-800 text-slate-400 uppercase tracking-wider font-semibold text-[11px]">
+                                        <th class="p-2.5 bg-slate-950">Mecanic</th>
+                                        <th class="p-2.5 bg-slate-950">Tip</th>
+                                        <th class="p-2.5 bg-slate-950">Data</th>
+                                        <th class="p-2.5 bg-slate-950">Start / Stop</th>
+                                        <th class="p-2.5 bg-slate-950 text-right">Durată</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reports-table-body" class="divide-y divide-slate-800 text-slate-300">
+                                    <tr>
+                                        <td colspan="5" class="p-6 text-center text-slate-500">Se încarcă...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Script de integrare Supabase și interfață -->
+    <script>
+        const SUPABASE_URL = "https://vkvsabbbawyiurnaiugo.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdnNhYmJiYXd5aXVybmFpdWdvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NTA0Njk1NiwiZXhwIjoyMTAwNjIyOTU2fQ.1D67DT0lul6bgcRSmbr5-JEHZmErTNvCXB4Up1g3zWw";
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const WEBHOOK_LOGS = "https://discord.com/api/webhooks/1530882813824466944/yKrptcBA86amfq3a9nerXLYpr9wf78VxGLXfE93P7DKaYMbthEjkpJ3HhBAL2EMPOOm-";
+
+        let allShiftsData = [];
+        let filteredShiftsData = [];
+        let usersMap = {};
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const currentPage = window.location.pathname.split("/").pop() || "index.html";
+            document.querySelectorAll('.nav-link').forEach(link => {
+                const linkHref = link.getAttribute('href');
+                if (linkHref === currentPage) {
+                    link.classList.remove('text-slate-300', 'hover:bg-slate-800');
+                    link.classList.add('bg-emerald-500/10', 'text-emerald-400', 'font-medium');
+                }
+            });
+
+            const cachedUser = localStorage.getItem('discord_user') || localStorage.getItem('workforce_user');
+            if (!cachedUser) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                const localData = JSON.parse(cachedUser);
+                if (!localData || (!localData.discord_id && !localData.id)) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                let queryId = localData.discord_id || localData.id;
+                let { data: dbUser } = await supabaseClient
+                    .from('users')
+                    .select('*')
+                    .eq('discord_id', queryId)
+                    .maybeSingle();
+
+                let activeUser = dbUser || localData;
+
+                const displayName = activeUser.display_name || activeUser.username || activeUser.name || 'Mecanic';
+                const role = activeUser.role || activeUser.default_role || 'Mecanic';
+                const userAvatar = activeUser.avatar || activeUser.avatar_url || 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f468-200d-1f4bb.png';
+
+                document.getElementById('user-display-name').textContent = displayName;
+                document.getElementById('user-role').textContent = role;
+                document.getElementById('user-avatar').src = userAvatar;
+
+                const roleLower = role.toLowerCase();
+                const isPrivileged = roleLower.includes('sef') || roleLower.includes('șef') || roleLower.includes('manager') || roleLower.includes('admin') || roleLower.includes('owner');
+
+                if (isPrivileged) {
+                    const navLogs = document.getElementById('nav-logs');
+                    if (navLogs) navLogs.classList.remove('hidden');
+                }
+
+                localStorage.setItem('discord_user', JSON.stringify(activeUser));
+
+                await fetchUsersData();
+                fetchAllShifts();
+                initAutoSundayReportChecker();
+
+            } catch (err) {
+                console.error('Erore sesiune:', err);
+                window.location.href = 'login.html';
+                return;
+            }
+        });
+
+        function logout() {
+            localStorage.removeItem('discord_user');
+            localStorage.removeItem('workforce_user');
+            window.location.href = 'login.html';
+        }
+
+        async function fetchUsersData() {
+            try {
+                let { data: usersData } = await supabaseClient.from('users').select('discord_id, display_name, username');
+                if (usersData) {
+                    usersData.forEach(u => {
+                        if (u.discord_id) usersMap[u.discord_id] = u.display_name || u.username;
+                    });
+                }
+            } catch (e) {}
+
+            try {
+                let { data: profilesData } = await supabaseClient.from('profiles').select('discord_id, display_name, username');
+                if (profilesData) {
+                    profilesData.forEach(u => {
+                        if (u.discord_id) usersMap[u.discord_id] = u.display_name || u.username;
+                    });
+                }
+            } catch (e) {}
+        }
+
+        async function fetchAllShifts() {
+            try {
+                let { data, error } = await supabaseClient
+                    .from('shifts')
+                    .select('id, discord_id, date, start_time, end_time, duration, created_at, shift_type, duration_ms')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                allShiftsData = (data || []).map(shift => {
+                    const resolvedName = usersMap[shift.discord_id] || shift.discord_id || 'Mecanic Necunoscut';
+                    return {
+                        ...shift,
+                        mechanic_name: resolvedName
+                    };
+                });
+
+                applyFilters();
+            } catch (err) {
+                console.error('Erore preluare rapoarte:', err);
+                document.getElementById('reports-table-body').innerHTML = `<tr><td colspan="5" class="p-6 text-center text-rose-400">Erore la încărcarea datelor din baza de date.</td></tr>`;
+            }
+        }
+
+        function applyFilters() {
+            const period = document.getElementById('filter-period').value;
+            const shiftType = document.getElementById('filter-shift-type').value;
+            const mechanicQuery = document.getElementById('filter-mechanic').value.toLowerCase().trim();
+
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0];
+
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(now.getDate() - 7);
+
+            filteredShiftsData = allShiftsData.filter(shift => {
+                const nameVal = (shift.mechanic_name || '').toLowerCase();
+                const discordIdVal = (shift.discord_id || '').toLowerCase();
+                const matchesMechanic = mechanicQuery === '' || nameVal.includes(mechanicQuery) || discordIdVal.includes(mechanicQuery);
+
+                if (!matchesMechanic) return false;
+
+                if (shiftType !== 'all') {
+                    const currentType = (shift.shift_type || '').toLowerCase();
+                    if (currentType !== shiftType) return false;
+                }
+
+                if (period === 'today') {
+                    return shift.date === todayStr;
+                } else if (period === 'last7days') {
+                    const shiftDate = new Date(shift.date);
+                    return shiftDate >= sevenDaysAgo && shiftDate <= now;
+                }
+
+                return true;
+            });
+
+            renderTableAndStats();
+            renderRankings();
+        }
+
+        function resetFilters() {
+            document.getElementById('filter-period').value = 'all';
+            document.getElementById('filter-shift-type').value = 'all';
+            document.getElementById('filter-mechanic').value = '';
+            applyFilters();
+        }
+
+        function renderTableAndStats() {
+            const tbody = document.getElementById('reports-table-body');
+            const badge = document.getElementById('table-count-badge');
+
+            badge.textContent = `${filteredShiftsData.length} rânduri`;
+
+            if (filteredShiftsData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-500">Nicio tură găsită cu filtrele selectate.</td></tr>`;
+            } else {
+                let html = '';
+                filteredShiftsData.forEach(shift => {
+                    const typeLower = (shift.shift_type || '').toLowerCase();
+                    let typeBadge = '';
+                    if (typeLower === 'zi') {
+                        typeBadge = `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-md font-medium">☀️ Zi</span>`;
+                    } else if (typeLower === 'noapte') {
+                        typeBadge = `<span class="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-md font-medium">🌙 Noapte</span>`;
+                    } else {
+                        typeBadge = `<span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md">${shift.shift_type || 'N/A'}</span>`;
+                    }
+
+                    html += `
+                        <tr class="hover:bg-slate-800/40 transition">
+                            <td class="p-2.5 font-semibold text-emerald-400 truncate max-w-[130px]" title="${shift.mechanic_name}">
+                                <div>${shift.mechanic_name}</div>
+                                <div class="text-[9px] text-slate-500 font-mono">ID: ${shift.discord_id || 'N/A'}</div>
+                            </td>
+                            <td class="p-2.5">${typeBadge}</td>
+                            <td class="p-2.5 text-slate-300">${shift.date || 'N/A'}</td>
+                            <td class="p-2.5 font-mono text-slate-400 text-[10px]">${shift.start_time || '00:00'} - ${shift.end_time || '00:00'}</td>
+                            <td class="p-2.5 text-right font-semibold text-emerald-400">${shift.duration || '00:00:00'}</td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+            }
+
+            let totalMs = filteredShiftsData.reduce((acc, curr) => acc + (Number(curr.duration_ms) || 0), 0);
+            let uniqueMechanics = new Set(filteredShiftsData.map(s => s.discord_id));
+
+            document.getElementById('stat-total-shifts').textContent = filteredShiftsData.length;
+            document.getElementById('stat-total-hours').textContent = `${(totalMs / 3600000).toFixed(2)}h`;
+            document.getElementById('stat-total-mechanics').textContent = uniqueMechanics.size;
+        }
+
+        function renderRankings() {
+            const dayContainer = document.getElementById('ranking-day-container');
+            const nightContainer = document.getElementById('ranking-night-container');
+
+            let dayStats = {};
+            let nightStats = {};
+
+            filteredShiftsData.forEach(shift => {
+                const type = (shift.shift_type || '').toLowerCase();
+                const name = shift.mechanic_name || 'Necunoscut';
+                const ms = Number(shift.duration_ms) || 0;
+
+                if (type === 'zi') {
+                    dayStats[name] = (dayStats[name] || 0) + ms;
+                } else if (type === 'noapte') {
+                    nightStats[name] = (nightStats[name] || 0) + ms;
+                }
+            });
+
+            let sortedDay = Object.entries(dayStats).sort((a, b) => b[1] - a[1]);
+            let sortedNight = Object.entries(nightStats).sort((a, b) => b[1] - a[1]);
+
+            if (sortedDay.length === 0) {
+                dayContainer.innerHTML = `<p class="text-center text-slate-500 py-3">Nu există ture de zi înregistrate.</p>`;
+            } else {
+                let html = '';
+                sortedDay.forEach(([name, ms], index) => {
+                    let hours = (ms / 3600000).toFixed(2);
+                    let medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
+                    html += `
+                        <div class="flex items-center justify-between bg-slate-950/40 border border-slate-800/60 p-2.5 rounded-xl">
+                            <div class="flex items-center space-x-2 truncate">
+                                <span class="font-bold text-amber-400 w-5 text-center">${medal}</span>
+                                <span class="font-medium text-emerald-400 truncate">${name}</span>
+                            </div>
+                            <span class="font-bold text-emerald-400 text-xs">${hours}h</span>
+                        </div>
+                    `;
+                });
+                dayContainer.innerHTML = html;
+            }
+
+            if (sortedNight.length === 0) {
+                nightContainer.innerHTML = `<p class="text-center text-slate-500 py-3">Nu există ture de noapte înregistrate.</p>`;
+            } else {
+                let html = '';
+                sortedNight.forEach(([name, ms], index) => {
+                    let hours = (ms / 3600000).toFixed(2);
+                    let medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
+                    html += `
+                        <div class="flex items-center justify-between bg-slate-950/40 border border-slate-800/60 p-2.5 rounded-xl">
+                            <div class="flex items-center space-x-2 truncate">
+                                <span class="font-bold text-indigo-400 w-5 text-center">${medal}</span>
+                                <span class="font-medium text-emerald-400 truncate">${name}</span>
+                            </div>
+                            <span class="font-bold text-emerald-400 text-xs">${hours}h</span>
+                        </div>
+                    `;
+                });
+                nightContainer.innerHTML = html;
+            }
+        }
+
+        function exportToCSV() {
+            if (filteredShiftsData.length === 0) {
+                alert('Nu există date de exportat!');
+                return;
+            }
+
+            let csvContent = "ID Tura,Discord ID,Nume Mecanic,Data,Tip Tura,Ora Start,Ora Stop,Durata,Durata MS,Creat la\n";
+
+            filteredShiftsData.forEach(shift => {
+                const row = [
+                    `"${shift.id || ''}"`,
+                    `"${shift.discord_id || ''}"`,
+                    `"${shift.mechanic_name || ''}"`,
+                    `"${shift.date || ''}"`,
+                    `"${shift.shift_type || ''}"`,
+                    `"${shift.start_time || ''}"`,
+                    `"${shift.end_time || ''}"`,
+                    `"${shift.duration || ''}"`,
+                    `"${shift.duration_ms || 0}"`,
+                    `"${shift.created_at || ''}"`
+                ];
+                csvContent += row.join(",") + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `rapoarte_ture_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        async function sendManualReport() {
+            if (filteredShiftsData.length === 0) {
+                alert('Nu există date filtrate pentru a trimite raportul!');
+                return;
+            }
+
+            const success = await sendReportToDiscordWebhook(filteredShiftsData, "📊 Raport General Ture (Solicitat Manual)");
+            if (success) {
+                alert('Raportul a fost trimis cu succes pe Discord prin Webhook!');
+            } else {
+                alert('A apărut o eroare la trimiterea raportului pe Discord.');
+            }
+        }
+
+        async function sendReportToDiscordWebhook(dataList, titleHeader) {
+            let totalMs = dataList.reduce((acc, curr) => acc + (Number(curr.duration_ms) || 0), 0);
+            let totalHours = (totalMs / 3600000).toFixed(2);
+            let uniqueMechanics = new Set(dataList.map(s => s.discord_id)).size;
+
+            let sampleRows = dataList.slice(0, 10).map(s => `• **${s.mechanic_name}** (${(s.shift_type || 'std').toUpperCase()}) - ${s.date} [**${s.duration}**]`).join('\n');
+            
+            if (dataList.length > 10) {
+                sampleRows += `\n...și încă ${dataList.length - 10} înregistrări.`;
+            }
+
+            const payload = {
+                embeds: [{
+                    title: titleHeader,
+                    color: 3447003,
+                    fields: [
+                        { name: "📈 Total Ture", value: `${dataList.length}`, inline: true },
+                        { name: "⏱️ Total Ore Lucrate", value: `**${totalHours}h**`, inline: true },
+                        { name: "👥 Mecanici Contorizați", value: `${uniqueMechanics}`, inline: true },
+                        { name: "📋 Ultimele Ture din Raport", value: sampleRows || "Nicio tură", inline: false }
+                    ],
+                    timestamp: new Date().toISOString()
+                }]
+            };
+
+            try {
+                let response = await fetch(WEBHOOK_LOGS, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                return response.ok;
+            } catch (err) {
+                console.error('Erore webhook raport:', err);
+                return false;
+            }
+        }
+
+        function initAutoSundayReportChecker() {
+            setInterval(() => {
+                const now = new Date();
+                const options = { timeZone: 'Europe/Bucharest', weekday: 'short', hour: 'numeric', minute: 'numeric', hour12: false };
+                const formatter = new Intl.DateTimeFormat('en-US', options);
+                const parts = formatter.formatToParts(now);
+                
+                let weekday = '';
+                let hour = 0;
+                let minute = 0;
+
+                parts.forEach(p => {
+                    if (p.type === 'weekday') weekday = p.value;
+                    if (p.type === 'hour') hour = parseInt(p.value, 10);
+                    if (p.type === 'minute') minute = parseInt(p.value, 10);
+                });
+
+                const todayDateStr = now.toLocaleDateString('ro-RO', { timeZone: 'Europe/Bucharest' });
+                const lastSentDate = localStorage.getItem('last_auto_report_date');
+
+                if (weekday === 'Sun' && hour === 19 && minute === 0 && lastSentDate !== todayDateStr) {
+                    triggerAutomaticSundayReport(todayDateStr);
+                }
+            }, 60000);
+        }
+
+        async function triggerAutomaticSundayReport(todayDateStr) {
+            if (allShiftsData.length === 0) return;
+
+            const success = await sendReportToDiscordWebhook(allShiftsData, "🔔 Raport Săptămânal Automat (Duminică - 19:00)");
+            if (success) {
+                localStorage.setItem('last_auto_report_date', todayDateStr);
+            }
+        }
+    </script>
+</body>
+</html>
