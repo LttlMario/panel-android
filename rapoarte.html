@@ -687,7 +687,7 @@
                 if (readError || !shift) throw readError || new Error('Pontaj negăsit');
                 const start = new Date(`${shift.date}T${shift.start_time || '00:00:00'}`);
                 const seconds = Math.max(0, Math.floor((Date.now() - start.getTime()) / 1000));
-                const { error } = await supabaseClient.from('shifts').update({ end_time: getRomanianTime(), duration: formatTime(seconds), duration_ms: seconds * 1000 }).eq('id', shiftId);
+                const { error } = await supabaseClient.from('shifts').update({ status: 'completed', ended_at: new Date().toISOString(), stop_reason: 'Încheiere de către manager', end_time: getRomanianTime(), duration: formatTime(seconds), duration_ms: seconds * 1000 }).eq('id', shiftId);
                 if (error) throw error;
                 alert('Pontajul a fost oprit.'); fetchActiveShifts(); fetchAllShifts();
             } catch (err) { console.error('Eroare la oprirea pontajului:', err); alert('Pontajul nu a putut fi oprit.'); }
