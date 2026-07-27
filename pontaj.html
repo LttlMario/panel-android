@@ -398,7 +398,7 @@
             }
         }
 
-        async function stopShift() {
+        async function legacyStopShift() {
             clearInterval(timerInterval);
             secondsElapsed = getElapsedSeconds();
             const shiftEndTime = new Date();
@@ -496,7 +496,7 @@
             }
         }
 
-        function resetTimerState() {
+        function legacyResetTimerState() {
             clearInterval(timerInterval);
             localStorage.removeItem(ACTIVE_SHIFT_STORAGE_KEY);
             secondsElapsed = 0;
@@ -519,7 +519,7 @@
             document.getElementById('btn-shift-night').className = 'px-5 py-2.5 rounded-xl text-xs font-semibold border transition cursor-pointer bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700';
         }
 
-        function updateTimerDisplay() {
+        function legacyUpdateTimerDisplay() {
             document.getElementById('timer-display').textContent = formatTime(getElapsedSeconds());
         }
 
@@ -528,7 +528,7 @@
             return secondsElapsed + Math.max(0, Math.floor((Date.now() - runningSince.getTime()) / 1000));
         }
 
-        function startTimer() {
+        function legacyStartTimer() {
             clearInterval(timerInterval);
             updateTimerDisplay();
             timerInterval = setInterval(updateTimerDisplay, 1000);
@@ -569,7 +569,7 @@
             }
         }
 
-        async function restoreActiveShift() {
+        async function legacyRestoreActiveShift() {
             let savedShift;
             try {
                 savedShift = JSON.parse(localStorage.getItem(ACTIVE_SHIFT_STORAGE_KEY));
@@ -813,7 +813,7 @@
             }
         }
 
-        async function startShift() {
+        async function legacyStartShift() {
             if (isActionProcessing || !selectedShiftType) { if (!selectedShiftType) alert('Te rog selectează mai întâi o tură validă!'); return; }
             isActionProcessing = true;
             try {
@@ -837,7 +837,7 @@
             finally { isActionProcessing = false; }
         }
 
-        async function pauseShift() {
+        async function legacyPauseShift() {
             if (isActionProcessing || !activeShiftRecord) return;
             isActionProcessing = true;
             try {
@@ -884,7 +884,7 @@
             document.getElementById('btn-start').disabled = false; document.getElementById('btn-pause').disabled = true; document.getElementById('btn-stop').disabled = true; document.getElementById('pause-btn-text').textContent = 'Pauză'; selectedShiftType = null; resetUIPlaceholder();
         }
 
-        async function sendStopShiftDiscordWebhook(data) {
+        async function legacySendStopShiftDiscordWebhook(data) {
             const payload = { embeds: [{ title: `⏹️ Pontaj Încheiat - Tură de ${data.shift_type.toUpperCase()}`, color: data.shift_type === 'zi' ? 16766720 : 65535, fields: [
                 { name: '👤 Mecanic', value: data.colleague_name, inline: true }, { name: '📅 Data', value: data.date, inline: true },
                 { name: '⏰ Interval', value: `${data.start_time} - ${data.end_time}`, inline: false }, { name: '⏳ Timp Total Lucrat', value: `**${data.duration}**`, inline: true },

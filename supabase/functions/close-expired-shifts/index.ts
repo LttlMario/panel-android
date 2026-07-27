@@ -1,0 +1,77 @@
+import { createClient } from 'jsr:@supabase/supabase-js@2';
+
+const corsHeaders = { 'Content-Type': 'application/json' };
+
+function getSecretKey() {
+  const legacyKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (legacyKey) return legacyKey;
+  const keys = JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS') ?? '{}');
+  return keys.default;
+}
+
+function romanianTime(date = new Date()) {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Bucharest', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+  }).formatToParts(date).filter((part) => part.type !== 'literal').map((part) => [part.type, part.value]));
+  return `${parts.hour}:${parts.minute}:${parts.second}`;
+}
+
+function formatDuration(seconds: number) {
+  const hours = Math.floor(seconds / 3600).toString().padStart(2, '0');
+  const minutes = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+  const secs = (seconds % 60).toString().padStart(2, '0');
+  return `${hours}:${minutes}:${secs}`;
+}
+
+function workedSeconds(shift: Record<string, unknown>, now: Date) {
+  const started = new Date(String(shift.started_at)).getTime();
+  let paused = Number(shift.paused_seconds) || 0;
+  if (shift.status === 'paused' && shift.paused_at) {
+    paused += Math.max(0, Math.floor((now.getTime() - new Date(String(shift.paused_at)).getTime()) / 1000));
+  }
+  return Math.max(0, Math.floor((now.getTime() - started) / 1000) - paused);
+}
+
+Deno.serve(async (request) => {
+  const cronSecret = Deno.env.get('CRON_SECRET');
+  if (cronSecret && request.headers.get('x-cron-secret') !== cronSecret) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
+  }
+
+  const supabase = createClient(Deno.env.get('SUPABASE_URL')!, getSecretKey());
+  const now = new Date();
+  const { data: expired, error } = await supabase.from('shifts').select('*')
+    .in('status', ['active', 'paused']).lte('auto_stop_at', now.toISOString());
+
+  if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders });
+
+  const webhookUrl = Deno.env.get('DISCORD_PONTAJ_WEBHOOK_URL');
+  const results = await Promise.all((expired ?? []).map(async (shift) => {
+    const seconds = workedSeconds(shift, now);
+    const reason = 'Încheiere automată – program maxim atins';
+    const { data: updated, error: updateError } = await supabase.from('shifts').update({
+      status: 'auto_completed', ended_at: now.toISOString(), end_time: romanianTime(now),
+      duration: formatDuration(seconds), duration_ms: seconds * 1000, stop_reason: reason,
+    }).eq('id', shift.id).in('status', ['active', 'paused']).select('*');
+
+    if (updateError || !updated?.length) return { id: shift.id, closed: false };
+
+    if (webhookUrl) {
+      await fetch(webhookUrl, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ embeds: [{
+          title: `⏹️ Pontaj Încheiat - Tură de ${String(shift.shift_type).toUpperCase()}`,
+          color: shift.shift_type === 'zi' ? 16766720 : 65535,
+          fields: [
+            { name: '👤 Mecanic', value: String(shift.discord_id || 'Necunoscut'), inline: true },
+            { name: '📅 Data', value: String(shift.date || ''), inline: true },
+            { name: '⏳ Timp Total Lucrat', value: `**${formatDuration(seconds)}**`, inline: true },
+            { name: '📝 Motiv', value: reason, inline: false },
+          ], timestamp: now.toISOString(),
+        }] }),
+      });
+    }
+    return { id: shift.id, closed: true };
+  }));
+
+  return new Response(JSON.stringify({ closed: results.filter((item) => item.closed).length }), { headers: corsHeaders });
+});
