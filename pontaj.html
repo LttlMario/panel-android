@@ -191,7 +191,7 @@
         </main>
     </div>
 
-    <!-- Scriptul logic sincronizat cu index.html -->
+    <!-- Scriptul logic actualizat cu sistem anti-spam (fără modificarea regulilor existente) -->
     <script>
         const SUPABASE_URL = "https://vkvsabbbawyiurnaiugo.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdnNhYmJiYXd5aXVybmFpdWdvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NTA0Njk1NiwiZXhwIjoyMTAwNjIyOTU2fQ.1D67DT0lul6bgcRSmbr5-JEHZmErTNvCXB4Up1g3zWw";
@@ -210,6 +210,9 @@
         let secondsElapsed = 0;
         let isPaused = false;
         let shiftStartTime = null;
+        
+        // --- ADĂUGAT: Flag anti-spam pentru a preveni dublu-click-ul / trimiterea multiplă ---
+        let isActionProcessing = false;
 
         document.addEventListener('DOMContentLoaded', async () => {
             // 1. Evidențiere automată a paginii active în meniu
@@ -285,6 +288,9 @@
         });
 
         function selectShiftType(type) {
+            // Protecție anti-spam pe selectarea tipului de tură
+            if (isActionProcessing) return;
+
             const now = new Date();
             const hours = now.getHours();
             const minutes = now.getMinutes();
@@ -327,16 +333,21 @@
         }
 
         async function startShift() {
+            // Verificare anti-spam
+            if (isActionProcessing) return;
+
             if (!selectedShiftType) {
                 alert('Te rog selectează mai întâi o tură validă!');
                 return;
             }
 
+            isActionProcessing = true;
+            document.getElementById('btn-start').disabled = true;
+
             shiftStartTime = new Date();
             secondsElapsed = 0;
             isPaused = false;
 
-            document.getElementById('btn-start').disabled = true;
             document.getElementById('btn-pause').disabled = false;
             document.getElementById('btn-stop').disabled = false;
             document.getElementById('current-shift-status').textContent = `Tura de ${selectedShiftType.toUpperCase()} este activă...`;
@@ -349,9 +360,17 @@
             }, 1000);
 
             await sendGeneralDiscordWebhook("▶️ Pontaj Start", `Mecanicul **${currentUser.display_name}** a pornit tura de **${selectedShiftType.toUpperCase()}**.`, 3066993);
+            
+            // Deblocare anti-spam cu un mic delay de siguranță (2 secunde)
+            setTimeout(() => {
+                isActionProcessing = false;
+            }, 2000);
         }
 
         async function pauseShift() {
+            if (isActionProcessing) return;
+            isActionProcessing = true;
+
             isPaused = !isPaused;
             const pauseText = document.getElementById('pause-btn-text');
             if (isPaused) {
@@ -363,9 +382,20 @@
                 document.getElementById('current-shift-status').textContent = `Tura de ${selectedShiftType.toUpperCase()} este activă...`;
                 await sendGeneralDiscordWebhook("▶️ Pontaj Reluat", `Mecanicul **${currentUser.display_name}** a reluat tura de **${selectedShiftType.toUpperCase()}**.`, 3066993);
             }
+
+            setTimeout(() => {
+                isActionProcessing = false;
+            }, 1000);
         }
 
         async function stopShift() {
+            if (isActionProcessing) return;
+            isActionProcessing = true;
+
+            // Dezactivăm imediat butoanele pentru a preveni spam-ul de click-uri pe Stop
+            document.getElementById('btn-stop').disabled = true;
+            document.getElementById('btn-pause').disabled = true;
+
             clearInterval(timerInterval);
             const shiftEndTime = new Date();
             const durationMs = secondsElapsed * 1000;
@@ -400,6 +430,10 @@
 
             resetTimerState();
             fetchShiftsHistory();
+
+            setTimeout(() => {
+                isActionProcessing = false;
+            }, 2000);
         }
 
         async function sendGeneralDiscordWebhook(title, description, color) {
