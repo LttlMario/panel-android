@@ -53,7 +53,8 @@ function getRole() {
 
     const role = roleValue.toLocaleLowerCase('ro-RO');
     if (role.includes('lider') || role.includes('admin') || role.includes('owner')) return Roles.ADMIN;
-    if (role.includes('coordonator') || role.includes('manager')) return Roles.MANAGER;
+    if (role.includes('coordonator')) return Roles.COORDONATOR;
+    if (role.includes('manager')) return Roles.MANAGER;
     if (role.includes('familia')) return Roles.LA_FAMILIA;
     if (role.includes('sef') || role.includes('șef')) return Roles.SEF_MECANIC;
     return Roles.MECANIC;
