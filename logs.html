@@ -57,10 +57,11 @@
         document.addEventListener('DOMContentLoaded', async () => {
             const user = getUser();
             if (!user) return;
-            const role = String(user.role || user.default_role || '').toLowerCase();
-            if (!(role.includes('admin') || role.includes('owner'))) { window.location.href='403.html'; return; }
+            if (typeof getRole !== 'function' || getRole() < 5) { window.location.replace('403.html'); return; }
             const {data: dbUser} = await supabaseClient.from('users').select('*').eq('discord_id', user.discord_id || user.id).maybeSingle();
             const activeUser = dbUser || user;
+            const activeRoleLevel = typeof getRoleFromUser === 'function' ? getRoleFromUser(activeUser) : getRole();
+            if (activeRoleLevel < 5) { window.location.replace('403.html'); return; }
             document.getElementById('user-display-name').textContent = activeUser.display_name || activeUser.username || 'Manager';
             document.getElementById('user-role').textContent = activeUser.role || activeUser.default_role || 'Manager';
             document.getElementById('user-avatar').src = activeUser.avatar || activeUser.avatar_url || 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f468-200d-1f4bb.png';
