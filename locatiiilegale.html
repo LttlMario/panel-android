@@ -1779,12 +1779,16 @@
                 .replace(/[\u0300-\u036f]/g, '')
                 .toLowerCase();
 
+            const isTortureRoom = loc.id === 'camera-tortura'
+                || searchableText.includes('camera de tortura');
+            if (isTortureRoom) return null;
+
             const isMushrooms = loc.category === 'mushrooms'
                 || /(ciuperc|mushroom|psilocybe|amanita|oyster)/.test(searchableText);
             const isWeapons = loc.category === 'weapons'
                 || /(craftare arme|componente? arma|armament|armurier|weapon|muniti|glont|gloant|pistol|pusca|rifle|smg)/.test(searchableText);
             const isCocaine = /(coca|cocain|acetona)/.test(searchableText);
-            const isCannabis = /(canabin|cannabis|marijuana|joint)/.test(searchableText);
+            const isCannabis = /(canabin|canabis|cannabis|marijuana|joint)/.test(searchableText);
 
             if (isMushrooms) {
                 return {
