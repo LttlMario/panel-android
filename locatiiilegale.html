@@ -1083,7 +1083,7 @@
                     <div class="recipe-action-wrapper" id="sb-recipe-wrapper">
                         <div class="recipe-action-title" id="sb-recipe-custom-title">Centru de Rețete & Calculatoare</div>
                         <div class="recipe-action-desc" id="sb-recipe-custom-desc">Verifică resursele și necesarul exact.</div>
-                        <a href="calculatorilegal.html" class="recipe-action-btn">
+                        <a href="calculatorilegal.html" class="recipe-action-btn" id="sb-recipe-link">
                             <span>⚙️</span>
                             <span id="sb-recipe-text">Deschide Calculator Ilegal</span>
                             <span>→</span>
@@ -1763,6 +1763,68 @@
             showToast('Date exportate!');
         }
 
+        function getCalculatorContext(loc) {
+            const searchableText = [
+                loc.id,
+                loc.category,
+                loc.title,
+                loc.description,
+                loc.notes,
+                loc.requirements,
+                loc.rewards
+            ]
+                .filter(Boolean)
+                .join(' ')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase();
+
+            const isMushrooms = loc.category === 'mushrooms'
+                || /(ciuperc|mushroom|psilocybe|amanita|oyster)/.test(searchableText);
+            const isWeapons = loc.category === 'weapons'
+                || /(craftare arme|componente? arma|armament|armurier|weapon|muniti|glont|gloant|pistol|pusca|rifle|smg)/.test(searchableText);
+            const isCocaine = /(coca|cocain|acetona)/.test(searchableText);
+            const isCannabis = /(canabin|cannabis|marijuana|joint)/.test(searchableText);
+
+            if (isMushrooms) {
+                return {
+                    href: 'calculatorilegal.html#cat-mushrooms',
+                    title: 'Calculator pentru Ciuperci',
+                    description: 'Calculează ingredientele și cantitățile necesare pentru ciuperci.',
+                    buttonText: 'Deschide Calculatorul de Ciuperci'
+                };
+            }
+
+            if (isWeapons) {
+                return {
+                    href: 'calculatorilegal.html#cat-weapons',
+                    title: 'Calculator pentru Arme',
+                    description: 'Calculează piesele și materialele necesare pentru arme.',
+                    buttonText: 'Deschide Calculatorul de Arme'
+                };
+            }
+
+            if (isCocaine) {
+                return {
+                    href: 'calculatorilegal.html#cat-plicuri',
+                    title: 'Calculator pentru Cocaină',
+                    description: 'Calculează resursele necesare pentru producția de cocaină.',
+                    buttonText: 'Deschide Calculatorul de Cocaină'
+                };
+            }
+
+            if (isCannabis) {
+                return {
+                    href: 'calculatorilegal.html#cat-weed',
+                    title: 'Calculator pentru Canabis',
+                    description: 'Calculează resursele necesare pentru procesarea canabisului.',
+                    buttonText: 'Deschide Calculatorul de Canabis'
+                };
+            }
+
+            return null;
+        }
+
         function selectLocation(id, zoomTo = true) {
             const loc = DATA.find(item => item.id === id);
             if (!loc) return;
@@ -1813,11 +1875,13 @@
             if (isAdminLoggedIn) document.getElementById('sb-edit-panel-btn').style.display = 'flex';
 
             const recipeWrapper = document.getElementById('sb-recipe-wrapper');
-            const isCocaina = loc.id === "procesare-cocaina" || (loc.title && loc.title.toLowerCase().includes("cocaină"));
-            const isCanabin = loc.id === "procesare-marijuana" || (loc.title && loc.title.toLowerCase().includes("canabin"));
-            const isArme = loc.id === "craftare-arme" || (loc.title && loc.title.toLowerCase().includes("arme"));
+            const calculatorContext = getCalculatorContext(loc);
 
-            if (isCocaina || isCanabin || isArme) {
+            if (calculatorContext) {
+                document.getElementById('sb-recipe-custom-title').textContent = calculatorContext.title;
+                document.getElementById('sb-recipe-custom-desc').textContent = calculatorContext.description;
+                document.getElementById('sb-recipe-text').textContent = calculatorContext.buttonText;
+                document.getElementById('sb-recipe-link').href = calculatorContext.href;
                 recipeWrapper.classList.add('active');
             } else {
                 recipeWrapper.classList.remove('active');
