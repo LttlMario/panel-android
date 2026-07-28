@@ -9,6 +9,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/permissions.js"></script>
     <script src="js/panel-layout.js"></script>
+    <link rel="stylesheet" href="css/global-footer.css">
+    <script src="js/project-version.js"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen text-sm">
     <div class="flex min-h-screen w-full">
@@ -93,5 +95,6 @@
             document.getElementById('logs-list').innerHTML=filtered.length?filtered.map(item=>`<article class="p-4 md:px-5 flex gap-4 hover:bg-slate-800/30"><span class="w-9 h-9 flex-none grid place-items-center rounded-xl border ${colors[item.type]}">${icons[item.type]}</span><div class="min-w-0 flex-1"><div class="flex flex-col sm:flex-row sm:justify-between gap-1"><p class="font-semibold text-slate-100">${escapeHtml(item.title)}</p><time class="text-[11px] text-slate-500 whitespace-nowrap">${dateText(item.at)}</time></div><p class="text-xs text-emerald-400 mt-1">${escapeHtml(item.person)}</p><p class="text-xs text-slate-400 mt-1 break-words">${escapeHtml(item.detail)}</p></div></article>`).join(''):'<p class="p-8 text-center text-slate-500">Nu există loguri pentru filtrele alese.</p>';
         }
     </script>
+    <script src="js/global-footer.js"></script>
 </body>
 </html>
