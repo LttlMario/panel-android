@@ -433,8 +433,8 @@
                 document.getElementById('user-avatar').src = userAvatar;
 
                 const roleLower = currentUser.role.toLowerCase();
-                canManagePontaj = roleLower.includes('manager') || roleLower.includes('admin') || roleLower.includes('owner');
-                const isPrivileged = roleLower.includes('sef') || roleLower.includes('șef') || roleLower.includes('manager') || roleLower.includes('admin') || roleLower.includes('owner');
+                canManagePontaj = roleLower.includes('coordonator') || roleLower.includes('manager') || roleLower.includes('lider') || roleLower.includes('admin') || roleLower.includes('owner');
+                const isPrivileged = roleLower.includes('sef') || roleLower.includes('șef') || roleLower.includes('coordonator') || roleLower.includes('manager') || roleLower.includes('lider') || roleLower.includes('admin') || roleLower.includes('owner');
 
                 if (isPrivileged) {
                     const navLogs = document.getElementById('nav-logs');

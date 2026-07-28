@@ -54,14 +54,14 @@
     <!-- Script de Autentificare și Sincronizare Supabase -->
     <script>
         const SUPABASE_URL = "https://vkvsabbbawyiurnaiugo.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdnNhYmJiYXd5aXVybmFpdWdvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NTA0Njk1NiwiZXhwIjoyMTAwNjIyOTU2fQ.1D67DT0lul6bgcRSmbr5-JEHZmErTNvCXB4Up1g3zWw";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdnNhYmJiYXd5aXVybmFpdWdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwNDY5NTYsImV4cCI6MjEwMDYyMjk1Nn0.s2R8mdsoeQzOyz7a-NJOi5SQmyDmyy98cfUMfGqLo44";
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const CLIENT_ID = "1531023771211792384"; 
         const REDIRECT_URI = window.location.origin + window.location.pathname;
 
         document.getElementById('discord-login-btn').addEventListener('click', () => {
-            const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=identify%20email`;
+            const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=identify%20email%20guilds.members.read`;
             window.location.href = discordAuthUrl;
         });
 
@@ -106,7 +106,32 @@
                 const discordData = await response.json();
                 const discordId = discordData.id;
 
-                document.getElementById('status-msg').textContent = "Se verifică profilul în baza de date...";
+                document.getElementById('status-msg').textContent = "Se verifică rolul tău pe serverul Discord...";
+
+                const syncResponse = await fetch(`${SUPABASE_URL}/functions/v1/sync-discord-role`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        apikey: SUPABASE_KEY,
+                        authorization: `Bearer ${SUPABASE_KEY}`
+                    },
+                    body: JSON.stringify({ access_token: token })
+                });
+                const syncResult = await syncResponse.json();
+                if (!syncResponse.ok || !syncResult.user) {
+                    throw new Error(syncResult.error || 'Rolul Discord nu a putut fi verificat.');
+                }
+
+                const syncedUser = syncResult.user;
+                localStorage.setItem('discord_user', JSON.stringify(syncedUser));
+                localStorage.setItem('user_role', syncedUser.role);
+                localStorage.setItem('discord_access_token', token);
+
+                document.getElementById('status-msg').textContent = `Autentificare reușită! Rol sincronizat: ${syncedUser.role}.`;
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 400);
+                return;
 
                 // Căutare în tabelul `users` după discord_id
                 let { data: dbUser, error } = await supabaseClient

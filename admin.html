@@ -53,6 +53,10 @@
                         <span>📈</span>
                         <span>Rapoarte</span>
                     </a>
+                    <a href="logs.html" data-role="5" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
+                        <span>🧾</span>
+                        <span>Loguri</span>
+                    </a>
                     <a href="contracte.html" data-role="4" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
                         <span>📜</span>
                         <span>Contracte</span>
@@ -144,11 +148,13 @@
                         <div>
                             <select id="filter-role" onchange="renderUsersTable()" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-500 cursor-pointer">
                                 <option value="">Toate Rolurile</option>
-                                <option value="mecanic">Mecanic</option>
-                                <option value="sef mecanic">Sef Mecanic</option>
+                                <option value="el mecanico">El Mecanico</option>
+                                <option value="sef mecanic">Șef Mecanic</option>
+                                <option value="familia">La Familia</option>
+                                <option value="coordonator">Coordonator</option>
                                 <option value="manager">Manager</option>
-                                <option value="familia">Familia</option>
-                                <option value="admin">Admin</option>
+                                <option value="colider">CoLider</option>
+                                <option value="lider">Lider</option>
                             </select>
                         </div>
                         <div>
@@ -309,7 +315,7 @@
     <!-- Scriptul Logicii & Setări Pagină -->
     <script>
         const SUPABASE_URL = "https://vkvsabbbawyiurnaiugo.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdnNhYmJiYXd5aXVybmFpdWdvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NTA0Njk1NiwiZXhwIjoyMTAwNjIyOTU2fQ.1D67DT0lul6bgcRSmbr5-JEHZmErTNvCXB4Up1g3zWw";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFub24iLCJpYXQiOjE3ODUwNDY5NTYsImV4cCI6MjEwMDYyMjk1Nn0.s2R8mdsoeQzOyz7a-NJOi5SQmyDmyy98cfUMfGqLo44";
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let allUsersData = [];
@@ -451,11 +457,13 @@
                         </td>
                         <td class="p-4">
                             <select id="role-select-${uId}" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer">
-                                <option value="mecanic" ${currentRole === 'mecanic' ? 'selected' : ''}>Mecanic</option>
-                                <option value="sef mecanic" ${currentRole === 'sef mecanic' ? 'selected' : ''}>Sef Mecanic</option>
+                                <option value="el mecanico" ${currentRole === 'el mecanico' || currentRole === 'mecanic' ? 'selected' : ''}>El Mecanico</option>
+                                <option value="sef mecanic" ${currentRole === 'sef mecanic' ? 'selected' : ''}>Șef Mecanic</option>
+                                <option value="familia" ${currentRole === 'familia' || currentRole === 'la familia' ? 'selected' : ''}>La Familia</option>
+                                <option value="coordonator" ${currentRole === 'coordonator' ? 'selected' : ''}>Coordonator</option>
                                 <option value="manager" ${currentRole === 'manager' ? 'selected' : ''}>Manager</option>
-                                <option value="familia" ${currentRole === 'familia' ? 'selected' : ''}>Familia</option>
-                                <option value="admin" ${currentRole === 'admin' ? 'selected' : ''}>Admin</option>
+                                <option value="colider" ${currentRole === 'colider' ? 'selected' : ''}>CoLider</option>
+                                <option value="lider" ${currentRole === 'lider' ? 'selected' : ''}>Lider</option>
                             </select>
                         </td>
                         <td class="p-4 text-right space-x-2">
