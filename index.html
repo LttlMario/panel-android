@@ -137,6 +137,52 @@
                         <article class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5"><p class="text-[10px] uppercase tracking-wider text-slate-500">Stare pontaj</p><p id="dashboard-shift-state" class="text-xl font-black mt-3">Se verifică...</p><p id="dashboard-shift-detail" class="text-xs text-slate-500 mt-2">—</p></article>
                         <article class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5"><p class="text-[10px] uppercase tracking-wider text-slate-500">Următoarea învoire</p><p id="next-absence" class="text-base font-bold text-indigo-400 mt-3">Niciuna</p><p id="next-absence-detail" class="text-xs text-slate-500 mt-2">Nu ai învoiri active.</p></article>
                     </div>
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+                            <div>
+                                <p class="text-[10px] uppercase tracking-wider text-slate-500">Statisticile mele</p>
+                                <h3 class="text-base font-bold text-slate-100 mt-1">Activitate personală</h3>
+                            </div>
+                            <span id="personal-stats-updated" class="text-[10px] text-slate-500">Se încarcă...</span>
+                        </div>
+                        <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                            <article class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+                                <p class="text-[10px] uppercase tracking-wider text-slate-500">Total ture</p>
+                                <p id="personal-total-shifts" class="text-2xl font-black text-slate-100 mt-2">—</p>
+                            </article>
+                            <article class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+                                <p class="text-[10px] uppercase tracking-wider text-slate-500">Total lucrat</p>
+                                <p id="personal-total-hours" class="text-2xl font-black text-emerald-400 mt-2">—</p>
+                            </article>
+                            <article class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+                                <p class="text-[10px] uppercase tracking-wider text-slate-500">Săptămâna aceasta</p>
+                                <p id="personal-week-hours" class="text-2xl font-black text-indigo-400 mt-2">—</p>
+                            </article>
+                            <article class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+                                <p class="text-[10px] uppercase tracking-wider text-slate-500">Ture de zi</p>
+                                <p id="personal-day-hours" class="text-2xl font-black text-amber-400 mt-2">—</p>
+                            </article>
+                            <article class="bg-slate-950 border border-slate-800 rounded-xl p-4 col-span-2 lg:col-span-1">
+                                <p class="text-[10px] uppercase tracking-wider text-slate-500">Ture de noapte</p>
+                                <p id="personal-night-hours" class="text-2xl font-black text-violet-400 mt-2">—</p>
+                            </article>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+                            <div class="bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+                                <span class="text-xs text-slate-400">Media unei ture</span>
+                                <strong id="personal-average-shift" class="text-sm font-mono text-slate-200">—</strong>
+                            </div>
+                            <div class="bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+                                <span class="text-xs text-slate-400">Cea mai lungă tură</span>
+                                <strong id="personal-longest-shift" class="text-sm font-mono text-slate-200">—</strong>
+                            </div>
+                            <div class="bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+                                <span class="text-xs text-slate-400">Ultimul pontaj</span>
+                                <strong id="personal-last-shift" class="text-xs text-right text-slate-200">—</strong>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <article class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6"><div class="flex items-center justify-between gap-3"><div><p class="text-xs uppercase tracking-wider text-slate-500">Tura curentă</p><h3 id="active-shift-title" class="text-lg font-bold mt-1">Nicio tură activă</h3></div><span id="active-shift-badge" class="px-3 py-1 rounded-lg border text-[10px] font-bold bg-slate-800 text-slate-400 border-slate-700">OPRIT</span></div><div class="mt-7 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5"><div><p id="active-shift-timer" class="text-4xl font-black font-mono text-emerald-400">00:00:00</p><p id="active-shift-note" class="text-xs text-slate-500 mt-2">Pornește o tură când ești pregătit.</p></div><a href="pontaj.html" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold transition text-center">Gestionează pontajul →</a></div></article>
                         <article class="bg-slate-900 border border-slate-800 rounded-2xl p-6"><p class="text-xs uppercase tracking-wider text-slate-500">Acces rapid</p><div class="mt-4 grid gap-2"><a href="cereri.html" class="p-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs font-semibold transition">📋 Trimite o învoire</a><a href="craftmecanics.html" class="p-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs font-semibold transition">🔨 Craft Mecanics</a><a href="marketplace.html" class="p-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs font-semibold transition">🛒 Vezi marketplace-ul</a></div></article>
@@ -154,7 +200,6 @@
         let dashboardTimer = null;
         let completedTodaySeconds = 0;
         let globalSearchEntries = [
-            { title: 'Asistent intern', detail: 'Întrebări despre funcțiile și informațiile panelului.', href: 'asistent.html', role: 1, type: 'Pagină' },
             { title: 'Pontaj', detail: 'Pornește, oprește sau pune pauză turei.', href: 'pontaj.html', role: 1, type: 'Pagină' },
             { title: 'Cereri și învoiri', detail: 'Trimite și urmărește o învoire.', href: 'cereri.html', role: 1, type: 'Pagină' },
             { title: 'Craft Mecanics', detail: 'Echipamente, piese și rețete de crafting.', href: 'craftmecanics.html', role: 1, type: 'Pagină' },
@@ -220,7 +265,7 @@
 
                 let activeUser = dbUser || localData;
 
-                const displayName = activeUser.display_name || 'Mecanic';
+                const displayName = activeUser.display_name || activeUser.username || 'Mecanic';
                 const role = activeUser.role || activeUser.default_role || 'Mecanic';
                 const userAvatar = activeUser.avatar || 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f468-200d-1f4bb.png';
 
@@ -260,7 +305,6 @@
         async function loadGlobalSearchData() {
             const role = getRole();
             const modules = [
-                { file: 'asistent.html', role: 1, type: 'Asistent' },
                 { file: 'craftmecanics.html', role: 1, type: 'Craft' }, { file: 'pontaj.html', role: 1, type: 'Pontaj' },
                 { file: 'cereri.html', role: 1, type: 'Învoire' }, { file: 'marketplace.html', role: 1, type: 'Marketplace' },
                 { file: 'calculatorilegal.html', role: 3, type: 'Calculator' }, { file: 'locatiiilegale.html', role: 3, type: 'Locație' },
@@ -327,14 +371,67 @@
             document.getElementById('today-worked-time').textContent = formatDashboardTime(completedTodaySeconds + seconds);
         }
 
+        function startOfRomanianWeek() {
+            const now = new Date();
+            const roDate = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Bucharest' }));
+            const day = roDate.getDay() || 7;
+            roDate.setHours(0, 0, 0, 0);
+            roDate.setDate(roDate.getDate() - day + 1);
+            return roDate;
+        }
+
+        function shiftSecondsValue(shift) {
+            if (['active', 'paused'].includes(shift?.status)) return workedSeconds(shift);
+            return Math.max(0, Number(shift?.duration_ms || 0) / 1000);
+        }
+
+        function compactDuration(seconds) {
+            const totalMinutes = Math.floor(Math.max(0, seconds || 0) / 60);
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+            if (hours === 0) return `${minutes}m`;
+            return `${hours}h ${String(minutes).padStart(2, '0')}m`;
+        }
+
+        function renderPersonalStatistics(shifts) {
+            const validShifts = (shifts || []).filter(shift => shift.status !== 'cancelled');
+            const completedShifts = validShifts.filter(shift => !['active', 'paused'].includes(shift.status));
+            const totalSeconds = validShifts.reduce((sum, shift) => sum + shiftSecondsValue(shift), 0);
+            const daySeconds = validShifts.filter(shift => (shift.shift_type || '').toLowerCase() === 'zi').reduce((sum, shift) => sum + shiftSecondsValue(shift), 0);
+            const nightSeconds = validShifts.filter(shift => (shift.shift_type || '').toLowerCase() === 'noapte').reduce((sum, shift) => sum + shiftSecondsValue(shift), 0);
+            const weekStart = startOfRomanianWeek();
+            const weekSeconds = validShifts.filter(shift => {
+                const dateValue = shift.date ? new Date(`${shift.date}T12:00:00`) : new Date(shift.created_at);
+                return !Number.isNaN(dateValue.getTime()) && dateValue >= weekStart;
+            }).reduce((sum, shift) => sum + shiftSecondsValue(shift), 0);
+            const averageSeconds = completedShifts.length ? completedShifts.reduce((sum, shift) => sum + shiftSecondsValue(shift), 0) / completedShifts.length : 0;
+            const longestSeconds = completedShifts.reduce((max, shift) => Math.max(max, shiftSecondsValue(shift)), 0);
+            const lastShift = completedShifts[0] || validShifts[0];
+
+            document.getElementById('personal-total-shifts').textContent = validShifts.length;
+            document.getElementById('personal-total-hours').textContent = compactDuration(totalSeconds);
+            document.getElementById('personal-week-hours').textContent = compactDuration(weekSeconds);
+            document.getElementById('personal-day-hours').textContent = compactDuration(daySeconds);
+            document.getElementById('personal-night-hours').textContent = compactDuration(nightSeconds);
+            document.getElementById('personal-average-shift').textContent = completedShifts.length ? compactDuration(averageSeconds) : '—';
+            document.getElementById('personal-longest-shift').textContent = completedShifts.length ? compactDuration(longestSeconds) : '—';
+            document.getElementById('personal-last-shift').textContent = lastShift
+                ? `${lastShift.date || '—'} · ${(lastShift.shift_type || 'tură').toUpperCase()}`
+                : 'Niciun pontaj';
+            document.getElementById('personal-stats-updated').textContent = `Actualizat la ${new Date().toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })}`;
+        }
+
         async function loadMechanicDashboard(discordId) {
             try {
-                const [shiftsResult, absenceResult] = await Promise.all([
+                const [shiftsResult, absenceResult, historyResult] = await Promise.all([
                     supabaseClient.from('shifts').select('*').eq('discord_id', discordId).eq('date', romanianToday()).order('created_at', { ascending: false }),
-                    supabaseClient.from('absences').select('*').eq('discord_id', discordId).gte('end_at', new Date().toISOString()).order('start_at', { ascending: true }).limit(1)
+                    supabaseClient.from('absences').select('*').eq('discord_id', discordId).gte('end_at', new Date().toISOString()).order('start_at', { ascending: true }).limit(1),
+                    supabaseClient.from('shifts').select('*').eq('discord_id', discordId).order('created_at', { ascending: false })
                 ]);
                 if (shiftsResult.error) throw shiftsResult.error;
+                if (historyResult.error) throw historyResult.error;
                 const shifts = shiftsResult.data || [];
+                renderPersonalStatistics(historyResult.data || []);
                 dashboardActiveShift = shifts.find(shift => ['active', 'paused'].includes(shift.status)) || null;
                 completedTodaySeconds = shifts.filter(shift => !['active', 'paused'].includes(shift.status)).reduce((total, shift) => total + Number(shift.duration_ms || 0) / 1000, 0);
                 document.getElementById('today-shifts-count').textContent = shifts.length;
