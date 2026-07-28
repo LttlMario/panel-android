@@ -220,7 +220,7 @@
 
                 let activeUser = dbUser || localData;
 
-                const displayName = activeUser.display_name || activeUser.username || 'Mecanic';
+                const displayName = activeUser.display_name || 'Mecanic';
                 const role = activeUser.role || activeUser.default_role || 'Mecanic';
                 const userAvatar = activeUser.avatar || 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f468-200d-1f4bb.png';
 
