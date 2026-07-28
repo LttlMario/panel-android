@@ -91,6 +91,8 @@
             opacity: 1;
         }
     </style>
+    <link rel="stylesheet" href="css/global-footer.css">
+    <script src="js/project-version.js"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex text-sm">
 
@@ -306,9 +308,6 @@
     <!-- Scriptul logic complet integrat -->
     <script>
         const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1530238606055309382/eRiHV6smPdqCyA7yB4Ize2kpk9hePfN_Ze1B-hNv3V58J7hzDDosw-WpQ_B9IBKKdi9h";
-        const SUPABASE_URL = "https://vkvsabbbawyiurnaiugo.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdnNhYmJiYXd5aXVybmFpdWdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwNDY5NTYsImV4cCI6MjEwMDYyMjk1Nn0.s2R8mdsoeQzOyz7a-NJOi5SQmyDmyy98cfUMfGqLo44";
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let imageData1 = null;
         let imageData2 = null;
@@ -461,7 +460,7 @@ Semnătură:`;
 
             setDefaultDate();
             updateDateTime();
-            initializeContractNumberDisplay();
+            loadOrInitContractNumber();
             setInterval(updateDateTime, 1000);
             setupPasteHandlers();
         });
@@ -481,26 +480,40 @@ Semnătură:`;
             document.getElementById('currentDateTime').innerText = `Data: ${dateStr} | Ora: ${timeStr}`;
         }
 
-        function initializeContractNumberDisplay() {
-            currentContractNumber = '';
-            document.getElementById('contractNumberDisplay').innerText = 'Se alocă la generare';
-        }
+        function loadOrInitContractNumber() {
+            let counter = localStorage.getItem('contract_counter');
+            const currentYear = new Date().getFullYear();
 
-        async function reserveContractNumber() {
-            if (currentContractNumber) return currentContractNumber;
-
-            const { data, error } = await supabaseClient.rpc('next_contract_number');
-            if (error) throw error;
-            if (!data || typeof data !== 'string') {
-                throw new Error('Supabase nu a returnat un număr de contract valid.');
+            if (!counter) {
+                counter = 1;
+            } else {
+                counter = parseInt(counter, 10);
             }
 
-            currentContractNumber = data;
+            currentContractNumber = formatContractNumber(currentYear, counter);
             document.getElementById('contractNumberDisplay').innerText = currentContractNumber;
-            return currentContractNumber;
         }
 
-        async function generateContract() {
+        function formatContractNumber(year, number) {
+            return `CN-${year}-${String(number).padStart(5, '0')}`;
+        }
+
+        function incrementContractNumber() {
+            let counter = localStorage.getItem('contract_counter');
+            const currentYear = new Date().getFullYear();
+            
+            if (!counter) {
+                counter = 1;
+            } else {
+                counter = parseInt(counter, 10) + 1;
+            }
+
+            localStorage.setItem('contract_counter', counter);
+            currentContractNumber = formatContractNumber(currentYear, counter);
+            document.getElementById('contractNumberDisplay').innerText = currentContractNumber;
+        }
+
+        function generateContract() {
             const company = document.getElementById('company').value.trim();
             const manager = document.getElementById('manager').value.trim();
             const employeeName = document.getElementById('employeeName').value.trim();
@@ -513,14 +526,6 @@ Semnătură:`;
 
             if (!manager || !employeeName || !cnp || !phone || !position || !startDate) {
                 alert('Vă rugăm să completați toate câmpurile obligatorii: Manager, Nume Angajat, CNP, Număr Telefon, Poziție și Data Începerii!');
-                return;
-            }
-
-            try {
-                await reserveContractNumber();
-            } catch (error) {
-                console.error('Eroare alocare număr contract:', error);
-                alert('Numărul contractului nu a putut fi generat din baza de date.');
                 return;
             }
 
@@ -541,6 +546,7 @@ Semnătură:`;
             document.getElementById('statusIndicator').innerText = 'Generat cu succes';
             document.getElementById('statusIndicator').style.color = '#22c55e';
             
+            incrementContractNumber();
         }
 
         function copyContract() {
@@ -570,7 +576,6 @@ Semnătură:`;
             document.getElementById('statusIndicator').innerText = 'Formular resetat';
             document.getElementById('statusIndicator').style.color = '#f59e0b';
             document.getElementById('discordSection').classList.add('hidden');
-            initializeContractNumberDisplay();
             
             clearPasteZone(1);
             clearPasteZone(2);
@@ -635,11 +640,6 @@ Semnătură:`;
         }
 
         async function sendToDiscord() {
-            if (!currentContractNumber) {
-                alert('Mai întâi generează contractul pentru a primi un număr unic.');
-                return;
-            }
-
             const manager = document.getElementById('manager').value.trim();
             const employeeName = document.getElementById('employeeName').value.trim();
             const cnp = document.getElementById('cnp').value.trim();
@@ -754,5 +754,6 @@ Semnătură:`;
             return new File([u8arr], filename, { type: mime });
         }
     </script>
+    <script src="js/global-footer.js"></script>
 </body>
 </html>
