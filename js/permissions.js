@@ -4,7 +4,7 @@ const Roles = {
     MECANIC: 1,
     SEF_MECANIC: 2,
     LA_FAMILIA: 3,
-    COORDONATOR: 4,
+    COORDONATOR: 5,
     MANAGER: 4,
     COLIDER: 5,
     LIDER: 5,
