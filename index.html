@@ -104,8 +104,9 @@
         <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
             <header class="h-16 border-b border-slate-800 bg-slate-900/50 backdrop-blur px-8 flex items-center justify-between sticky top-0 z-20">
                 <h2 class="text-lg font-bold text-slate-100">Dashboard</h2>
-                <div class="flex items-center space-x-4">
-                    <span class="text-xs text-slate-400">Bine ai revenit!</span>
+                <div class="relative w-full max-w-md">
+                    <input id="global-search" type="search" autocomplete="off" placeholder="Caută: Runflat, pontaj, învoire..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-100 outline-none focus:border-emerald-500" oninput="renderGlobalSearch()" onfocus="renderGlobalSearch()">
+                    <div id="global-search-results" class="hidden absolute right-0 mt-2 w-full max-h-80 overflow-y-auto rounded-xl border border-slate-700 bg-slate-900 shadow-2xl z-50"></div>
                 </div>
             </header>
 
@@ -138,6 +139,18 @@
         let dashboardActiveShift = null;
         let dashboardTimer = null;
         let completedTodaySeconds = 0;
+        let globalSearchEntries = [
+            { title: 'Pontaj', detail: 'Pornește, oprește sau pune pauză turei.', href: 'pontaj.html', role: 1, type: 'Pagină' },
+            { title: 'Cereri și învoiri', detail: 'Trimite și urmărește o învoire.', href: 'cereri.html', role: 1, type: 'Pagină' },
+            { title: 'Craft Mecanics', detail: 'Echipamente, piese și rețete de crafting.', href: 'craftmecanics.html', role: 1, type: 'Pagină' },
+            { title: 'Marketplace', detail: 'Anunțuri și servicii disponibile.', href: 'marketplace.html', role: 1, type: 'Pagină' },
+            { title: 'Calculator Ilegal', detail: 'Calcule și rețete pentru activități ilegale.', href: 'calculatorilegal.html', role: 3, type: 'Pagină' },
+            { title: 'Locații ilegale', detail: 'Hartă cu locații, resurse și puncte importante.', href: 'locatiiilegale.html', role: 3, type: 'Pagină' },
+            { title: 'Rapoarte', detail: 'Pontaje active și rapoarte pentru manageri.', href: 'rapoarte.html', role: 4, type: 'Pagină' },
+            { title: 'Contracte', detail: 'Generator de contracte.', href: 'contracte.html', role: 4, type: 'Pagină' },
+            { title: 'Loguri', detail: 'Jurnalul de activitate al proiectului.', href: 'logs.html', role: 5, type: 'Pagină' },
+            { title: 'Panou Admin', detail: 'Setări și administrarea utilizatorilor.', href: 'admin.html', role: 5, type: 'Pagină' }
+        ];
 
         document.addEventListener('DOMContentLoaded', async () => {
             const currentPage = window.location.pathname.split("/").pop() || "index.html";
@@ -188,6 +201,7 @@
 
                 localStorage.setItem('discord_user', JSON.stringify(activeUser));
                 await loadMechanicDashboard(activeUser.discord_id);
+                loadGlobalSearchData();
 
             } catch (err) {
                 console.error('Erore sesiune:', err);
@@ -203,6 +217,52 @@
                 });
             }
         });
+
+        function escapeSearchText(value) { return String(value || '').replace(/[&<>'"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[char])); }
+
+        async function loadGlobalSearchData() {
+            const role = getRole();
+            const modules = [
+                { file: 'craftmecanics.html', role: 1, type: 'Craft' }, { file: 'pontaj.html', role: 1, type: 'Pontaj' },
+                { file: 'cereri.html', role: 1, type: 'Învoire' }, { file: 'marketplace.html', role: 1, type: 'Marketplace' },
+                { file: 'calculatorilegal.html', role: 3, type: 'Calculator' }, { file: 'locatiiilegale.html', role: 3, type: 'Locație' },
+                { file: 'marketplace-ilegal.html', role: 3, type: 'Black Market' }, { file: 'rapoarte.html', role: 4, type: 'Rapoarte' },
+                { file: 'contracte.html', role: 4, type: 'Contracte' }, { file: 'admin.html', role: 5, type: 'Admin' }, { file: 'logs.html', role: 5, type: 'Loguri' }
+            ].filter(module => module.role <= role);
+            await Promise.all(modules.map(async module => {
+                try {
+                    const markup = await (await fetch(module.file)).text();
+                    const page = new DOMParser().parseFromString(markup, 'text/html');
+                    const seen = new Set();
+                    page.querySelectorAll('[data-title], .gallery-card, h1, h2, h3, h4, label, button').forEach(element => {
+                        const title = (element.dataset.title || element.textContent || '').replace(/\s+/g, ' ').trim();
+                        const detail = (element.dataset.desc || element.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim();
+                        if (title.length < 3 || title.length > 100 || seen.has(title)) return;
+                        seen.add(title);
+                        const href = module.file === 'craftmecanics.html' ? `${module.file}?search=${encodeURIComponent(title)}` : module.file;
+                        globalSearchEntries.push({ title, detail: detail || `Secțiune din ${module.type}`, href, role: module.role, type: module.type });
+                    });
+                } catch (error) { console.warn(`Index indisponibil: ${module.file}`, error); }
+            }));
+            const databaseSources = [];
+            if (role >= 1) databaseSources.push(['marketplace', 1, 'Marketplace', row => ({ title: row.produse || row.nume, detail: `${row.tip_actiune || ''} · ${row.categorie || ''} · ${row.pret || ''}`, href: 'marketplace.html' })]);
+            if (role >= 3) databaseSources.push(['marketplace_ilegal', 3, 'Black Market', row => ({ title: row.produse || row.nume, detail: `${row.tip_actiune || ''} · ${row.categorie || ''} · ${row.pret || ''}`, href: 'marketplace-ilegal.html' })], ['illegal_locations', 3, 'Locație', row => ({ title: row.title, detail: `${row.description || ''} · Hartă: ${(row.map_key || '').toUpperCase()}`, href: `locatiiilegale.html?location=${encodeURIComponent(row.id)}` })]);
+            if (role >= 4) databaseSources.push(['users', 4, 'Personal', row => ({ title: row.display_name || row.username || row.discord_id, detail: `Rol: ${row.role || row.default_role || 'Mecanic'}`, href: 'rapoarte.html' })]);
+            await Promise.all(databaseSources.map(async ([table, requiredRole, type, format]) => {
+                try { const { data } = await supabaseClient.from(table).select('*').limit(300); (data || []).forEach(row => { const item = format(row); if (item.title) globalSearchEntries.push({ ...item, role: requiredRole, type }); }); } catch (error) { console.warn(`Date indisponibile: ${table}`, error); }
+            }));
+        }
+
+        function renderGlobalSearch() {
+            const input = document.getElementById('global-search');
+            const results = document.getElementById('global-search-results');
+            const query = input.value.trim().toLocaleLowerCase('ro-RO');
+            if (!query) { results.classList.add('hidden'); results.innerHTML = ''; return; }
+            const role = getRole();
+            const matches = globalSearchEntries.filter(item => item.role <= role && `${item.title} ${item.detail}`.toLocaleLowerCase('ro-RO').includes(query)).slice(0, 12);
+            results.classList.remove('hidden');
+            results.innerHTML = matches.length ? matches.map(item => `<a href="${item.href}" class="block px-4 py-3 border-b border-slate-800 last:border-0 hover:bg-slate-800 transition"><div class="flex justify-between gap-3"><span class="text-xs font-bold text-slate-100">${escapeSearchText(item.title)}</span><span class="text-[10px] text-emerald-400">${escapeSearchText(item.type)}</span></div><p class="text-[11px] text-slate-400 mt-1 truncate">${escapeSearchText(item.detail)}</p></a>`).join('') : '<p class="px-4 py-5 text-center text-xs text-slate-500">Niciun rezultat disponibil pentru rolul tău.</p>';
+        }
 
         function romanianToday() {
             const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Bucharest', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());

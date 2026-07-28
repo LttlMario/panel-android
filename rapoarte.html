@@ -53,6 +53,10 @@
                         <span>📈</span>
                         <span>Rapoarte</span>
                     </a>
+                    <a href="logs.html" data-role="5" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
+                        <span>🧾</span>
+                        <span>Loguri</span>
+                    </a>
                     <a href="contracte.html" data-role="4" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
                         <span>📜</span>
                         <span>Contracte</span>
@@ -198,6 +202,12 @@
                                 🔄
                             </button>
                         </div>
+                    </div>
+                    <div class="pt-3 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <p class="text-[11px] text-slate-400">Alege <strong class="text-slate-200">Tură de zi</strong> sau <strong class="text-slate-200">Tură de noapte</strong>, aplică filtrul, apoi trimite raportul către Discord.</p>
+                        <button onclick="sendSelectedShiftTypeReport()" class="shrink-0 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-md cursor-pointer">
+                            Trimite pontajul selectat pe Discord
+                        </button>
                     </div>
                 </div>
 
@@ -352,7 +362,7 @@
 
     <script>
         const SUPABASE_URL = "https://vkvsabbbawyiurnaiugo.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdnNhYmJiYXd5aXVybmFpdWdvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NTA0Njk1NiwiZXhwIjoyMTAwNjIyOTU2fQ.1D67DT0lul6bgcRSmbr5-JEHZmErTNvCXB4Up1g3zWw";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFub24iLCJpYXQiOjE3ODUwNDY5NTYsImV4cCI6MjEwMDYyMjk1Nn0.s2R8mdsoeQzOyz7a-NJOi5SQmyDmyy98cfUMfGqLo44";
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const WEBHOOK_LOGS = "https://discord.com/api/webhooks/1530882813824466944/yKrptcBA86amfq3a9nerXLYpr9wf78VxGLXfE93P7DKaYMbthEjkpJ3HhBAL2EMPOOm-";
@@ -1085,7 +1095,36 @@
             }
         }
 
-        async function sendReportToDiscordWebhook(dataList, titleHeader) {
+        async function sendSelectedShiftTypeReport() {
+            const shiftType = document.getElementById('filter-shift-type').value;
+
+            if (shiftType !== 'zi' && shiftType !== 'noapte') {
+                alert('Selectează mai întâi „Doar Ture de Zi” sau „Doar Ture de Noapte”, apoi apasă Aplică.');
+                return;
+            }
+
+            applyFilters();
+            if (filteredShiftsData.length === 0) {
+                alert(`Nu există ture de ${shiftType} pentru filtrele selectate.`);
+                return;
+            }
+
+            const label = shiftType === 'zi' ? 'ZI' : 'NOAPTE';
+            const color = shiftType === 'zi' ? 16766720 : 65535;
+            const success = await sendReportToDiscordWebhook(
+                filteredShiftsData,
+                `📊 Raport Pontaj ${label} (Solicitat Manual)`,
+                color
+            );
+
+            if (success) {
+                alert(`Raportul pentru pontajul de ${shiftType} a fost trimis pe Discord.`);
+            } else {
+                alert('Raportul nu a putut fi trimis pe Discord. Verifică webhook-ul și încearcă din nou.');
+            }
+        }
+
+        async function sendReportToDiscordWebhook(dataList, titleHeader, embedColor = 3447003) {
             let totalMs = dataList.reduce((acc, curr) => acc + (Number(curr.duration_ms) || 0), 0);
             let totalHours = (totalMs / 3600000).toFixed(2);
             let uniqueMechanics = new Set(dataList.map(s => s.discord_id)).size;
@@ -1099,7 +1138,7 @@
             const payload = {
                 embeds: [{
                     title: titleHeader,
-                    color: 3447003,
+                    color: embedColor,
                     fields: [
                         { name: "📈 Total Ture", value: `${dataList.length}`, inline: true },
                         { name: "⏱️ Total Ore Lucrate", value: `**${totalHours}h**`, inline: true },
