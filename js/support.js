@@ -18,7 +18,7 @@
       backdrop-filter: blur(12px);
     }
     .support-trigger:hover { transform: translateY(-2px); border-color: rgba(99,102,241,.75); background: #1e293b; }
-    .support-trigger:focus-visible, .support-close:focus-visible, .support-pay:focus-visible { outline: 2px solid #818cf8; outline-offset: 2px; }
+    .support-trigger:focus-visible, .support-close:focus-visible, .support-pay:focus-visible, .support-confirm:focus-visible, .support-later:focus-visible { outline: 2px solid #818cf8; outline-offset: 2px; }
     .support-backdrop {
       position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
       padding: 18px; background: rgba(2,6,23,.78); backdrop-filter: blur(6px); z-index: 10000;
@@ -46,11 +46,25 @@
     }
     .support-pay:hover { background: #6366f1; transform: translateY(-1px); }
     .support-note { margin: 13px 0 0; color: #64748b; text-align: center; font-size: 10px; line-height: 1.5; }
+    .support-confirmation { display: none; }
+    .support-confirmation.open { display: block; }
+    .support-donation-content.hidden { display: none; }
+    .support-confirm-icon { width: 58px; height: 58px; margin: 0 auto 14px; display: grid; place-items: center; border-radius: 18px; background: rgba(16,185,129,.12); border: 1px solid rgba(16,185,129,.28); font-size: 27px; }
+    .support-confirm-title { margin: 0; text-align: center; color: #f8fafc; font-size: 18px; font-weight: 800; }
+    .support-confirm-copy { margin: 9px auto 18px; max-width: 360px; text-align: center; color: #94a3b8; font-size: 12px; line-height: 1.6; }
+    .support-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .support-confirm, .support-later { display: flex; align-items: center; justify-content: center; min-height: 43px; border-radius: 12px; font-size: 12px; font-weight: 800; cursor: pointer; transition: .2s ease; }
+    .support-confirm { border: 1px solid rgba(16,185,129,.35); background: #059669; color: #fff; }
+    .support-confirm:hover { background: #10b981; transform: translateY(-1px); }
+    .support-later { border: 1px solid #334155; background: #020617; color: #cbd5e1; }
+    .support-later:hover { background: #1e293b; color: #f8fafc; }
+
     @media (max-width: 520px) {
       #${ROOT_ID} { right: 12px; bottom: 12px; }
       .support-trigger span:last-child { display: none; }
       .support-trigger { width: 46px; height: 46px; justify-content: center; padding: 0; border-radius: 50%; font-size: 17px; }
       .support-points { grid-template-columns: 1fr; }
+      .support-actions { grid-template-columns: 1fr; }
     }
   `;
   document.head.appendChild(style);
@@ -71,6 +85,7 @@
           <button type="button" class="support-close" aria-label="Închide">×</button>
         </div>
         <div class="support-body">
+          <div class="support-donation-content">
           <p class="support-copy">Acest panel este dezvoltat și întreținut în timpul liber. Dacă îți este util, poți contribui voluntar la dezvoltarea lui, la funcționalități noi și la menținerea proiectului actualizat.</p>
           <div class="support-points">
             <div class="support-point">🚀 Funcționalități noi</div>
@@ -80,6 +95,16 @@
           </div>
           <a class="support-pay" href="${REVOLUT_URL}" target="_blank" rel="noopener noreferrer">💳 Donează prin Revolut</a>
           <p class="support-note">Donațiile sunt complet opționale. Îți mulțumesc pentru susținere!</p>
+          </div>
+          <div class="support-confirmation" aria-live="polite">
+            <div class="support-confirm-icon">💳</div>
+            <h3 class="support-confirm-title">Ai finalizat donația?</h3>
+            <p class="support-confirm-copy">După ce termini plata în pagina Revolut, revino aici și alege una dintre opțiunile de mai jos.</p>
+            <div class="support-actions">
+              <button type="button" class="support-confirm">❤️ Da, am donat</button>
+              <button type="button" class="support-later">Nu încă</button>
+            </div>
+          </div>
         </div>
       </section>
     </div>
@@ -89,10 +114,27 @@
   const trigger = root.querySelector('.support-trigger');
   const backdrop = root.querySelector('.support-backdrop');
   const closeButton = root.querySelector('.support-close');
+  const payButton = root.querySelector('.support-pay');
+  const donationContent = root.querySelector('.support-donation-content');
+  const confirmationContent = root.querySelector('.support-confirmation');
+  const confirmButton = root.querySelector('.support-confirm');
+  const laterButton = root.querySelector('.support-later');
+
+  const showDonationStep = () => {
+    donationContent.classList.remove('hidden');
+    confirmationContent.classList.remove('open');
+  };
+
+  const showConfirmationStep = () => {
+    donationContent.classList.add('hidden');
+    confirmationContent.classList.add('open');
+    confirmButton.focus();
+  };
 
   const openModal = () => {
     backdrop.classList.add('open');
     document.body.style.overflow = 'hidden';
+    showDonationStep();
     closeButton.focus();
   };
 
@@ -103,6 +145,14 @@
   };
 
   trigger.addEventListener('click', openModal);
+  payButton.addEventListener('click', () => {
+    window.setTimeout(showConfirmationStep, 120);
+  });
+  confirmButton.addEventListener('click', () => {
+    const returnPage = `${window.location.pathname.split('/').pop() || 'index.html'}${window.location.search || ''}`;
+    window.location.href = `thank-you.html?return=${encodeURIComponent(returnPage)}`;
+  });
+  laterButton.addEventListener('click', closeModal);
   closeButton.addEventListener('click', closeModal);
   backdrop.addEventListener('click', event => {
     if (event.target === backdrop) closeModal();

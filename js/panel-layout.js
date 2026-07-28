@@ -2,6 +2,60 @@
 (() => {
     const COLLAPSE_KEY = 'panel_sidebar_collapsed';
 
+    const CANONICAL_NAV_ITEMS = [
+        { href: 'cereri.html', role: 1, icon: '📋', label: 'Cereri / Absențe' },
+        { href: 'calculatorilegal.html', role: 3, icon: '🧮', label: 'Calculator Ilegal' },
+        { href: 'craftmecanics.html', role: 1, icon: '🔨', label: 'Craft Mecanics' },
+        { href: 'locatiiilegale.html', role: 3, icon: '🗺️', label: 'Locații Ilegale' },
+        { href: 'marketplace.html', role: 1, icon: '🛒', label: 'Marketplace' },
+        { href: 'marketplace-ilegal.html', role: 3, icon: '🚨', label: 'Black Market' },
+        { href: 'logs.html', role: 5, icon: '🧾', label: 'Loguri', adminOnly: true }
+    ];
+
+    function normalizeHref(href) {
+        try {
+            return new URL(href, window.location.href).pathname.split('/').pop().toLowerCase();
+        } catch (_) {
+            return String(href || '').split('?')[0].split('#')[0].split('/').pop().toLowerCase();
+        }
+    }
+
+    function ensureCanonicalNavigation(navigation) {
+        if (!navigation) return;
+        const role = typeof getRole === 'function' ? getRole() : 0;
+        const currentPage = normalizeHref(window.location.pathname) || 'index.html';
+
+        CANONICAL_NAV_ITEMS.forEach((item) => {
+            let link = [...navigation.querySelectorAll('a[href]')].find((candidate) =>
+                normalizeHref(candidate.getAttribute('href')) === normalizeHref(item.href)
+            );
+
+            if (!link) {
+                link = document.createElement('a');
+                link.href = item.href;
+                link.setAttribute('data-role', String(item.role));
+                link.className = 'nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm';
+                link.innerHTML = `<span>${item.icon}</span><span>${item.label}</span>`;
+                navigation.appendChild(link);
+            }
+
+            link.setAttribute('data-role', String(item.role));
+            if (item.adminOnly) link.setAttribute('data-admin-only', 'true');
+            link.style.display = role >= item.role ? '' : 'none';
+
+            if (currentPage === normalizeHref(item.href)) {
+                link.classList.add('bg-slate-800', 'text-emerald-400');
+                link.setAttribute('aria-current', 'page');
+            }
+        });
+
+        navigation.querySelectorAll('a[href="logs.html"], a[href*="/logs.html"]').forEach((link) => {
+            link.setAttribute('data-role', '5');
+            link.setAttribute('data-admin-only', 'true');
+            link.style.display = role >= 5 ? '' : 'none';
+        });
+    }
+
     function addStyles() {
         if (document.getElementById('panel-layout-styles')) return;
         const style = document.createElement('style');
@@ -42,6 +96,7 @@
         const sidebar = navigation?.closest('aside');
         if (!navigation || !sidebar) return;
 
+        ensureCanonicalNavigation(navigation);
         addStyles();
         navigation.querySelectorAll('a[href="asistent.html"]').forEach((link) => link.remove());
         sidebar.classList.add('panel-responsive-sidebar');
@@ -100,6 +155,7 @@
         document.body.append(backdrop, mobileMenu);
 
         const mobileNav = mobileMenu.querySelector('.panel-mobile-nav');
+        ensureCanonicalNavigation(navigation);
         mobileNav.innerHTML = navigation.innerHTML;
         if (typeof applyRoleBasedVisibility === 'function' && typeof getRole === 'function') applyRoleBasedVisibility(getRole());
 
