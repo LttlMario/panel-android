@@ -235,8 +235,8 @@
             { title: 'Locații ilegale', detail: 'Hartă cu locații, resurse și puncte importante.', href: 'locatiiilegale.html', role: 3, type: 'Pagină' },
             { title: 'Rapoarte', detail: 'Pontaje active și rapoarte pentru manageri.', href: 'rapoarte.html', role: 4, type: 'Pagină' },
             { title: 'Contracte', detail: 'Generator de contracte.', href: 'contracte.html', role: 4, type: 'Pagină' },
-            { title: 'Loguri', detail: 'Jurnalul de activitate al proiectului.', href: 'logs.html', role: 8, type: 'Pagină' },
-            { title: 'Panou Admin', detail: 'Setări și administrarea utilizatorilor.', href: 'admin.html', role: 8, type: 'Pagină' }
+            { title: 'Loguri', detail: 'Jurnalul de activitate al proiectului.', href: 'logs.html', role: 7, type: 'Pagină' },
+            { title: 'Panou Admin', detail: 'Setări și administrarea utilizatorilor.', href: 'admin.html', role: 7, type: 'Pagină' }
         ];
 
         function toggleMobileMenu() {
@@ -301,7 +301,7 @@
                 document.getElementById('user-avatar').src = userAvatar;
 
                 const roleLower = role.toLowerCase();
-                const isPrivileged = roleLower.includes('sef') || roleLower.includes('șef') || roleLower.includes('manager') || roleLower.includes('admin') || roleLower.includes('owner');
+                const isPrivileged = roleLower.includes('sef') || roleLower.includes('șef') || roleLower.includes('manager') || roleLower.includes('co-lider') || roleLower.includes('colider') || roleLower.includes('lider') || roleLower.includes('coordonator');
 
                 if (isPrivileged) {
                     const navLogs = document.getElementById('nav-logs');
@@ -336,7 +336,7 @@
                 { file: 'cereri.html', role: 1, type: 'Învoire' }, { file: 'marketplace.html', role: 1, type: 'Marketplace' },
                 { file: 'calculatorilegal.html', role: 3, type: 'Calculator' }, { file: 'locatiiilegale.html', role: 3, type: 'Locație' },
                 { file: 'marketplace-ilegal.html', role: 3, type: 'Black Market' }, { file: 'rapoarte.html', role: 4, type: 'Rapoarte' },
-                { file: 'contracte.html', role: 4, type: 'Contracte' }, { file: 'admin.html', role: 8, type: 'Admin' }, { file: 'logs.html', role: 8, type: 'Loguri' }
+                { file: 'contracte.html', role: 4, type: 'Contracte' }, { file: 'admin.html', role: 7, type: 'Admin' }, { file: 'logs.html', role: 7, type: 'Loguri' }
             ].filter(module => module.role <= role);
             await Promise.all(modules.map(async module => {
                 try {
