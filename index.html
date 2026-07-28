@@ -154,6 +154,7 @@
         let dashboardTimer = null;
         let completedTodaySeconds = 0;
         let globalSearchEntries = [
+            { title: 'Asistent intern', detail: 'Întrebări despre funcțiile și informațiile panelului.', href: 'asistent.html', role: 1, type: 'Pagină' },
             { title: 'Pontaj', detail: 'Pornește, oprește sau pune pauză turei.', href: 'pontaj.html', role: 1, type: 'Pagină' },
             { title: 'Cereri și învoiri', detail: 'Trimite și urmărește o învoire.', href: 'cereri.html', role: 1, type: 'Pagină' },
             { title: 'Craft Mecanics', detail: 'Echipamente, piese și rețete de crafting.', href: 'craftmecanics.html', role: 1, type: 'Pagină' },
@@ -259,6 +260,7 @@
         async function loadGlobalSearchData() {
             const role = getRole();
             const modules = [
+                { file: 'asistent.html', role: 1, type: 'Asistent' },
                 { file: 'craftmecanics.html', role: 1, type: 'Craft' }, { file: 'pontaj.html', role: 1, type: 'Pontaj' },
                 { file: 'cereri.html', role: 1, type: 'Învoire' }, { file: 'marketplace.html', role: 1, type: 'Marketplace' },
                 { file: 'calculatorilegal.html', role: 3, type: 'Calculator' }, { file: 'locatiiilegale.html', role: 3, type: 'Locație' },
