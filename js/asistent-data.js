@@ -2,7 +2,7 @@
 window.PANEL_ASSISTANT_KNOWLEDGE = [
     {
         title: 'Ce este Asistentul intern',
-        category: 'asistent', role: 1, page: 'asistent.html',
+        category: 'asistent', role: 1, page: '',
         keywords: ['asistent', 'ai', 'robot', 'cine esti', 'ce poti', 'ajutor'],
         answer: 'Sunt asistentul local al panelului. Caut exclusiv în informațiile proiectului și îți arăt pagina potrivită. Nu caut pe internet și nu trimit conversația către un API AI.'
     },

@@ -10,18 +10,18 @@
             .panel-responsive-sidebar { transition: width .2s ease; position: relative; }
             .panel-sidebar-toggle { position:absolute; top:18px; right:-14px; z-index:70; width:28px; height:28px; display:flex; align-items:center; justify-content:center; border:1px solid #334155; border-radius:999px; background:#0f172a; color:#cbd5e1; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.3); }
             .panel-sidebar-toggle:hover { background:#1e293b; color:#fff; }
-            #panel-mobile-backdrop { display:none; position:fixed; inset:0; z-index:80; background:rgba(2,6,23,.78); backdrop-filter:blur(3px); }
-            #panel-mobile-menu { position:fixed; inset:0 auto 0 0; z-index:81; width:min(288px,86vw); background:#0f172a; border-right:1px solid #1e293b; transform:translateX(-102%); transition:transform .2s ease; box-shadow:16px 0 40px rgba(0,0,0,.45); overflow:auto; }
+            #panel-mobile-backdrop { display:none; position:fixed; inset:0; z-index:4000; background:rgba(2,6,23,.78); backdrop-filter:blur(3px); }
+            #panel-mobile-menu { position:fixed; inset:0 auto 0 0; z-index:4001; width:min(288px,86vw); background:#0f172a; border-right:1px solid #1e293b; transform:translateX(-102%); transition:transform .2s ease; box-shadow:16px 0 40px rgba(0,0,0,.45); overflow:auto; }
             #panel-mobile-menu.is-open { transform:translateX(0); }
             #panel-mobile-menu .panel-mobile-top { height:64px; padding:0 18px; border-bottom:1px solid #1e293b; display:flex; align-items:center; justify-content:space-between; }
             #panel-mobile-menu .panel-mobile-nav { padding:16px; }
-            .panel-mobile-toggle { display:none; width:40px; height:40px; flex:none; align-items:center; justify-content:center; border:1px solid #334155; border-radius:12px; background:#020617; color:#e2e8f0; font-size:18px; cursor:pointer; }
+            .panel-mobile-toggle { display:none; position:relative; z-index:40; width:40px; height:40px; flex:none; align-items:center; justify-content:center; border:1px solid #334155; border-radius:12px; background:#020617; color:#e2e8f0; font-size:18px; cursor:pointer; }
             .panel-action-bar { display:flex; align-items:center; justify-content:flex-end; gap:12px; flex-wrap:wrap; padding:12px max(16px, calc((100vw - 1280px) / 2)); border-bottom:1px solid #1e293b; background:rgba(15,23,42,.72); }
             .panel-action-bar > div { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
             .panel-dashboard-search-bar { display:flex; justify-content:center; padding:16px; border-bottom:1px solid #1e293b; background:rgba(15,23,42,.45); }
             .panel-dashboard-search-bar > div { width:min(100%, 620px); }
             .panel-bottom-save-bar { position:sticky; bottom:0; z-index:30; display:flex; justify-content:flex-end; padding:14px 16px; border-top:1px solid #1e293b; background:rgba(15,23,42,.96); backdrop-filter:blur(10px); }
-            #panel-save-reminder { position:fixed; right:16px; bottom:16px; z-index:100; max-width:min(360px, calc(100vw - 32px)); padding:12px 14px; border:1px solid rgba(251,191,36,.4); border-radius:14px; background:#3b2f09; color:#fef3c7; font-size:12px; box-shadow:0 14px 35px rgba(0,0,0,.35); }
+            #panel-save-reminder { position:fixed; right:16px; bottom:94px; z-index:100; max-width:min(360px, calc(100vw - 32px)); padding:12px 14px; border:1px solid rgba(251,191,36,.4); border-radius:14px; background:#3b2f09; color:#fef3c7; font-size:12px; box-shadow:0 14px 35px rgba(0,0,0,.35); }
             @media (max-width:767px) {
                 .panel-responsive-sidebar { display:none !important; }
                 .panel-sidebar-toggle { display:none !important; }
@@ -36,12 +36,14 @@
     }
 
     function setup() {
+        const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+        setupAssistantWidget(currentPage);
         const navigation = document.getElementById('sidebar-nav') || document.querySelector('aside nav');
         const sidebar = navigation?.closest('aside');
         if (!navigation || !sidebar) return;
 
         addStyles();
-        ensureAssistantLink(navigation);
+        navigation.querySelectorAll('a[href="asistent.html"]').forEach((link) => link.remove());
         sidebar.classList.add('panel-responsive-sidebar');
         // Pagina cu harta folosește o grilă proprie; mutarea headerului ar rupe poziționarea hărții.
         if (!document.getElementById('map-container-wrapper')) relocateHeaderActions();
@@ -106,6 +108,7 @@
             backdrop.style.display = 'none';
         };
         const openMobileMenu = () => {
+            document.dispatchEvent(new CustomEvent('panel:mobile-menu-open'));
             mobileMenu.classList.add('is-open');
             backdrop.style.display = 'block';
         };
@@ -125,24 +128,42 @@
         }
     }
 
-    function ensureAssistantLink(navigation) {
-        if (navigation.querySelector('a[href="asistent.html"]')) return;
+    function loadAssistantScript(id, source, ready) {
+        if (ready()) return Promise.resolve();
+        const existing = document.getElementById(id);
+        if (existing) {
+            return new Promise((resolve, reject) => {
+                existing.addEventListener('load', resolve, { once: true });
+                existing.addEventListener('error', reject, { once: true });
+            });
+        }
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.id = id;
+            script.src = source;
+            script.onload = resolve;
+            script.onerror = () => {
+                script.remove();
+                reject(new Error(`Nu s-a putut încărca ${source}`));
+            };
+            document.head.appendChild(script);
+        });
+    }
 
-        const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-        const link = document.createElement('a');
-        link.href = 'asistent.html';
-        link.dataset.role = '1';
-        link.className = currentPage === 'asistent.html'
-            ? 'nav-link flex items-center space-x-3 px-4 py-3 rounded-xl bg-emerald-500/10 text-emerald-400 font-medium transition text-sm'
-            : 'nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm';
-        link.innerHTML = '<span>🤖</span><span>Asistent</span>';
-
-        const dashboardLink = navigation.querySelector('a[href="index.html"]');
-        if (dashboardLink) dashboardLink.insertAdjacentElement('afterend', link);
-        else navigation.prepend(link);
-
-        if (typeof applyRoleBasedVisibility === 'function' && typeof getRole === 'function') {
-            applyRoleBasedVisibility(getRole());
+    async function setupAssistantWidget(currentPage) {
+        const allowedPages = new Set([
+            'index.html', 'pontaj.html', 'cereri.html', 'rapoarte.html', 'contracte.html', 'admin.html',
+            'calculatorilegal.html', 'craftmecanics.html', 'locatiiilegale.html', 'marketplace.html',
+            'marketplace-ilegal.html', 'logs.html'
+        ]);
+        if (!allowedPages.has(currentPage) || document.getElementById('panel-assistant-widget')) return;
+        try {
+            if (typeof isLogged !== 'function' || !isLogged()) return;
+            await loadAssistantScript('panel-assistant-data-script', 'js/asistent-data.js', () => Array.isArray(window.PANEL_ASSISTANT_KNOWLEDGE));
+            await loadAssistantScript('panel-assistant-core-script', 'js/asistent-core.js', () => Boolean(window.PanelAssistantCore));
+            await loadAssistantScript('panel-assistant-widget-script', 'js/asistent-widget.js', () => Boolean(window.__panelAssistantWidgetLoaded));
+        } catch (error) {
+            console.warn('Asistentul plutitor nu a putut fi inițializat.', error);
         }
     }
 
