@@ -16,12 +16,20 @@
             #panel-mobile-menu .panel-mobile-top { height:64px; padding:0 18px; border-bottom:1px solid #1e293b; display:flex; align-items:center; justify-content:space-between; }
             #panel-mobile-menu .panel-mobile-nav { padding:16px; }
             .panel-mobile-toggle { display:none; width:40px; height:40px; flex:none; align-items:center; justify-content:center; border:1px solid #334155; border-radius:12px; background:#020617; color:#e2e8f0; font-size:18px; cursor:pointer; }
+            .panel-action-bar { display:flex; align-items:center; justify-content:flex-end; gap:12px; flex-wrap:wrap; padding:12px max(16px, calc((100vw - 1280px) / 2)); border-bottom:1px solid #1e293b; background:rgba(15,23,42,.72); }
+            .panel-action-bar > div { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+            .panel-dashboard-search-bar { display:flex; justify-content:center; padding:16px; border-bottom:1px solid #1e293b; background:rgba(15,23,42,.45); }
+            .panel-dashboard-search-bar > div { width:min(100%, 620px); }
+            .panel-bottom-save-bar { position:sticky; bottom:0; z-index:30; display:flex; justify-content:flex-end; padding:14px 16px; border-top:1px solid #1e293b; background:rgba(15,23,42,.96); backdrop-filter:blur(10px); }
+            #panel-save-reminder { position:fixed; right:16px; bottom:16px; z-index:100; max-width:min(360px, calc(100vw - 32px)); padding:12px 14px; border:1px solid rgba(251,191,36,.4); border-radius:14px; background:#3b2f09; color:#fef3c7; font-size:12px; box-shadow:0 14px 35px rgba(0,0,0,.35); }
             @media (max-width:767px) {
                 .panel-responsive-sidebar { display:none !important; }
                 .panel-sidebar-toggle { display:none !important; }
                 .panel-mobile-toggle { display:flex; }
                 #app { grid-template-columns:1fr !important; grid-template-rows:64px 1fr !important; }
                 #app > header, #app > #map-container-wrapper { grid-column:1 !important; }
+                .panel-action-bar { justify-content:stretch; padding:12px 16px; }
+                .panel-action-bar > div, .panel-action-bar button { width:100%; }
             }
         `;
         document.head.appendChild(style);
@@ -34,6 +42,8 @@
 
         addStyles();
         sidebar.classList.add('panel-responsive-sidebar');
+        relocateHeaderActions();
+        setupAdminSaveArea();
         const main = document.querySelector('main');
         const originalMainMargin = main?.style.marginLeft || '';
         const originalSidebarWidth = sidebar.style.width || '';
@@ -106,6 +116,85 @@
             mobileToggle.setAttribute('aria-label', 'Deschide meniul');
             mobileToggle.addEventListener('click', openMobileMenu);
             header.insertBefore(mobileToggle, header.firstChild);
+        }
+    }
+
+    function relocateHeaderActions() {
+        const header = document.querySelector('header');
+        if (!header || document.getElementById('panel-page-actions')) return;
+
+        const search = document.getElementById('global-search');
+        if (search) {
+            const searchWrapper = search.closest('.relative');
+            if (searchWrapper) {
+                const searchBar = document.createElement('div');
+                searchBar.className = 'panel-dashboard-search-bar';
+                header.insertAdjacentElement('afterend', searchBar);
+                searchBar.appendChild(searchWrapper);
+            }
+            return;
+        }
+
+        const actionButtons = [...header.querySelectorAll('button:not(.panel-mobile-toggle)')];
+        if (!actionButtons.length) return;
+
+        const actionBar = document.createElement('div');
+        actionBar.id = 'panel-page-actions';
+        actionBar.className = 'panel-action-bar';
+        header.insertAdjacentElement('afterend', actionBar);
+
+        const movedContainers = new Set();
+        actionButtons.forEach((button) => {
+            const container = button.parentElement;
+            const directContainer = container?.parentElement === header && container.tagName === 'DIV';
+            const target = directContainer ? container : button;
+            if (!movedContainers.has(target)) {
+                movedContainers.add(target);
+                actionBar.appendChild(target);
+            }
+        });
+    }
+
+    function setupAdminSaveArea() {
+        const saveButton = document.querySelector('button[onclick="saveAllAdminSettings()"]');
+        const main = document.querySelector('main');
+        if (!saveButton || !main || document.getElementById('panel-admin-save-area')) return;
+
+        const saveArea = document.createElement('div');
+        saveArea.id = 'panel-admin-save-area';
+        saveArea.className = 'panel-bottom-save-bar';
+        main.appendChild(saveArea);
+        saveArea.appendChild(saveButton);
+        document.getElementById('panel-page-actions')?.remove();
+
+        let dirty = false;
+        const showReminder = () => {
+            if (dirty) return;
+            dirty = true;
+            const reminder = document.createElement('div');
+            reminder.id = 'panel-save-reminder';
+            reminder.textContent = 'Ai modificări nesalvate. Apasă „Salvează Toate Setările” din partea de jos a paginii.';
+            document.body.appendChild(reminder);
+        };
+        const clearReminder = () => {
+            dirty = false;
+            document.getElementById('panel-save-reminder')?.remove();
+        };
+
+        main.addEventListener('change', (event) => {
+            const element = event.target;
+            if (!(element instanceof HTMLInputElement || element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement)) return;
+            if (element.id.startsWith('search-') || element.id.startsWith('filter-') || element.id.startsWith('role-select-')) return;
+            showReminder();
+        });
+
+        const originalSave = window.saveAllAdminSettings;
+        if (typeof originalSave === 'function') {
+            window.saveAllAdminSettings = async (...args) => {
+                const result = await originalSave(...args);
+                clearReminder();
+                return result;
+            };
         }
     }
 
