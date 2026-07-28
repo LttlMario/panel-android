@@ -134,11 +134,7 @@
   }
 
   function openRevolut() {
-    const opened = window.open(CONFIG.revolutUrl, "_blank", "noopener,noreferrer");
-    if (!opened) {
-      window.location.href = CONFIG.revolutUrl;
-      return;
-    }
+    window.open(CONFIG.revolutUrl, "_blank", "noopener,noreferrer");
     openConfirmationDialog();
   }
 
