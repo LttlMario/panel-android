@@ -2,104 +2,6 @@
 (() => {
     const COLLAPSE_KEY = 'panel_sidebar_collapsed';
 
-    const CANONICAL_NAV_ITEMS = [
-        { href: 'index.html', role: 1, icon: '🏠', label: 'Dashboard' },
-        { href: 'pontaj.html', role: 1, icon: '⏱️', label: 'Pontaj' },
-        { href: 'cereri.html', role: 1, icon: '📋', label: 'Cereri / Absențe' },
-        { href: 'rapoarte.html', role: 4, icon: '📊', label: 'Rapoarte' },
-        { href: 'contracte.html', role: 4, icon: '📄', label: 'Contracte' },
-        { href: 'admin.html', role: 5, icon: '⚙️', label: 'Administrare' },
-        { href: 'logs.html', role: 5, icon: '🧾', label: 'Loguri', adminOnly: true },
-        { href: 'calculatorilegal.html', role: 3, icon: '🧮', label: 'Calculator Ilegal' },
-        { href: 'craftmecanics.html', role: 1, icon: '🔨', label: 'Craft Mecanics' },
-        { href: 'locatiiilegale.html', role: 3, icon: '🗺️', label: 'Locații Ilegale' },
-        { href: 'marketplace.html', role: 1, icon: '🛒', label: 'Marketplace' },
-        { href: 'marketplace-ilegal.html', role: 3, icon: '🚨', label: 'Black Market' }
-    ];
-
-    function normalizeHref(href) {
-        try {
-            return new URL(href, window.location.href).pathname.split('/').pop().toLowerCase();
-        } catch (_) {
-            return String(href || '').split('?')[0].split('#')[0].split('/').pop().toLowerCase();
-        }
-    }
-
-    function ensureCanonicalNavigation(navigation) {
-        if (!navigation) return;
-
-        const role = typeof getRole === 'function' ? getRole() : 0;
-        const currentPage = normalizeHref(window.location.pathname) || 'index.html';
-        const existingLinks = [...navigation.querySelectorAll('a[href]')];
-        const usedLinks = new Set();
-        const orderedFragment = document.createDocumentFragment();
-
-        CANONICAL_NAV_ITEMS.forEach((item) => {
-            const normalizedItemHref = normalizeHref(item.href);
-            const matches = existingLinks.filter((candidate) =>
-                normalizeHref(candidate.getAttribute('href')) === normalizedItemHref
-            );
-
-            let link = matches.shift();
-            matches.forEach((duplicate) => duplicate.remove());
-
-            if (!link) {
-                link = document.createElement('a');
-                link.href = item.href;
-                link.className = 'nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm';
-                link.innerHTML = `<span>${item.icon}</span><span>${item.label}</span>`;
-            } else {
-                // Păstrează clasele paginii, dar uniformizează eticheta și iconița.
-                link.href = item.href;
-                const spans = link.querySelectorAll(':scope > span');
-                if (spans.length >= 2) {
-                    spans[0].textContent = item.icon;
-                    spans[1].textContent = item.label;
-                } else {
-                    link.innerHTML = `<span>${item.icon}</span><span>${item.label}</span>`;
-                }
-            }
-
-            link.setAttribute('data-role', String(item.role));
-            link.toggleAttribute('data-admin-only', Boolean(item.adminOnly));
-            link.hidden = role < item.role;
-            link.style.display = role < item.role ? 'none' : '';
-
-            link.classList.remove('bg-slate-800', 'text-emerald-400');
-            link.removeAttribute('aria-current');
-            if (currentPage === normalizedItemHref) {
-                link.classList.add('bg-slate-800', 'text-emerald-400');
-                link.setAttribute('aria-current', 'page');
-            }
-
-            usedLinks.add(link);
-            orderedFragment.appendChild(link);
-        });
-
-        // Păstrează doar linkurile necunoscute, după meniul standard.
-        existingLinks.forEach((link) => {
-            if (!usedLinks.has(link) && !CANONICAL_NAV_ITEMS.some((item) =>
-                normalizeHref(item.href) === normalizeHref(link.getAttribute('href'))
-            )) {
-                orderedFragment.appendChild(link);
-            }
-        });
-
-        navigation.appendChild(orderedFragment);
-
-        // Ultima protecție: Loguri există o singură dată și este vizibil numai la nivel 5.
-        const logLinks = [...navigation.querySelectorAll('a[href]')].filter((link) =>
-            normalizeHref(link.getAttribute('href')) === 'logs.html'
-        );
-        logLinks.slice(1).forEach((duplicate) => duplicate.remove());
-        logLinks.slice(0, 1).forEach((link) => {
-            link.setAttribute('data-role', '5');
-            link.setAttribute('data-admin-only', 'true');
-            link.hidden = role < 5;
-            link.style.display = role < 5 ? 'none' : '';
-        });
-    }
-
     function addStyles() {
         if (document.getElementById('panel-layout-styles')) return;
         const style = document.createElement('style');
@@ -140,7 +42,6 @@
         const sidebar = navigation?.closest('aside');
         if (!navigation || !sidebar) return;
 
-        ensureCanonicalNavigation(navigation);
         addStyles();
         navigation.querySelectorAll('a[href="asistent.html"]').forEach((link) => link.remove());
         sidebar.classList.add('panel-responsive-sidebar');
@@ -199,7 +100,6 @@
         document.body.append(backdrop, mobileMenu);
 
         const mobileNav = mobileMenu.querySelector('.panel-mobile-nav');
-        ensureCanonicalNavigation(navigation);
         mobileNav.innerHTML = navigation.innerHTML;
         if (typeof applyRoleBasedVisibility === 'function' && typeof getRole === 'function') applyRoleBasedVisibility(getRole());
 
