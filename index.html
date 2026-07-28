@@ -131,11 +131,10 @@
                 </div>
             </div>
                 <section class="px-4 pb-6 md:px-8 md:pb-8 max-w-7xl mx-auto w-full space-y-6">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                        <article class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5"><p class="text-[10px] uppercase tracking-wider text-slate-500">Ture astăzi</p><p id="today-shifts-count" class="text-3xl font-black mt-2">—</p><p class="text-xs text-slate-500 mt-1">înregistrate pe contul tău</p></article>
-                        <article class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5"><p class="text-[10px] uppercase tracking-wider text-slate-500">Timp lucrat azi</p><p id="today-worked-time" class="text-3xl font-black text-emerald-400 mt-2 font-mono">—</p><p class="text-xs text-slate-500 mt-1">fără timpul de pauză</p></article>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                         <article class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5"><p class="text-[10px] uppercase tracking-wider text-slate-500">Stare pontaj</p><p id="dashboard-shift-state" class="text-xl font-black mt-3">Se verifică...</p><p id="dashboard-shift-detail" class="text-xs text-slate-500 mt-2">—</p></article>
                         <article class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5"><p class="text-[10px] uppercase tracking-wider text-slate-500">Următoarea învoire</p><p id="next-absence" class="text-base font-bold text-indigo-400 mt-3">Niciuna</p><p id="next-absence-detail" class="text-xs text-slate-500 mt-2">Nu ai învoiri active.</p></article>
+                        <article class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5"><p class="text-[10px] uppercase tracking-wider text-slate-500">Timp de pauză</p><p id="dashboard-pause-time" class="text-3xl font-black text-amber-400 mt-2 font-mono">00:00:00</p><p class="text-xs text-slate-500 mt-1">în tura curentă</p></article>
                     </div>
                     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6">
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
@@ -364,11 +363,20 @@
             return Math.max(0, seconds);
         }
 
+        function pauseSeconds(shift) {
+            if (!shift || !['active', 'paused'].includes(shift.status)) return 0;
+            let seconds = Number(shift.paused_seconds || 0);
+            if (shift.status === 'paused' && shift.paused_at) {
+                seconds += Math.max(0, Math.floor((Date.now() - new Date(shift.paused_at).getTime()) / 1000));
+            }
+            return Math.max(0, seconds);
+        }
+
         function updateDashboardTimer() {
             const active = dashboardActiveShift && ['active', 'paused'].includes(dashboardActiveShift.status);
             const seconds = active ? workedSeconds(dashboardActiveShift) : 0;
             document.getElementById('active-shift-timer').textContent = formatDashboardTime(seconds);
-            document.getElementById('today-worked-time').textContent = formatDashboardTime(completedTodaySeconds + seconds);
+            document.getElementById('dashboard-pause-time').textContent = formatDashboardTime(active ? pauseSeconds(dashboardActiveShift) : 0);
         }
 
         function startOfRomanianWeek() {
@@ -434,7 +442,6 @@
                 renderPersonalStatistics(historyResult.data || []);
                 dashboardActiveShift = shifts.find(shift => ['active', 'paused'].includes(shift.status)) || null;
                 completedTodaySeconds = shifts.filter(shift => !['active', 'paused'].includes(shift.status)).reduce((total, shift) => total + Number(shift.duration_ms || 0) / 1000, 0);
-                document.getElementById('today-shifts-count').textContent = shifts.length;
 
                 const state = document.getElementById('dashboard-shift-state');
                 const detail = document.getElementById('dashboard-shift-detail');
