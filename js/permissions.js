@@ -13,6 +13,7 @@ const Roles = {
 
 const PagePermissions = {
     'index.html': 1,
+    'asistent.html': 1,
     'pontaj.html': 1,
     'cereri.html': 1,
     'rapoarte.html': 4,

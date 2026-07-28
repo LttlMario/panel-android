@@ -41,6 +41,7 @@
         if (!navigation || !sidebar) return;
 
         addStyles();
+        ensureAssistantLink(navigation);
         sidebar.classList.add('panel-responsive-sidebar');
         // Pagina cu harta folosește o grilă proprie; mutarea headerului ar rupe poziționarea hărții.
         if (!document.getElementById('map-container-wrapper')) relocateHeaderActions();
@@ -121,6 +122,27 @@
             mobileToggle.setAttribute('aria-label', 'Deschide meniul');
             mobileToggle.addEventListener('click', openMobileMenu);
             header.insertBefore(mobileToggle, header.firstChild);
+        }
+    }
+
+    function ensureAssistantLink(navigation) {
+        if (navigation.querySelector('a[href="asistent.html"]')) return;
+
+        const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+        const link = document.createElement('a');
+        link.href = 'asistent.html';
+        link.dataset.role = '1';
+        link.className = currentPage === 'asistent.html'
+            ? 'nav-link flex items-center space-x-3 px-4 py-3 rounded-xl bg-emerald-500/10 text-emerald-400 font-medium transition text-sm'
+            : 'nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm';
+        link.innerHTML = '<span>🤖</span><span>Asistent</span>';
+
+        const dashboardLink = navigation.querySelector('a[href="index.html"]');
+        if (dashboardLink) dashboardLink.insertAdjacentElement('afterend', link);
+        else navigation.prepend(link);
+
+        if (typeof applyRoleBasedVisibility === 'function' && typeof getRole === 'function') {
+            applyRoleBasedVisibility(getRole());
         }
     }
 
