@@ -983,6 +983,7 @@
                                     <option value="weapons">Arme</option>
                                     <option value="suppliers">Achiziții Ilegale</option>
                                     <option value="deliveries">Livrări / Rulote</option>
+                                    <option value="hospitals">🏥 Spitale</option>
                                     <option value="mushrooms">Ciuperci</option>
                                     <option value="smeltery">Topitorie</option>
                                 </select>
@@ -1391,7 +1392,15 @@
         let DATA = [];
 
         function mapDatabaseLocation(row) {
-            return { id: row.id, map: row.map_key, category: row.category, title: row.title, description: row.description || '', images: Array.isArray(row.images) ? row.images : [], x: Number(row.x), y: Number(row.y), notes: row.notes || '', requirements: row.requirements || '', rewards: row.rewards || '', lastUpdated: row.last_updated };
+            const title = row.title || '';
+            const storedCategory = row.category || '';
+            const category = CONFIG.categories[storedCategory]
+                ? storedCategory
+                : title.toLocaleLowerCase('ro-RO').includes('spital')
+                    ? 'hospitals'
+                    : storedCategory;
+
+            return { id: row.id, map: row.map_key, category, title, description: row.description || '', images: Array.isArray(row.images) ? row.images : [], x: Number(row.x), y: Number(row.y), notes: row.notes || '', requirements: row.requirements || '', rewards: row.rewards || '', lastUpdated: row.last_updated };
         }
 
         function mapLocationForDatabase(loc) {
@@ -1634,6 +1643,10 @@
 
             const map = document.getElementById('l-inp-map').value;
             const category = document.getElementById('l-inp-category').value;
+            if (!CONFIG.maps[map] || !CONFIG.categories[category]) {
+                alert('Harta sau categoria selectată nu este validă. Reîncarcă pagina și încearcă din nou.');
+                return;
+            }
             const description = document.getElementById('l-inp-desc').value;
             const requirements = document.getElementById('l-inp-req').value;
             const rewards = document.getElementById('l-inp-rew').value;
