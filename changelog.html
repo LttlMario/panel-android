@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ro" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actualizări - Panel by Little Mario</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#1e293b',
+                            900: '#0f172a',
+                            950: '#020617'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="js/project-version.js"></script>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100 antialiased">
+    <main class="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+        <header class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6 shadow-2xl sm:p-8">
+            <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-[0.25em] text-emerald-400">Istoric dezvoltare</p>
+                    <h1 class="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Actualizări Panel</h1>
+                    <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
+                        Aici sunt păstrate versiunile și schimbările importante ale proiectului.
+                        Versiunea afișată în toate paginile este citită dintr-un singur fișier.
+                    </p>
+                </div>
+                <div class="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-5 py-4 text-center">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-300">Versiunea curentă</p>
+                    <p class="mt-1 text-3xl font-black text-emerald-400" data-panel-version>v2.8.0</p>
+                    <p class="mt-1 text-xs text-slate-400" data-panel-release-date>29.07.2026</p>
+                </div>
+            </div>
+            <div class="mt-6 flex flex-wrap gap-3">
+                <a href="index.html" class="rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-xs font-semibold transition hover:bg-slate-700">
+                    ← Înapoi la Dashboard
+                </a>
+                <a href="#cum-actualizezi" class="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/20">
+                    Cum publici o versiune nouă
+                </a>
+            </div>
+        </header>
+
+        <section class="mt-8 space-y-6">
+            <article class="rounded-3xl border border-emerald-500/25 bg-slate-900 p-6 shadow-xl sm:p-8">
+                <div class="flex flex-wrap items-center gap-3">
+                    <span class="rounded-full bg-emerald-500 px-3 py-1 text-xs font-black text-slate-950">v2.8.0</span>
+                    <span class="text-xs text-slate-500">29 iulie 2026</span>
+                    <span class="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300">Versiune curentă</span>
+                </div>
+                <h2 class="mt-5 text-xl font-black">Dashboard personal, pauze în timp real și susținerea proiectului</h2>
+                <div class="mt-5 grid gap-4 md:grid-cols-2">
+                    <div class="rounded-2xl border border-slate-800 bg-slate-950/60 p-5">
+                        <h3 class="font-bold text-emerald-300">Adăugat</h3>
+                        <ul class="mt-3 space-y-2 text-sm leading-6 text-slate-300">
+                            <li>• Statistici personale în Dashboard.</li>
+                            <li>• Separare între turele de zi și turele de noapte.</li>
+                            <li>• Timp total de pauză în statisticile utilizatorului.</li>
+                            <li>• Buton „Mergi la pontaj” în cardul stării pontajului.</li>
+                            <li>• Componentă globală „Susține proiectul”.</li>
+                            <li>• Donație prin Revolut și confirmare manuală după revenire.</li>
+                            <li>• Pagină de mulțumire pentru susținători.</li>
+                            <li>• Sistem centralizat pentru versiunea proiectului.</li>
+                        </ul>
+                    </div>
+                    <div class="rounded-2xl border border-slate-800 bg-slate-950/60 p-5">
+                        <h3 class="font-bold text-sky-300">Îmbunătățit</h3>
+                        <ul class="mt-3 space-y-2 text-sm leading-6 text-slate-300">
+                            <li>• Starea turei este afișată ca activă, în pauză sau oprită.</li>
+                            <li>• Cronometrul exclude timpul petrecut în pauză.</li>
+                            <li>• Interfața Dashboard-ului este mai aerisită.</li>
+                            <li>• Navigarea către pontaj este mai rapidă.</li>
+                            <li>• Elementele de susținere nu mai blochează chatul asistentului.</li>
+                        </ul>
+                    </div>
+                </div>
+            </article>
+
+            <article class="rounded-3xl border border-slate-800 bg-slate-900 p-6 sm:p-8">
+                <div class="flex flex-wrap items-center gap-3">
+                    <span class="rounded-full bg-indigo-500/15 px-3 py-1 text-xs font-black text-indigo-300">v2.7.0</span>
+                    <span class="text-xs text-slate-500">28 iulie 2026</span>
+                </div>
+                <h2 class="mt-5 text-xl font-black">Pontaj activ și pauză sincronizate în Supabase</h2>
+                <ul class="mt-4 space-y-2 text-sm leading-6 text-slate-300">
+                    <li>• Tura este creată în baza de date imediat la pornire.</li>
+                    <li>• Stările <code class="rounded bg-slate-950 px-1.5 py-0.5 text-amber-300">active</code>, <code class="rounded bg-slate-950 px-1.5 py-0.5 text-amber-300">paused</code> și <code class="rounded bg-slate-950 px-1.5 py-0.5 text-amber-300">completed</code> sunt salvate în timp real.</li>
+                    <li>• Managerii pot vedea imediat când un utilizator intră în pauză.</li>
+                    <li>• Au fost adăugate câmpurile pentru durata pauzei și momentul opririi.</li>
+                    <li>• Tura este finalizată prin actualizarea aceleiași înregistrări.</li>
+                </ul>
+            </article>
+
+            <article class="rounded-3xl border border-slate-800 bg-slate-900 p-6 sm:p-8">
+                <div class="flex flex-wrap items-center gap-3">
+                    <span class="rounded-full bg-indigo-500/15 px-3 py-1 text-xs font-black text-indigo-300">v2.6.0</span>
+                    <span class="text-xs text-slate-500">28 iulie 2026</span>
+                </div>
+                <h2 class="mt-5 text-xl font-black">Contracte cu număr unic generat de Supabase</h2>
+                <ul class="mt-4 space-y-2 text-sm leading-6 text-slate-300">
+                    <li>• Numărătoarea contractelor nu mai depinde de memoria browserului.</li>
+                    <li>• Format zilnic: <code class="rounded bg-slate-950 px-1.5 py-0.5 text-emerald-300">CN-AAAA-LL-ZZ-NNN</code>.</li>
+                    <li>• Numărul este rezervat atomic prin funcție SQL.</li>
+                    <li>• Contractul generat și mesajul trimis pe Discord folosesc același număr.</li>
+                </ul>
+            </article>
+
+            <article class="rounded-3xl border border-slate-800 bg-slate-900 p-6 sm:p-8">
+                <div class="flex flex-wrap items-center gap-3">
+                    <span class="rounded-full bg-indigo-500/15 px-3 py-1 text-xs font-black text-indigo-300">v2.5.0</span>
+                    <span class="text-xs text-slate-500">27–28 iulie 2026</span>
+                </div>
+                <h2 class="mt-5 text-xl font-black">Panel modular și control pe roluri</h2>
+                <ul class="mt-4 space-y-2 text-sm leading-6 text-slate-300">
+                    <li>• Permisiuni numerice pentru Mecanic, Șef Mecanic, La Familia, Manager și Admin.</li>
+                    <li>• Acces diferit pentru Dashboard, Pontaj, Cereri, Rapoarte, Contracte și Admin.</li>
+                    <li>• Meniu desktop și meniu mobil sincronizate.</li>
+                    <li>• Căutare globală în paginile și modulele disponibile rolului.</li>
+                    <li>• Marketplace, Black Market, Craft Mecanics și locații integrate în navigare.</li>
+                </ul>
+            </article>
+
+            <article class="rounded-3xl border border-slate-800 bg-slate-900 p-6 sm:p-8">
+                <div class="flex flex-wrap items-center gap-3">
+                    <span class="rounded-full bg-slate-800 px-3 py-1 text-xs font-black text-slate-300">v2.0.0</span>
+                    <span class="text-xs text-slate-500">iulie 2026</span>
+                </div>
+                <h2 class="mt-5 text-xl font-black">Trecerea la panel web cu Discord și Supabase</h2>
+                <ul class="mt-4 space-y-2 text-sm leading-6 text-slate-300">
+                    <li>• Autentificare cu Discord și profil de utilizator.</li>
+                    <li>• Persistență în Supabase pentru utilizatori și pontaje.</li>
+                    <li>• Pontaj separat pentru programul de zi și programul de noapte.</li>
+                    <li>• Rapoarte, învoiri, contracte și administrare într-un singur panel.</li>
+                    <li>• Interfață responsive cu temă închisă.</li>
+                </ul>
+            </article>
+        </section>
+
+        <section id="cum-actualizezi" class="mt-8 rounded-3xl border border-amber-500/20 bg-amber-500/5 p-6 sm:p-8">
+            <p class="text-xs font-bold uppercase tracking-[0.2em] text-amber-300">Administrare versiuni</p>
+            <h2 class="mt-2 text-2xl font-black">Cum adaugi următoarea actualizare</h2>
+            <ol class="mt-5 space-y-3 text-sm leading-6 text-slate-300">
+                <li><strong class="text-slate-100">1.</strong> Modifică versiunea în <code class="rounded bg-slate-950 px-2 py-1 text-emerald-300">js/project-version.js</code>.</li>
+                <li><strong class="text-slate-100">2.</strong> Adaugă o secțiune nouă în partea de sus a acestui fișier.</li>
+                <li><strong class="text-slate-100">3.</strong> Folosește versiune minoră pentru funcții noi, de exemplu <code class="rounded bg-slate-950 px-2 py-1">2.8.0 → 2.9.0</code>.</li>
+                <li><strong class="text-slate-100">4.</strong> Folosește versiune patch pentru reparații, de exemplu <code class="rounded bg-slate-950 px-2 py-1">2.8.0 → 2.8.1</code>.</li>
+                <li><strong class="text-slate-100">5.</strong> Versiunea majoră se schimbă numai la o refacere amplă, de exemplu <code class="rounded bg-slate-950 px-2 py-1">2.x → 3.0.0</code>.</li>
+            </ol>
+        </section>
+
+        <footer class="mt-8 border-t border-slate-800 py-8 text-center">
+            <p class="text-xs text-slate-500">
+                © 2026 <span class="font-semibold text-slate-300">Panel by Little Mario</span>
+                <span class="mx-2">•</span>
+                <a href="changelog.html" class="font-semibold text-emerald-400 hover:text-emerald-300" data-panel-version>v2.8.0</a>
+            </p>
+        </footer>
+    </main>
+</body>
+</html>
