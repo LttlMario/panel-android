@@ -1932,6 +1932,8 @@
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
+            // Profilul trebuie afișat chiar dacă inițializarea hărții întâmpină o problemă.
+            fetchUserData();
             try {
                 await loadLocationsFromDatabase();
             } catch (error) {
@@ -1939,7 +1941,6 @@
                 alert('Locațiile nu au putut fi încărcate. Rulează mai întâi SQL-ul de migrare în Supabase.');
             }
             initMaps();
-            fetchUserData();
         });
     </script>
 </body>
