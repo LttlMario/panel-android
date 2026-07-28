@@ -42,7 +42,8 @@
 
         addStyles();
         sidebar.classList.add('panel-responsive-sidebar');
-        relocateHeaderActions();
+        // Pagina cu harta folosește o grilă proprie; mutarea headerului ar rupe poziționarea hărții.
+        if (!document.getElementById('map-container-wrapper')) relocateHeaderActions();
         setupAdminSaveArea();
         const main = document.querySelector('main');
         const originalMainMargin = main?.style.marginLeft || '';
@@ -57,6 +58,10 @@
         const applyCollapsedState = (collapsed) => {
             sidebar.style.width = collapsed ? '5.25rem' : originalSidebarWidth;
             if (main?.classList.contains('ml-72')) main.style.marginLeft = collapsed ? '5.25rem' : originalMainMargin;
+            const mapApp = document.getElementById('app');
+            if (mapApp && document.getElementById('map-container-wrapper')) {
+                mapApp.style.gridTemplateColumns = collapsed ? '5.25rem 1fr' : '288px 1fr';
+            }
 
             navigation.querySelectorAll('a').forEach((link) => {
                 const label = link.querySelector('span:nth-child(2)');
