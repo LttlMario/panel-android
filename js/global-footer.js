@@ -134,12 +134,17 @@
   }
 
   function openRevolut() {
-    const opened = window.open(CONFIG.revolutUrl, "_blank", "noopener,noreferrer");
-    if (!opened) {
-      window.location.href = CONFIG.revolutUrl;
-      return;
-    }
-    openConfirmationDialog();
+      const revolutLink = document.createElement("a");
+
+      revolutLink.href = CONFIG.revolutUrl;
+      revolutLink.target = "_blank";
+      revolutLink.rel = "noopener noreferrer";
+
+      document.body.appendChild(revolutLink);
+      revolutLink.click();
+      revolutLink.remove();
+
+      openConfirmationDialog();
   }
 
   function bindEvents() {
