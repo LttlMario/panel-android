@@ -4,10 +4,11 @@ const Roles = {
     MECANIC: 1,
     SEF_MECANIC: 2,
     LA_FAMILIA: 3,
+    COORDONATOR: 5,
     MANAGER: 4,
     COLIDER: 5,
-    LIDER: 6,
-    COORDONATOR: 7
+    LIDER: 5,
+    ADMIN: 5
 };
 
 const PagePermissions = {
@@ -16,15 +17,15 @@ const PagePermissions = {
     'pontaj.html': 1,
     'cereri.html': 1,
     'rapoarte.html': 4,
-    'logs.html': 7,
+    'logs.html': 5,
     'contracte.html': 4,
-    'admin.html': 7,
+    'admin.html': 5,
     'calculatorilegal.html': 3,
     'craftmecanics.html': 1,
     'locatiiilegale.html': 3,
     'marketplace.html': 1,
     'marketplace-ilegal.html': 3,
-    'edit.html': 7
+    'edit.html': 5
 };
 
 const STORAGE_KEY = 'discord_user';
@@ -45,76 +46,18 @@ function getUser() {
 
 function getRole() {
     const user = getUser();
-
-    if (!user) {
-        return 0;
-    }
+    if (!user) return 0;
 
     const roleValue = user.role || user.default_role;
+    if (typeof roleValue === 'number') return roleValue;
+    if (typeof roleValue !== 'string') return 0;
 
-    // Dacă rolul este deja salvat ca număr.
-    if (typeof roleValue === 'number') {
-        return roleValue;
-    }
-
-    if (typeof roleValue !== 'string') {
-        return 0;
-    }
-
-    const role = roleValue
-        .toLocaleLowerCase('ro-RO')
-        .trim();
-
-    // Ordinea verificărilor este importantă.
-
-    if (
-        role.includes('coordonator') ||
-        role.includes('admin') ||
-        role.includes('owner')
-    ) {
-        return Roles.COORDONATOR;
-    }
-
-    if (
-        role.includes('co-lider') ||
-        role.includes('co lider') ||
-        role.includes('colider')
-    ) {
-        return Roles.COLIDER;
-    }
-
-    if (role.includes('lider')) {
-        return Roles.LIDER;
-    }
-
-    if (role.includes('manager')) {
-        return Roles.MANAGER;
-    }
-
-    if (
-        role.includes('la familia') ||
-        role.includes('familia')
-    ) {
-        return Roles.LA_FAMILIA;
-    }
-
-    if (
-        role.includes('sef mecanic') ||
-        role.includes('șef mecanic') ||
-        role.includes('sef') ||
-        role.includes('șef')
-    ) {
-        return Roles.SEF_MECANIC;
-    }
-
-    if (
-        role.includes('el mecanico') ||
-        role.includes('mecanic')
-    ) {
-        return Roles.MECANIC;
-    }
-
-    // Rol implicit.
+    const role = roleValue.toLocaleLowerCase('ro-RO');
+    if (role.includes('lider') || role.includes('admin') || role.includes('owner')) return Roles.ADMIN;
+    if (role.includes('coordonator')) return Roles.COORDONATOR;
+    if (role.includes('manager')) return Roles.MANAGER;
+    if (role.includes('familia')) return Roles.LA_FAMILIA;
+    if (role.includes('sef') || role.includes('șef')) return Roles.SEF_MECANIC;
     return Roles.MECANIC;
 }
 
@@ -128,12 +71,8 @@ function logout() {
 }
 
 (function initSecurityMiddleware() {
-    const currentPage =
-        window.location.pathname.split('/').pop() || 'index.html';
-
-    if (['login.html', '403.html'].includes(currentPage)) {
-        return;
-    }
+    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    if (['login.html', '403.html'].includes(currentPage)) return;
 
     if (!isLogged()) {
         window.location.href = 'login.html';
@@ -141,33 +80,19 @@ function logout() {
     }
 
     const requiredRole = PagePermissions[currentPage];
-    const userRole = getRole();
-
-    if (
-        requiredRole !== undefined &&
-        userRole < requiredRole
-    ) {
+    if (requiredRole !== undefined && getRole() < requiredRole) {
         window.location.href = '403.html';
         return;
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        applyRoleBasedVisibility(userRole);
-    });
+    document.addEventListener('DOMContentLoaded', () => applyRoleBasedVisibility(getRole()));
 })();
 
 function applyRoleBasedVisibility(userRole) {
     document.querySelectorAll('[data-role]').forEach((element) => {
-        const requiredRole = Number.parseInt(
-            element.getAttribute('data-role'),
-            10
-        );
-
-        if (Number.isNaN(requiredRole)) {
-            return;
+        const requiredRole = Number.parseInt(element.getAttribute('data-role'), 10);
+        if (!Number.isNaN(requiredRole)) {
+            element.style.display = userRole < requiredRole ? 'none' : '';
         }
-
-        element.style.display =
-            userRole < requiredRole ? 'none' : '';
     });
 }
