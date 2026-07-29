@@ -839,6 +839,14 @@
             document.getElementById('imageModal').classList.remove('active');
         }
 
+        document.querySelectorAll('.gallery-card img').forEach((image) => {
+            image.style.cursor = 'zoom-in';
+
+            image.addEventListener('click', () => {
+                image.parentElement.querySelector('.zoom-btn')?.click();
+            });
+        });
+
         // Citire Profil Utilizator din sesiunea Discord și tabela users
         async function loadUserProfile() {
             const cachedUser = localStorage.getItem('discord_user');
