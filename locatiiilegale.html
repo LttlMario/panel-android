@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
     <script src="js/permissions.js"></script>
     <script src="js/panel-layout.js"></script>
     <style>
@@ -1204,8 +1205,8 @@
 
     <script>
         // Configurare Supabase - aceeași sesiune ca în dashboard
-        const SUPABASE_URL = 'https://vkvsabbbawyiurnaiugo.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdnNhYmJiYXd5aXVybmFpdWdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwNDY5NTYsImV4cCI6MjEwMDYyMjk1Nn0.s2R8mdsoeQzOyz7a-NJOi5SQmyDmyy98cfUMfGqLo44';
+        const SUPABASE_URL = window.PANEL_SUPABASE_CONFIG.url;
+        const SUPABASE_KEY = window.PANEL_SUPABASE_CONFIG.publishableKey;
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         async function fetchUserData() {

@@ -1,6 +1,11 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
-const corsHeaders = { 'Content-Type': 'application/json' };
+const corsHeaders = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cron-secret',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
 
 function getSecretKey() {
   const legacyKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -33,6 +38,12 @@ function workedSeconds(shift: Record<string, unknown>, now: Date) {
 }
 
 Deno.serve(async (request) => {
+  // Verificările de disponibilitate și preflight-ul browserului nu execută
+  // închiderea turelor și trebuie să răspundă înainte de validarea secretului.
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }
+
   const cronSecret = Deno.env.get('CRON_SECRET');
   if (cronSecret && request.headers.get('x-cron-secret') !== cronSecret) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });

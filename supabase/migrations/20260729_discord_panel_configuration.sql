@@ -12,8 +12,6 @@ create table if not exists public.discord_panel_config (
   contracts_webhook_url text,
   marketplace_webhook_url text,
   illegal_marketplace_webhook_url text,
-  illegal_locations_webhook_url text,
-  admin_actions_webhook_url text,
   updated_by_discord_id text,
   updated_at timestamptz not null default now()
 );

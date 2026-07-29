@@ -2,8 +2,8 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const cors = {'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization,apikey,content-type','Content-Type':'application/json'};
 const reply=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:cors});
-const levels:Record<string,number>={pontaj:1,requests:1,contracts:4,marketplace:1,illegal_marketplace:3,illegal_locations:7,admin_actions:7};
-const fields:Record<string,string>={pontaj:'pontaj_webhook_url',requests:'requests_webhook_url',contracts:'contracts_webhook_url',marketplace:'marketplace_webhook_url',illegal_marketplace:'illegal_marketplace_webhook_url',illegal_locations:'illegal_locations_webhook_url',admin_actions:'admin_actions_webhook_url'};
+const levels:Record<string,number>={pontaj:1,requests:1,contracts:4,marketplace:1,illegal_marketplace:3};
+const fields:Record<string,string>={pontaj:'pontaj_webhook_url',requests:'requests_webhook_url',contracts:'contracts_webhook_url',marketplace:'marketplace_webhook_url',illegal_marketplace:'illegal_marketplace_webhook_url'};
 const roleLevel=(role:string)=>{const value=String(role||'').toLocaleLowerCase('ro-RO');if(value.includes('coordonator')||['admin','owner'].includes(value))return 7;if(value==='lider')return 6;if(['colider','co lider','co-lider'].includes(value))return 5;if(value.includes('manager'))return 4;if(value.includes('familia'))return 3;if(value.includes('sef')||value.includes('șef'))return 2;return 1};
 
 Deno.serve(async request=>{

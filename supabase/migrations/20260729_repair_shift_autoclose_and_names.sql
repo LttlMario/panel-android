@@ -4,6 +4,14 @@ create extension if not exists pg_cron;
 -- Compatibilitate cu tabelul shifts creat de versiunile mai vechi ale panelului.
 alter table public.shifts add column if not exists updated_at timestamptz not null default now();
 
+-- Unele proiecte mai vechi au deja o restricție de status care permite doar
+-- valorile active/paused/completed. ADD COLUMN IF NOT EXISTS nu o actualizează,
+-- deci o recreăm explicit înainte de a folosi auto_completed.
+alter table public.shifts drop constraint if exists shifts_status_check;
+alter table public.shifts
+  add constraint shifts_status_check
+  check (status in ('active', 'paused', 'completed', 'auto_completed'));
+
 create or replace function public.fill_shift_colleague_name()
 returns trigger
 language plpgsql

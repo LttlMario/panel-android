@@ -62,6 +62,13 @@ function getRole() {
         return 0;
     }
 
+    // Denumirea rolului poate fi personalizată pentru orice server.
+    // Nivelul numeric primit la autentificare rămâne sursa sigură de acces.
+    const savedPermissionLevel = Number(user.permission_level);
+    if (Number.isInteger(savedPermissionLevel) && savedPermissionLevel >= 1 && savedPermissionLevel <= 7) {
+        return savedPermissionLevel;
+    }
+
     const roleValue = user.role || user.default_role;
 
     // Acceptă rolurile salvate direct ca numere.

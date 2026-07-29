@@ -6,6 +6,14 @@ const headers = {
   'Content-Type': 'application/json',
 };
 const reply = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers });
+type DiagnosticStatus = 'ok' | 'warning' | 'error';
+type DiagnosticResult = { id: string; category: string; label: string; status: DiagnosticStatus; message: string; duration_ms?: number };
+const safeFetch = async (url: string, init: RequestInit = {}, timeout = 8000) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeout);
+  try { return await fetch(url, { ...init, signal: controller.signal }); }
+  finally { clearTimeout(timer); }
+};
 const level = (role: string) => {
   const value = String(role || '').toLocaleLowerCase('ro-RO');
   if (value.includes('coordonator') || value === 'admin' || value === 'owner') return 7;
@@ -49,6 +57,97 @@ Deno.serve(async (request) => {
       return reply({ config, mappings: mappings || [] });
     }
 
+    if (body.action === 'diagnose') {
+      const results: DiagnosticResult[] = [];
+      const add = (id: string, category: string, label: string, status: DiagnosticStatus, message: string, duration_ms?: number) =>
+        results.push({ id, category, label, status, message, ...(duration_ms === undefined ? {} : { duration_ms }) });
+      const check = async (id: string, category: string, label: string, task: () => Promise<{ status?: DiagnosticStatus; message: string }>) => {
+        const started = Date.now();
+        try { const outcome = await task(); add(id, category, label, outcome.status || 'ok', outcome.message, Date.now() - started); }
+        catch (error) { add(id, category, label, 'error', error instanceof Error ? error.message : 'Verificarea a eșuat.', Date.now() - started); }
+      };
+
+      const [{ data: config, error: configError }, { data: mappings, error: mappingsError }] = await Promise.all([
+        db.from('discord_panel_config').select('*').eq('id', 1).maybeSingle(),
+        db.from('discord_role_mappings').select('discord_role_id,discord_role_name,panel_role,permission_level,enabled').order('permission_level'),
+      ]);
+      if (configError) throw configError;
+      if (mappingsError) throw mappingsError;
+
+      await check('database-schema', 'Supabase', 'Schema și securitate', async () => {
+        const { data, error } = await db.rpc('get_panel_system_diagnostics');
+        if (error) throw new Error(`Rulează migrarea pentru diagnosticare: ${error.message}`);
+        const missing = Array.isArray(data?.missing_tables) ? data.missing_tables : [];
+        const rlsMissing = Array.isArray(data?.rls_disabled_tables) ? data.rls_disabled_tables : [];
+        const cron = Boolean(data?.cleanup_cron_active);
+        if (missing.length) return { status: 'error', message: `Lipsesc tabele: ${missing.join(', ')}.` };
+        if (rlsMissing.length) return { status: 'warning', message: `RLS este dezactivat pentru: ${rlsMissing.join(', ')}.` };
+        return { status: cron ? 'ok' : 'warning', message: cron ? 'Tabelele, RLS și curățarea automată sunt configurate.' : 'Tabelele și RLS sunt configurate, dar programarea curățării nu este activă.' };
+      });
+
+      await check('current-user', 'Supabase', 'Utilizatorul administrator', async () => {
+        const { data, error } = await db.from('users').select('display_name,username').eq('discord_id', discordUser.id).maybeSingle();
+        if (error) throw error;
+        if (!data) return { status: 'error', message: 'Utilizatorul Discord nu există în tabela users.' };
+        const display = String(data.display_name || '').trim();
+        return display ? { message: `Utilizator sincronizat: ${display}.` } : { status: 'warning', message: 'Utilizatorul există, dar display_name nu este completat.' };
+      });
+
+      const missingConfig = ['discord_client_id', 'guild_id', 'panel_public_url'].filter((key) => !String(config?.[key] || '').trim());
+      add('discord-config', 'Discord', 'Aplicație și server', missingConfig.length ? 'error' : 'ok', missingConfig.length ? `Câmpuri necompletate: ${missingConfig.join(', ')}.` : 'Client ID, Guild ID și URL-ul public sunt salvate.');
+      const validMappings = (mappings || []).filter((item: any) => item.enabled !== false && /^\d{15,22}$/.test(String(item.discord_role_id || '')) && item.discord_role_name && item.panel_role);
+      const levels = new Set(validMappings.map((item: any) => Number(item.permission_level)));
+      add('discord-roles', 'Discord', 'Cele 7 roluri', validMappings.length === 7 && levels.size === 7 ? 'ok' : 'error', validMappings.length === 7 && levels.size === 7 ? 'Toate cele 7 niveluri au nume și ID Discord valid.' : `Sunt valide ${validMappings.length} din 7 mapări de rol.`);
+
+      const webhookFields: Array<[string, string]> = [
+        ['family_webhook_url', 'Anunțuri Familie / Birouri'], ['mechanics_webhook_url', 'Anunțuri Angajați'], ['pontaj_webhook_url', 'Pontaj / Loguri'],
+        ['requests_webhook_url', 'Cereri / Absențe'], ['contracts_webhook_url', 'Contracte'], ['marketplace_webhook_url', 'Marketplace'], ['illegal_marketplace_webhook_url', 'Black Market'],
+      ];
+      await Promise.all(webhookFields.map(([field, label]) => check(`webhook-${field}`, 'Webhook-uri', label, async () => {
+        const url = String(config?.[field] || '').trim();
+        if (!url) return { status: 'warning', message: 'Webhook necompletat.' };
+        if (!/^https:\/\/(?:canary\.|ptb\.)?discord(?:app)?\.com\/api\/webhooks\/\d+\/[A-Za-z0-9._-]+$/i.test(url)) return { status: 'error', message: 'Formatul URL-ului nu este valid.' };
+        const response = await safeFetch(url, { method: 'GET' });
+        return response.ok ? { message: 'Webhook valid și accesibil.' } : { status: 'error', message: `Discord a răspuns cu HTTP ${response.status}.` };
+      })));
+
+      const functionNames = ['sync-discord-role', 'manage-community-posts', 'send-discord-notification', 'close-expired-shifts'];
+      await Promise.all(functionNames.map((name) => check(`edge-${name}`, 'Edge Functions', name, async () => {
+        const response = await safeFetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/${name}`, { method: 'OPTIONS', headers: { Origin: String(config?.panel_public_url || 'https://localhost') } });
+        return response.ok ? { message: 'Funcția este publicată și răspunde.' } : { status: 'error', message: `Funcția răspunde cu HTTP ${response.status}.` };
+      })));
+      add('edge-manage-discord-config', 'Edge Functions', 'manage-discord-config', 'ok', 'Funcția curentă este publicată și execută diagnosticul.');
+
+      await check('public-panel', 'GitHub / site public', 'Pagina publică', async () => {
+        const base = String(config?.panel_public_url || '').replace(/\/$/, '');
+        if (!base) return { status: 'error', message: 'URL-ul public nu este configurat.' };
+        const response = await safeFetch(`${base}/login.html`);
+        return response.ok ? { message: 'Pagina login.html este publică și accesibilă.' } : { status: 'error', message: `login.html răspunde cu HTTP ${response.status}.` };
+      });
+      await check('public-supabase-config', 'GitHub / site public', 'Configurația Supabase publicată', async () => {
+        const base = String(config?.panel_public_url || '').replace(/\/$/, '');
+        if (!base) return { status: 'error', message: 'URL-ul public nu este configurat.' };
+        const response = await safeFetch(`${base}/js/supabase-config.js`);
+        if (!response.ok) return { status: 'error', message: `Fișierul răspunde cu HTTP ${response.status}.` };
+        const content = await response.text();
+        return content.includes(String(Deno.env.get('SUPABASE_URL') || '')) ? { message: 'Fișierul public indică proiectul Supabase curent.' } : { status: 'error', message: 'Fișierul public indică alt proiect Supabase.' };
+      });
+      await check('public-critical-pages', 'GitHub / site public', 'Scripturi pe paginile esențiale', async () => {
+        const base = String(config?.panel_public_url || '').replace(/\/$/, '');
+        const pages = ['login.html', 'index.html', 'pontaj.html', 'anunturi.html', 'discord-configurare.html'];
+        const failed: string[] = [];
+        await Promise.all(pages.map(async (page) => {
+          const response = await safeFetch(`${base}/${page}`);
+          if (!response.ok) { failed.push(`${page} (HTTP ${response.status})`); return; }
+          if (!(await response.text()).includes('js/supabase-config.js')) failed.push(`${page} (lipsește supabase-config.js)`);
+        }));
+        return failed.length ? { status: 'error', message: failed.join('; ') } : { message: 'Paginile esențiale încarcă configurația Supabase.' };
+      });
+
+      const summary = results.reduce((acc, item) => { acc[item.status]++; return acc; }, { ok: 0, warning: 0, error: 0 });
+      return reply({ checked_at: new Date().toISOString(), results, summary });
+    }
+
     if (body.action === 'save') {
       const config = body.config || {};
       if (!/^\d{15,22}$/.test(String(config.discord_client_id || ''))) throw new Error('Client ID Discord invalid.');
@@ -69,8 +168,6 @@ Deno.serve(async (request) => {
         contracts_webhook_url: config.contracts_webhook_url || null,
         marketplace_webhook_url: config.marketplace_webhook_url || null,
         illegal_marketplace_webhook_url: config.illegal_marketplace_webhook_url || null,
-        illegal_locations_webhook_url: config.illegal_locations_webhook_url || null,
-        admin_actions_webhook_url: config.admin_actions_webhook_url || null,
         updated_by_discord_id: discordUser.id,
         updated_at: new Date().toISOString(),
       };
