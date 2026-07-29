@@ -9,12 +9,29 @@
         style.textContent = `
             .panel-responsive-sidebar { transition: width .2s ease; position:sticky; top:0; height:100vh; align-self:flex-start; }
             .panel-responsive-sidebar.fixed { position:fixed; }
-            #panel-theme-toggle { width:34px; height:34px; flex:none; display:grid; place-items:center; border:1px solid #334155; border-radius:10px; background:#020617; color:#cbd5e1; cursor:pointer; }
-            html[data-panel-theme="light"] body { background:#f1f5f9 !important; color:#0f172a !important; }
-            html[data-panel-theme="light"] .bg-slate-950 { background-color:#f1f5f9 !important; }
-            html[data-panel-theme="light"] .bg-slate-900 { background-color:#fff !important; }
-            html[data-panel-theme="light"] .text-slate-100, html[data-panel-theme="light"] .text-slate-200, html[data-panel-theme="light"] .text-slate-300 { color:#1e293b !important; }
-            html[data-panel-theme="light"] .border-slate-800, html[data-panel-theme="light"] .border-slate-700 { border-color:#cbd5e1 !important; }
+            #panel-theme-toggle { width:38px; height:38px; flex:none; display:grid; place-items:center; border:1px solid #334155; border-radius:11px; background:#0b1220; color:#cbd5e1; cursor:pointer; box-shadow:0 5px 16px rgba(0,0,0,.18); }
+            #panel-theme-toggle:hover { border-color:#10b981; color:#6ee7b7; }
+            .panel-header-tools { position:absolute; left:50%; transform:translateX(-50%); z-index:25; width:min(620px,45vw); display:flex; align-items:center; justify-content:center; gap:10px; }
+            .panel-header-tools .panel-search-host { position:relative; width:100%; min-width:0; }
+            .panel-header-tools .panel-search-host > div, .panel-header-tools .panel-search-host .relative, .panel-header-tools .search-container { width:100% !important; max-width:none !important; }
+
+            /* Tema Panel nu primește suprascrieri: păstrează exact designul original al paginilor. */
+            html[data-panel-theme="dark"] { color-scheme:dark; --bg-main:#030712; --bg-panel:#080f1d; --bg-panel-hover:#111c2e; --card:#0a1220; --border:#223047; --text-main:#e5edf8; --text-muted:#91a0b6; }
+            html[data-panel-theme="dark"] body, html[data-panel-theme="dark"] main, html[data-panel-theme="dark"] #app { background:#030712 !important; color:#e5edf8 !important; }
+            html[data-panel-theme="dark"] aside, html[data-panel-theme="dark"] header, html[data-panel-theme="dark"] footer, html[data-panel-theme="dark"] .bg-slate-900, html[data-panel-theme="dark"] .post, html[data-panel-theme="dark"] .dialog, html[data-panel-theme="dark"] .panel, html[data-panel-theme="dark"] .card { background-color:#080f1d !important; }
+            html[data-panel-theme="dark"] .bg-slate-950, html[data-panel-theme="dark"] input, html[data-panel-theme="dark"] textarea, html[data-panel-theme="dark"] select, html[data-panel-theme="dark"] .poll-option, html[data-panel-theme="dark"] .tab, html[data-panel-theme="dark"] .reaction { background-color:#030712 !important; color:#e5edf8 !important; }
+            html[data-panel-theme="dark"] .bg-slate-800 { background-color:#111c2e !important; }
+            html[data-panel-theme="dark"] .border-slate-800, html[data-panel-theme="dark"] .border-slate-700, html[data-panel-theme="dark"] .post, html[data-panel-theme="dark"] .dialog { border-color:#223047 !important; }
+
+            html[data-panel-theme="light"] { color-scheme:light; --bg-main:#e7edf4; --bg-panel:#f3f6fa; --bg-panel-hover:#dce5ef; --card:#f3f6fa; --border:#b8c5d4; --text-main:#172033; --text-muted:#5e6d82; }
+            html[data-panel-theme="light"] body, html[data-panel-theme="light"] main, html[data-panel-theme="light"] #app { background:#e7edf4 !important; color:#172033 !important; }
+            html[data-panel-theme="light"] aside, html[data-panel-theme="light"] header, html[data-panel-theme="light"] footer, html[data-panel-theme="light"] .bg-slate-900, html[data-panel-theme="light"] .post, html[data-panel-theme="light"] .dialog, html[data-panel-theme="light"] .panel, html[data-panel-theme="light"] .card { background-color:#f3f6fa !important; color:#172033 !important; }
+            html[data-panel-theme="light"] .bg-slate-950, html[data-panel-theme="light"] input, html[data-panel-theme="light"] textarea, html[data-panel-theme="light"] select, html[data-panel-theme="light"] .poll-option, html[data-panel-theme="light"] .tab, html[data-panel-theme="light"] .reaction, html[data-panel-theme="light"] .audience { background-color:#e4eaf1 !important; color:#172033 !important; }
+            html[data-panel-theme="light"] .bg-slate-800, html[data-panel-theme="light"] .badge { background-color:#d8e1eb !important; color:#263449 !important; }
+            html[data-panel-theme="light"] .text-slate-100, html[data-panel-theme="light"] .text-slate-200, html[data-panel-theme="light"] .text-slate-300, html[data-panel-theme="light"] .post-body, html[data-panel-theme="light"] h1, html[data-panel-theme="light"] h2, html[data-panel-theme="light"] h3 { color:#172033 !important; }
+            html[data-panel-theme="light"] .text-slate-400, html[data-panel-theme="light"] .text-slate-500, html[data-panel-theme="light"] .muted, html[data-panel-theme="light"] .meta { color:#5e6d82 !important; }
+            html[data-panel-theme="light"] .border-slate-800, html[data-panel-theme="light"] .border-slate-700, html[data-panel-theme="light"] .post, html[data-panel-theme="light"] .dialog, html[data-panel-theme="light"] input, html[data-panel-theme="light"] textarea, html[data-panel-theme="light"] select { border-color:#b8c5d4 !important; }
+            html[data-panel-theme="light"] .nav-link:hover { background:#dce5ef !important; }
             .panel-sidebar-toggle { position:absolute; top:18px; right:-14px; z-index:70; width:28px; height:28px; display:flex; align-items:center; justify-content:center; border:1px solid #334155; border-radius:999px; background:#0f172a; color:#cbd5e1; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.3); }
             .panel-sidebar-toggle:hover { background:#1e293b; color:#fff; }
             #panel-mobile-backdrop { display:none; position:fixed; inset:0; z-index:4000; background:rgba(2,6,23,.78); backdrop-filter:blur(3px); }
@@ -25,19 +42,19 @@
             .panel-mobile-toggle { display:none; position:relative; z-index:40; width:40px; height:40px; flex:none; align-items:center; justify-content:center; border:1px solid #334155; border-radius:12px; background:#020617; color:#e2e8f0; font-size:18px; cursor:pointer; }
             .panel-action-bar { display:flex; align-items:center; justify-content:flex-end; gap:12px; flex-wrap:wrap; padding:12px max(16px, calc((100vw - 1280px) / 2)); border-bottom:1px solid #1e293b; background:rgba(15,23,42,.72); }
             .panel-action-bar > div { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-            .panel-dashboard-search-bar { display:flex; justify-content:center; padding:16px; border-bottom:1px solid #1e293b; background:rgba(15,23,42,.45); }
-            .panel-dashboard-search-bar > div { width:min(100%, 620px); }
             .panel-bottom-save-bar { position:sticky; bottom:0; z-index:30; display:flex; justify-content:flex-end; padding:14px 16px; border-top:1px solid #1e293b; background:rgba(15,23,42,.96); backdrop-filter:blur(10px); }
             #panel-save-reminder { position:fixed; right:16px; bottom:94px; z-index:100; max-width:min(360px, calc(100vw - 32px)); padding:12px 14px; border:1px solid rgba(251,191,36,.4); border-radius:14px; background:#3b2f09; color:#fef3c7; font-size:12px; box-shadow:0 14px 35px rgba(0,0,0,.35); }
             @media (max-width:767px) {
                 .panel-responsive-sidebar { display:none !important; }
                 .panel-sidebar-toggle { display:none !important; }
                 .panel-mobile-toggle { display:flex; }
+                .panel-header-tools { position:static; transform:none; order:20; width:100%; }
                 #app { grid-template-columns:1fr !important; grid-template-rows:64px 1fr !important; }
                 #app > header, #app > #map-container-wrapper { grid-column:1 !important; }
                 .panel-action-bar { justify-content:stretch; padding:12px 16px; }
                 .panel-action-bar > div, .panel-action-bar button { width:100%; }
             }
+            @media (min-width:768px) and (max-width:1100px) { .panel-header-tools { width:min(460px,42vw); } }
         `;
         document.head.appendChild(style);
     }
@@ -60,8 +77,7 @@
         addStyles();
         navigation.querySelectorAll('a[href="asistent.html"]').forEach((link) => link.remove());
         sidebar.classList.add('panel-responsive-sidebar');
-        // Pagina cu harta folosește o grilă proprie; mutarea headerului ar rupe poziționarea hărții.
-        if (!document.getElementById('map-container-wrapper')) relocateHeaderActions();
+        relocateHeaderActions();
         setupAdminSaveArea();
         const main = document.querySelector('main');
         if (main) main.style.minHeight = '100vh';
@@ -244,32 +260,33 @@
     }
 
     function ensureThemeToggle(sidebar) {
-        if (sidebar.querySelector('#panel-theme-toggle') || document.getElementById('theme-toggle-btn')) return;
         const avatar = sidebar.querySelector('#user-avatar');
         if (!avatar) return;
         let footer = avatar.parentElement;
         while (footer?.parentElement && footer.parentElement !== sidebar) footer = footer.parentElement;
         if (!footer) return;
 
-        const modes = ['system', 'dark', 'light'];
-        const icons = { system: '🌓', dark: '🌙', light: '☀️' };
-        const labels = { system: 'Tema sistemului', dark: 'Temă întunecată', light: 'Temă luminoasă' };
+        const modes = ['panel', 'dark', 'light'];
+        const icons = { panel: '🎨', dark: '🌙', light: '☀️' };
+        const labels = { panel: 'Tema Panel (originală)', dark: 'Tema Dark', light: 'Tema Light confortabilă' };
         const apply = (mode) => {
-            const resolved = mode === 'system'
-                ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-                : mode;
-            document.documentElement.dataset.panelTheme = resolved;
-            document.documentElement.dataset.theme = resolved;
-            document.documentElement.classList.toggle('dark', resolved === 'dark');
+            document.documentElement.dataset.panelTheme = mode;
+            // Unele pagini vechi își citesc culorile din data-theme; Panel folosește paleta lor originală întunecată.
+            document.documentElement.dataset.theme = mode === 'light' ? 'light' : 'dark';
+            document.documentElement.classList.toggle('dark', mode !== 'light');
             const button = document.getElementById('panel-theme-toggle');
             if (button) {
                 button.textContent = icons[mode];
                 button.title = labels[mode];
+                button.setAttribute('aria-label', `${labels[mode]}. Apasă pentru tema următoare.`);
             }
         };
 
-        let mode = localStorage.getItem('panel_theme') || 'system';
-        const button = document.createElement('button');
+        let mode = localStorage.getItem('panel_theme') || 'panel';
+        if (mode === 'system' || !modes.includes(mode)) mode = 'panel';
+        const legacyButton = document.getElementById('theme-toggle-btn');
+        const button = legacyButton || document.createElement('button');
+        if (legacyButton) legacyButton.removeAttribute('onclick');
         button.id = 'panel-theme-toggle';
         button.type = 'button';
         button.setAttribute('aria-label', 'Schimbă tema');
@@ -278,10 +295,12 @@
             localStorage.setItem('panel_theme', mode);
             apply(mode);
         });
-        const logoutButton = [...footer.querySelectorAll('button')].find((item) => item !== button && /logout|ieșire|iesire/i.test(item.textContent || ''));
-        let reference = logoutButton || null;
-        while (reference?.parentElement && reference.parentElement !== footer) reference = reference.parentElement;
-        footer.insertBefore(button, reference);
+        if (!legacyButton) {
+            const logoutButton = [...footer.querySelectorAll('button')].find((item) => item !== button && /logout|ieșire|iesire/i.test(item.textContent || ''));
+            let reference = logoutButton || null;
+            while (reference?.parentElement && reference.parentElement !== footer) reference = reference.parentElement;
+            footer.insertBefore(button, reference);
+        }
         apply(mode);
     }
 
@@ -304,38 +323,24 @@
 
     function relocateHeaderActions() {
         const header = document.querySelector('header');
-        if (!header || document.getElementById('panel-page-actions')) return;
+        const themeButton = document.getElementById('panel-theme-toggle');
+        if (!header || !themeButton || document.querySelector('.panel-header-tools')) return;
 
-        const search = document.getElementById('global-search');
+        const tools = document.createElement('div');
+        tools.className = 'panel-header-tools';
+        const search = document.getElementById('global-search')
+            || header.querySelector('.search-container input, input[type="search"], input[placeholder*="Caută"], input[placeholder*="caută"]');
         if (search) {
-            const searchWrapper = search.closest('.relative');
-            if (searchWrapper) {
-                const searchBar = document.createElement('div');
-                searchBar.className = 'panel-dashboard-search-bar';
-                header.insertAdjacentElement('afterend', searchBar);
-                searchBar.appendChild(searchWrapper);
+            const originalWrapper = search.closest('.search-container, .relative') || search.parentElement;
+            if (originalWrapper) {
+                const searchHost = document.createElement('div');
+                searchHost.className = 'panel-search-host';
+                searchHost.appendChild(originalWrapper);
+                tools.appendChild(searchHost);
             }
-            return;
         }
-
-        const actionButtons = [...header.querySelectorAll('button:not(.panel-mobile-toggle)')];
-        if (!actionButtons.length) return;
-
-        const actionBar = document.createElement('div');
-        actionBar.id = 'panel-page-actions';
-        actionBar.className = 'panel-action-bar';
-        header.insertAdjacentElement('afterend', actionBar);
-
-        const movedContainers = new Set();
-        actionButtons.forEach((button) => {
-            const container = button.parentElement;
-            const directContainer = container?.parentElement === header && container.tagName === 'DIV';
-            const target = directContainer ? container : button;
-            if (!movedContainers.has(target)) {
-                movedContainers.add(target);
-                actionBar.appendChild(target);
-            }
-        });
+        tools.appendChild(themeButton);
+        header.appendChild(tools);
     }
 
     function setupAdminSaveArea() {
