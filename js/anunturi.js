@@ -1,6 +1,6 @@
 (() => {
   const URL='https://vkvsabbbawyiurnaiugo.supabase.co';
-  const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmJiYXd5aXVybmFpdWdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwNDY5NTYsImV4cCI6MjEwMDYyMjk1Nn0.s2R8mdsoeQzOyz7a-NJOi5SQmyDmyy98cfUMfGqLo44';
+  const KEY='sb_publishable_gRM7uXmfknjfFiOg7jjqDA_y-VGPMVD';
   const db=supabase.createClient(URL,KEY), user=getUser(), level=getRole();
   let posts=[], filter='all', editing=null, draft=null;
   const $=s=>document.querySelector(s), esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
