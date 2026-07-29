@@ -26,6 +26,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="css/global-footer.css">
     <script src="js/project-version.js"></script>
+    <script src="js/discord-config.js"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex items-center justify-center p-4 text-sm">
 
@@ -59,11 +60,18 @@
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdnNhYmJiYXd5aXVybmFpdWdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwNDY5NTYsImV4cCI6MjEwMDYyMjk1Nn0.s2R8mdsoeQzOyz7a-NJOi5SQmyDmyy98cfUMfGqLo44";
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const CLIENT_ID = "1531023771211792384"; 
+        let CLIENT_ID = window.PANEL_DISCORD_CONFIG.clientId;
+        const DISCORD_SCOPES = window.PANEL_DISCORD_CONFIG.scopes.join(' ');
         const REDIRECT_URI = window.location.origin + window.location.pathname;
 
-        document.getElementById('discord-login-btn').addEventListener('click', () => {
-            const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=identify%20email%20guilds.members.read`;
+        document.getElementById('discord-login-btn').addEventListener('click', async () => {
+            try {
+                const { data } = await supabaseClient.rpc('get_discord_oauth_config');
+                if (data?.[0]?.discord_client_id) CLIENT_ID = data[0].discord_client_id;
+            } catch (_) {
+                // Configurația locală rămâne fallback pentru prima instalare.
+            }
+            const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=${encodeURIComponent(DISCORD_SCOPES)}`;
             window.location.href = discordAuthUrl;
         });
 
