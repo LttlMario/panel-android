@@ -1,6 +1,6 @@
 (() => {
-    const SUPABASE_URL = 'https://vkvsabbbawyiurnaiugo.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdnNhYmJiYXd5aXVybmFpdWdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwNDY5NTYsImV4cCI6MjEwMDYyMjk1Nn0.s2R8mdsoeQzOyz7a-NJOi5SQmyDmyy98cfUMfGqLo44';
+    const SUPABASE_URL = window.PANEL_SUPABASE_CONFIG.url;
+    const SUPABASE_KEY = window.PANEL_SUPABASE_CONFIG.publishableKey;
     window.sendPanelDiscord = async (channel, payload) => {
         const accessToken = localStorage.getItem('discord_access_token');
         if (!accessToken) throw new Error('Sesiunea Discord lipsește. Autentifică-te din nou.');
