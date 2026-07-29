@@ -477,6 +477,80 @@
             transition: var(--transition);
         }
 
+        .mobile-map-toolbar,
+        .mobile-filter-close {
+            display: none;
+        }
+
+        @media (max-width: 767px) {
+            body, html { overflow: hidden; }
+            #app { grid-template-columns: 1fr !important; grid-template-rows: auto minmax(0, 1fr) !important; }
+            #locations-footer-host { display: none; }
+            header { min-height: 64px; padding: 10px 62px 10px 12px !important; }
+            .header-center-area { min-width: 0; }
+            .header-center-title { font-size: 14px; }
+            .header-center-subtitle { font-size: 10px; }
+            .controls-area > #admin-badge,
+            .controls-area > #admin-login-btn { display: none !important; }
+            #map-container-wrapper { grid-column: 1 !important; min-height: 0; }
+
+            .mobile-map-toolbar {
+                position: absolute;
+                z-index: 980;
+                top: 12px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: min(94vw, 430px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                padding: 7px;
+                border: 1px solid var(--border-color);
+                border-radius: 14px;
+                background: rgba(11,18,32,.92);
+                box-shadow: 0 8px 24px rgba(0,0,0,.35);
+                backdrop-filter: blur(12px);
+            }
+            .mobile-map-toolbar .map-switch-btn { flex: 1; min-width: 0; padding: 9px 5px; pointer-events: auto; }
+            .mobile-map-toolbar .mobile-filter-toggle {
+                width: 42px;
+                height: 36px;
+                flex: none;
+                border: 1px solid var(--accent);
+                border-radius: 9px;
+                background: rgba(16,185,129,.15);
+                color: var(--accent);
+                cursor: pointer;
+            }
+            .control-sidebar {
+                display: none;
+                top: 66px;
+                left: 10px;
+                right: 10px;
+                width: auto;
+                max-height: calc(100% - 78px);
+                padding: 16px;
+                z-index: 990;
+            }
+            .control-sidebar.mobile-open { display: flex; }
+            .control-sidebar > div:first-of-type { display: none; }
+            .mobile-filter-close {
+                display: flex;
+                width: 100%;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px 12px;
+                border: 1px solid var(--border-color);
+                border-radius: 10px;
+                background: var(--bg-main);
+                color: var(--text-main);
+                font-weight: 800;
+                cursor: pointer;
+            }
+            #map-container-wrapper #sidebar { width: min(92vw, 390px); }
+        }
+
         .map-switch-btn.active {
             background: var(--danger);
             color: #0b1220;
@@ -931,13 +1005,20 @@
         </header>
 
         <div id="map-container-wrapper">
+            <div class="mobile-map-toolbar" aria-label="Selectare hartă și filtre">
+                <button class="map-switch-btn active" data-map-target="ls" onclick="switchMap('ls')">Los Santos</button>
+                <button class="map-switch-btn" data-map-target="cayo" onclick="switchMap('cayo')">Cayo</button>
+                <button class="map-switch-btn" data-map-target="maldive" onclick="switchMap('maldive')">Maldive</button>
+                <button class="mobile-filter-toggle" type="button" onclick="document.querySelector('.control-sidebar').classList.toggle('mobile-open')" aria-label="Deschide filtrele">☰</button>
+            </div>
             <div class="control-sidebar">
+                <button class="mobile-filter-close" type="button" onclick="document.querySelector('.control-sidebar').classList.remove('mobile-open')"><span>Opțiuni și filtre</span><span>✕</span></button>
                 <div>
                     <div class="menu-section-title">Selectare Hartă</div>
                     <div class="map-switcher-group">
-                        <button class="map-switch-btn active" id="tab-ls" onclick="switchMap('ls')">Los Santos</button>
-                        <button class="map-switch-btn" id="tab-cayo" onclick="switchMap('cayo')">Cayo</button>
-                        <button class="map-switch-btn" id="tab-maldive" onclick="switchMap('maldive')">Maldive</button>
+                        <button class="map-switch-btn active" id="tab-ls" data-map-target="ls" onclick="switchMap('ls')">Los Santos</button>
+                        <button class="map-switch-btn" id="tab-cayo" data-map-target="cayo" onclick="switchMap('cayo')">Cayo</button>
+                        <button class="map-switch-btn" id="tab-maldive" data-map-target="maldive" onclick="switchMap('maldive')">Maldive</button>
                     </div>
                 </div>
 
@@ -1943,7 +2024,9 @@
                 if (updateView) {
                     setTimeout(() => maps[targetMapId].invalidateSize(), 50);
                 }
-                ['ls', 'cayo', 'maldive'].forEach(m => document.getElementById(`tab-${m}`).classList.toggle('active', m === targetMapId));
+                ['ls', 'cayo', 'maldive'].forEach(m => {
+                    document.querySelectorAll(`[data-map-target="${m}"]`).forEach(button => button.classList.toggle('active', m === targetMapId));
+                });
                 localStorage.setItem('gta_guide_illegal_map', targetMapId);
             }, 300);
         }
