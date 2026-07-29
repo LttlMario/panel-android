@@ -45,13 +45,21 @@ Deno.serve(async (request) => {
 
   if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders });
 
-  const webhookUrl = Deno.env.get('DISCORD_PONTAJ_WEBHOOK_URL');
+  const { data: panelConfig } = await supabase.from('discord_panel_config').select('pontaj_webhook_url').eq('id', 1).maybeSingle();
+  const webhookUrl = panelConfig?.pontaj_webhook_url || Deno.env.get('DISCORD_PONTAJ_WEBHOOK_URL');
   const results = await Promise.all((expired ?? []).map(async (shift) => {
     const seconds = workedSeconds(shift, now);
     const reason = 'Încheiere automată – program maxim atins';
+    let colleagueName = String(shift.colleague_name || '').trim();
+    if (!colleagueName) {
+      const { data: member } = await supabase.from('users')
+        .select('display_name, username').eq('discord_id', shift.discord_id).maybeSingle();
+      colleagueName = String(member?.display_name || member?.username || shift.discord_id || 'Necunoscut');
+    }
     const { data: updated, error: updateError } = await supabase.from('shifts').update({
       status: 'auto_completed', ended_at: now.toISOString(), end_time: romanianTime(now),
       duration: formatDuration(seconds), duration_ms: seconds * 1000, stop_reason: reason,
+      colleague_name: colleagueName,
     }).eq('id', shift.id).in('status', ['active', 'paused']).select('*');
 
     if (updateError || !updated?.length) return { id: shift.id, closed: false };
@@ -62,7 +70,7 @@ Deno.serve(async (request) => {
           title: `⏹️ Pontaj Încheiat - Tură de ${String(shift.shift_type).toUpperCase()}`,
           color: shift.shift_type === 'zi' ? 16766720 : 65535,
           fields: [
-            { name: '👤 Mecanic', value: String(shift.discord_id || 'Necunoscut'), inline: true },
+            { name: '👤 Mecanic', value: colleagueName, inline: true },
             { name: '📅 Data', value: String(shift.date || ''), inline: true },
             { name: '⏳ Timp Total Lucrat', value: `**${formatDuration(seconds)}**`, inline: true },
             { name: '📝 Motiv', value: reason, inline: false },
