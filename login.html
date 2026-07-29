@@ -201,6 +201,7 @@
                 localStorage.setItem('discord_user', JSON.stringify(finalUserData));
                 localStorage.setItem('user_role', finalUserData.role);
                 localStorage.setItem('discord_access_token', token);
+                localStorage.setItem('panel_session_issued_at', String(Date.now()));
 
                 document.getElementById('status-msg').textContent = "Autentificare reușită! Se redirecționează...";
                 setTimeout(() => {

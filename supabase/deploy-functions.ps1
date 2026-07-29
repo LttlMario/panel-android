@@ -14,7 +14,8 @@ $functions = @(
     'manage-discord-config',
     'manage-community-posts',
     'send-discord-notification',
-    'close-expired-shifts'
+    'close-expired-shifts',
+    'manage-admin-center'
 )
 
 foreach ($functionName in $functions) {

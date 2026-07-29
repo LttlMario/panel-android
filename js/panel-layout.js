@@ -413,6 +413,16 @@
         }
     }
 
+    function loadOperationsCenter() {
+        if (document.getElementById('panel-operations-script')) return;
+        const script = document.createElement('script');
+        script.id = 'panel-operations-script';
+        script.src = 'js/panel-operations.js';
+        script.defer = true;
+        document.head.appendChild(script);
+    }
+
+    loadOperationsCenter();
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setup);
     else setup();
 })();

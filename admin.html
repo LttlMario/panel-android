@@ -538,6 +538,8 @@
                 allUsersData = allUsersData.filter(u => String(u.discord_id || u.id) !== String(discordId));
                 renderUsersTable();
 
+                await window.panelAudit?.('user_kick', 'user', discordId, { userName });
+
                 alert(`Utilizatorul ${userName} a primit Kick cu succes din panel!`);
             } catch (err) {
                 console.error('Erore la acțiunea de kick:', err);
@@ -574,11 +576,19 @@
                     return supabaseClient.from('shifts').update({ status: 'completed', ended_at: now.toISOString(), end_time: endTime, duration, duration_ms: seconds * 1000, stop_reason: 'Încheiere de urgență – acțiune administrator' }).eq('id', shift.id).in('status', ['active', 'paused']);
                 }));
                 alert(`${shifts?.length || 0} ture au fost închise.`);
+                await window.panelAudit?.('shifts_emergency_stop', 'shifts', null, { count: shifts?.length || 0 });
                 refreshAdminOperations();
             } catch (error) { console.error('Eroare oprire de urgență:', error); alert('Nu s-au putut opri toate turele.'); }
         }
 
         async function saveAllAdminSettings() {
+            const maxHoursValue = Number(document.getElementById('pontaj-max-hours').value);
+            const dayEndValue = document.getElementById('pontaj-day-end-time').value;
+            const nightEndValue = document.getElementById('pontaj-night-end-time').value;
+            if (!Number.isFinite(maxHoursValue) || maxHoursValue < 1 || maxHoursValue > 24 || !/^\d{2}:\d{2}$/.test(dayEndValue) || !/^\d{2}:\d{2}$/.test(nightEndValue)) {
+                alert('Program invalid: durata trebuie să fie între 1 și 24 de ore, iar orele de închidere trebuie completate.');
+                return;
+            }
             const settings = {
                 pages: {
                     dashboard: document.getElementById('page-setting-dashboard').checked,
@@ -589,11 +599,11 @@
                     marketplace: document.getElementById('page-setting-marketplace').checked,
                 },
                 pontajConfig: {
-                    maxHours: document.getElementById('pontaj-max-hours').value,
+                    maxHours: maxHoursValue,
                     mode: document.getElementById('pontaj-mode').value,
                     globalNotice: document.getElementById('pontaj-global-notice').value,
-                    dayEndTime: document.getElementById('pontaj-day-end-time').value,
-                    nightEndTime: document.getElementById('pontaj-night-end-time').value,
+                    dayEndTime: dayEndValue,
+                    nightEndTime: nightEndValue,
                     excludeBreaks: document.getElementById('pontaj-exclude-breaks').checked
                 }
             };
@@ -602,6 +612,7 @@
             try {
                 const { error } = await supabaseClient.from('app_settings').upsert({ key: 'pontaj_config', value: settings.pontajConfig, updated_at: new Date().toISOString() }, { onConflict: 'key' });
                 if (error) throw error;
+                await window.panelAudit?.('pontaj_config_update', 'app_settings', 'pontaj_config', settings.pontajConfig);
                 alert('Setările globale de pontaj au fost publicate pentru toți utilizatorii.');
             } catch (error) {
                 console.warn('Tabelul app_settings nu este configurat încă:', error);

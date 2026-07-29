@@ -12,3 +12,6 @@ verify_jwt = false
 
 [functions.close-expired-shifts]
 verify_jwt = false
+
+[functions.manage-admin-center]
+verify_jwt = false
