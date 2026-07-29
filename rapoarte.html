@@ -429,6 +429,7 @@
                 currentUser.discord_id = activeUser.discord_id || activeUser.id;
                 currentUser.display_name = activeUser.display_name || activeUser.username || activeUser.name || 'Mecanic';
                 currentUser.role = activeUser.role || activeUser.default_role || 'Mecanic';
+                usersMap[String(currentUser.discord_id).trim()] = currentUser.display_name;
                 const userAvatar = activeUser.avatar || activeUser.avatar_url || 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f468-200d-1f4bb.png';
 
                 document.getElementById('user-display-name').textContent = currentUser.display_name;
@@ -583,6 +584,7 @@
 
             const shiftData = {
                 discord_id: currentUser.discord_id || 'necunoscut',
+                colleague_name: currentUser.display_name || 'Mecanic',
                 date: dateStr,
                 start_time: shiftStartTime.toTimeString().split(' ')[0],
                 end_time: shiftEndTime.toTimeString().split(' ')[0],
@@ -699,7 +701,8 @@
                 activeShiftsData = data || [];
                 if (!activeShiftsData.length) { container.innerHTML = '<p class="text-xs text-slate-500 md:col-span-3 py-3">Nu există pontaje active în acest moment.</p>'; return; }
                 container.innerHTML = activeShiftsData.map(shift => {
-                    const name = usersMap[shift.discord_id] || shift.discord_id || 'Mecanic necunoscut';
+                    const normalizedId = String(shift.discord_id || '').trim();
+                    const name = shift.colleague_name || usersMap[normalizedId] || normalizedId || 'Mecanic necunoscut';
                     const stateLabel = shift.status === 'paused' ? 'PAUZĂ' : 'ACTIV';
                     const stateClass = shift.status === 'paused' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
                     const actions = `<div class="grid grid-cols-2 gap-2"><button onclick="openActiveShiftModal('${shift.id}')" class="py-2 rounded-lg text-xs font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 cursor-pointer">Editează</button><button onclick="forceStopActiveShift('${shift.id}')" class="py-2 rounded-lg text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 cursor-pointer">Oprește</button></div>`;
@@ -850,19 +853,33 @@
 
         async function fetchUsersData() {
             try {
-                let { data: usersData } = await supabaseClient.from('users').select('discord_id, display_name, username');
-                if (usersData) {
-                    usersData.forEach(u => {
-                        if (u.discord_id) usersMap[u.discord_id] = u.display_name || u.username;
-                    });
-                }
-            } catch (e) {}
+                const { data: directory, error } = await supabaseClient.rpc('get_user_directory');
+                if (error) throw error;
+                (directory || []).forEach(user => {
+                    const id = String(user.discord_id || '').trim();
+                    if (id) usersMap[id] = user.display_name || id;
+                });
+                return;
+            } catch (error) {
+                console.warn('Directorul de utilizatori nu este încă instalat; se încearcă metoda compatibilă.', error);
+            }
+
+            try {
+                const { data: usersData, error } = await supabaseClient.from('users').select('discord_id, display_name, username');
+                if (error) throw error;
+                (usersData || []).forEach(user => {
+                    const id = String(user.discord_id || '').trim();
+                    if (id) usersMap[id] = user.display_name || user.username || id;
+                });
+            } catch (error) {
+                console.warn('Lista utilizatorilor nu poate fi citită direct din cauza politicilor RLS.', error);
+            }
 
             try {
                 let { data: profilesData } = await supabaseClient.from('profiles').select('discord_id, display_name, username');
                 if (profilesData) {
                     profilesData.forEach(u => {
-                        if (u.discord_id) usersMap[u.discord_id] = u.display_name || u.username;
+                        if (u.discord_id) usersMap[String(u.discord_id).trim()] = u.display_name || u.username;
                     });
                 }
             } catch (e) {}
@@ -872,13 +889,14 @@
             try {
                 let { data, error } = await supabaseClient
                     .from('shifts')
-                    .select('id, discord_id, date, start_time, end_time, duration, created_at, shift_type, duration_ms')
+                    .select('id, discord_id, colleague_name, date, start_time, end_time, duration, created_at, shift_type, duration_ms')
                     .order('created_at', { ascending: false });
 
                 if (error) throw error;
 
                 allShiftsData = (data || []).map(shift => {
-                    const resolvedName = usersMap[shift.discord_id] || shift.discord_id || 'Mecanic Necunoscut';
+                    const normalizedId = String(shift.discord_id || '').trim();
+                    const resolvedName = shift.colleague_name || usersMap[normalizedId] || normalizedId || 'Mecanic Necunoscut';
                     return {
                         ...shift,
                         mechanic_name: resolvedName

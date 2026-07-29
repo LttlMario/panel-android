@@ -554,6 +554,7 @@
         async function createActiveShiftRecord() {
             const activeRecord = {
                 discord_id: currentUser.discord_id || 'necunoscut',
+                colleague_name: currentUser.display_name || currentUser.username || 'Mecanic',
                 date: getRomanianDate(shiftStartTime),
                 start_time: getRomanianTime(shiftStartTime),
                 end_time: null,
@@ -825,7 +826,7 @@
                 const now = getRomanianNowDateTime();
                 const autoStopAt = getShiftDeadline(selectedShiftType, now);
                 const newShift = {
-                    discord_id: currentUser.discord_id, date: getRomanianDate(now), start_time: getRomanianTime(now), end_time: null,
+                    discord_id: currentUser.discord_id, colleague_name: currentUser.display_name || currentUser.username || 'Mecanic', date: getRomanianDate(now), start_time: getRomanianTime(now), end_time: null,
                     duration: '00:00:00', duration_ms: 0, shift_type: selectedShiftType, created_at: now.toISOString(),
                     started_at: now.toISOString(), auto_stop_at: autoStopAt.toISOString(), status: 'active', paused_seconds: 0, paused_at: null, stop_reason: null
                 };
