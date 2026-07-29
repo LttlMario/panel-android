@@ -11,6 +11,9 @@
             .panel-responsive-sidebar.fixed { position:fixed; }
             #panel-theme-toggle { width:38px; height:38px; flex:none; display:grid; place-items:center; border:1px solid #334155; border-radius:11px; background:#0b1220; color:#cbd5e1; cursor:pointer; box-shadow:0 5px 16px rgba(0,0,0,.18); }
             #panel-theme-toggle:hover { border-color:#10b981; color:#6ee7b7; }
+            .panel-responsive-sidebar .nav-link, .panel-mobile-nav .nav-link, #mobile-menu .nav-link { border:1px solid #2d4058; background:linear-gradient(135deg,rgba(30,45,65,.9),rgba(19,31,49,.92)); box-shadow:0 3px 10px rgba(2,6,23,.2); }
+            .panel-responsive-sidebar .nav-link:hover, .panel-mobile-nav .nav-link:hover, #mobile-menu .nav-link:hover { border-color:#48617d; background:linear-gradient(135deg,#293e58,#1d3048); transform:translateX(2px); }
+            .panel-responsive-sidebar .nav-link.bg-emerald-500\\/10, .panel-mobile-nav .nav-link.bg-emerald-500\\/10, #mobile-menu .nav-link.bg-emerald-500\\/10 { border-color:rgba(52,211,153,.45); background:linear-gradient(135deg,rgba(5,150,105,.34),rgba(6,95,70,.3)); }
             header { position:relative; }
             header:has(.panel-header-tools) { padding-right:72px !important; }
             .panel-header-tools { position:absolute; inset:0 18px; z-index:25; display:flex; align-items:center; pointer-events:none; }
@@ -72,6 +75,7 @@
                 .panel-header-tools .panel-search-host { position:static; transform:none; width:calc(100% - 48px); }
                 header:has(.panel-header-tools) { padding-right:16px !important; }
                 #app { grid-template-columns:1fr !important; grid-template-rows:64px 1fr !important; }
+                #app:has(#map-container-wrapper) { grid-template-rows:auto minmax(0,1fr) !important; }
                 #app > header, #app > #map-container-wrapper { grid-column:1 !important; }
                 .panel-action-bar { justify-content:stretch; padding:12px 16px; }
                 .panel-action-bar > div, .panel-action-bar button { width:100%; }
@@ -232,6 +236,7 @@
             ['marketplace-ilegal.html', 3, '🚨', 'Black Market'],
             ['rapoarte.html', 4, '📈', 'Rapoarte'],
             ['logs.html', 7, '🧾', 'Loguri'],
+            ['diagnostic.html', 7, '🩺', 'Verificare sistem'],
             ['admin.html', 7, '👑', 'Panou Admin']
         ];
 
@@ -330,7 +335,7 @@
         const allowedPages = new Set([
             'index.html', 'pontaj.html', 'cereri.html', 'rapoarte.html', 'contracte.html', 'admin.html',
             'calculatorilegal.html', 'craftmecanics.html', 'locatiiilegale.html', 'marketplace.html',
-            'marketplace-ilegal.html', 'logs.html'
+            'marketplace-ilegal.html', 'logs.html', 'diagnostic.html'
         ]);
         if (!allowedPages.has(currentPage) || document.getElementById('panel-assistant-widget')) return;
         try {
