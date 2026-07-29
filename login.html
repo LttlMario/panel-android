@@ -131,7 +131,9 @@
 
                 document.getElementById('status-msg').textContent = `Autentificare reușită! Rol sincronizat: ${syncedUser.role}.`;
                 setTimeout(() => {
-                    window.location.href = 'index.html';
+                    const returnAfterLogin = sessionStorage.getItem('panel_return_after_login');
+                    sessionStorage.removeItem('panel_return_after_login');
+                    window.location.href = returnAfterLogin || 'index.html';
                 }, 400);
                 return;
 
@@ -193,12 +195,14 @@
 
                 document.getElementById('status-msg').textContent = "Autentificare reușită! Se redirecționează...";
                 setTimeout(() => {
-                    window.location.href = 'index.html';
+                    const returnAfterLogin = sessionStorage.getItem('panel_return_after_login');
+                    sessionStorage.removeItem('panel_return_after_login');
+                    window.location.href = returnAfterLogin || 'index.html';
                 }, 400);
 
             } catch (err) {
                 console.error('Erore login:', err);
-                document.getElementById('status-msg').textContent = "A apărut o eroare la autentificare.";
+                document.getElementById('status-msg').textContent = `Eroare autentificare: ${err.message || 'eroare necunoscută'}`;
                 localStorage.clear();
             }
         }
