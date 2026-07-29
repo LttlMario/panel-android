@@ -9,6 +9,12 @@
         style.textContent = `
             .panel-responsive-sidebar { transition: width .2s ease; position:sticky; top:0; height:100vh; align-self:flex-start; }
             .panel-responsive-sidebar.fixed { position:fixed; }
+            #panel-theme-toggle { width:34px; height:34px; flex:none; display:grid; place-items:center; border:1px solid #334155; border-radius:10px; background:#020617; color:#cbd5e1; cursor:pointer; }
+            html[data-panel-theme="light"] body { background:#f1f5f9 !important; color:#0f172a !important; }
+            html[data-panel-theme="light"] .bg-slate-950 { background-color:#f1f5f9 !important; }
+            html[data-panel-theme="light"] .bg-slate-900 { background-color:#fff !important; }
+            html[data-panel-theme="light"] .text-slate-100, html[data-panel-theme="light"] .text-slate-200, html[data-panel-theme="light"] .text-slate-300 { color:#1e293b !important; }
+            html[data-panel-theme="light"] .border-slate-800, html[data-panel-theme="light"] .border-slate-700 { border-color:#cbd5e1 !important; }
             .panel-sidebar-toggle { position:absolute; top:18px; right:-14px; z-index:70; width:28px; height:28px; display:flex; align-items:center; justify-content:center; border:1px solid #334155; border-radius:999px; background:#0f172a; color:#cbd5e1; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.3); }
             .panel-sidebar-toggle:hover { background:#1e293b; color:#fff; }
             #panel-mobile-backdrop { display:none; position:fixed; inset:0; z-index:4000; background:rgba(2,6,23,.78); backdrop-filter:blur(3px); }
@@ -49,6 +55,7 @@
             applyRoleBasedVisibility(getRole());
         }
         ensureSidebarLogout(sidebar);
+        ensureThemeToggle(sidebar);
 
         addStyles();
         navigation.querySelectorAll('a[href="asistent.html"]').forEach((link) => link.remove());
@@ -234,6 +241,48 @@
             }
         });
         footer.appendChild(button);
+    }
+
+    function ensureThemeToggle(sidebar) {
+        if (sidebar.querySelector('#panel-theme-toggle') || document.getElementById('theme-toggle-btn')) return;
+        const avatar = sidebar.querySelector('#user-avatar');
+        if (!avatar) return;
+        let footer = avatar.parentElement;
+        while (footer?.parentElement && footer.parentElement !== sidebar) footer = footer.parentElement;
+        if (!footer) return;
+
+        const modes = ['system', 'dark', 'light'];
+        const icons = { system: '🌓', dark: '🌙', light: '☀️' };
+        const labels = { system: 'Tema sistemului', dark: 'Temă întunecată', light: 'Temă luminoasă' };
+        const apply = (mode) => {
+            const resolved = mode === 'system'
+                ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                : mode;
+            document.documentElement.dataset.panelTheme = resolved;
+            document.documentElement.dataset.theme = resolved;
+            document.documentElement.classList.toggle('dark', resolved === 'dark');
+            const button = document.getElementById('panel-theme-toggle');
+            if (button) {
+                button.textContent = icons[mode];
+                button.title = labels[mode];
+            }
+        };
+
+        let mode = localStorage.getItem('panel_theme') || 'system';
+        const button = document.createElement('button');
+        button.id = 'panel-theme-toggle';
+        button.type = 'button';
+        button.setAttribute('aria-label', 'Schimbă tema');
+        button.addEventListener('click', () => {
+            mode = modes[(modes.indexOf(mode) + 1) % modes.length];
+            localStorage.setItem('panel_theme', mode);
+            apply(mode);
+        });
+        const logoutButton = [...footer.querySelectorAll('button')].find((item) => item !== button && /logout|ieșire|iesire/i.test(item.textContent || ''));
+        let reference = logoutButton || null;
+        while (reference?.parentElement && reference.parentElement !== footer) reference = reference.parentElement;
+        footer.insertBefore(button, reference);
+        apply(mode);
     }
 
     async function setupAssistantWidget(currentPage) {
