@@ -3,99 +3,968 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Loguri - Workforce Management</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config={darkMode:'class',theme:{extend:{colors:{slate:{850:'#1e293b',900:'#0f172a',950:'#020617'}}}}}</script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#1e293b',
+                            900: '#0f172a',
+                            950: '#020617'
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <script src="js/permissions.js"></script>
     <script src="js/panel-layout.js"></script>
+
     <link rel="stylesheet" href="css/global-footer.css">
     <script src="js/project-version.js"></script>
 </head>
+
 <body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen text-sm">
+
     <div class="flex min-h-screen w-full">
+
+        <!-- SIDEBAR DESKTOP -->
         <aside class="w-72 bg-slate-900 border-r border-slate-800 flex-col justify-between hidden md:flex fixed inset-y-0">
-            <div class="p-6 overflow-y-auto"><h1 class="text-xl font-bold">Panel<span class="block text-xs font-normal text-slate-400 mt-0.5">by Little Mario</span></h1>
-                <nav class="mt-6 space-y-1.5">
-                    <a href="index.html" data-role="1" class="nav-link flex gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800"><span>📊</span>Dashboard</a>
-                    <a href="pontaj.html" data-role="1" class="nav-link flex gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800"><span>⏱️</span>Pontaj</a>
-                    <a href="cereri.html" data-role="1" class="nav-link flex gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800"><span>📋</span>Cereri / Absențe</a>
-                    <a href="rapoarte.html" data-role="4" class="nav-link flex gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800"><span>📈</span>Rapoarte</a>
-                    <a href="logs.html" data-role="5" class="nav-link flex gap-3 px-4 py-3 rounded-xl bg-emerald-500/10 text-emerald-400 font-medium"><span>🧾</span>Loguri</a>
-                    <a href="admin.html" data-role="5" class="nav-link flex gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800"><span>🔑</span>Panou Admin</a>
+
+            <div class="p-6 overflow-y-auto">
+
+                <h1 class="text-xl font-bold">
+                    Panel
+                    <span class="block text-xs font-normal text-slate-400 mt-0.5">
+                        by Little Mario
+                    </span>
+                </h1>
+
+                <nav class="mt-6 space-y-1.5" id="sidebar-nav">
+
+                    <!-- NIVEL 1: MECANIC ȘI ROLURI SUPERIOARE -->
+
+                    <a
+                        href="index.html"
+                        data-role="1"
+                        class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition"
+                    >
+                        <span>📊</span>
+                        <span>Dashboard</span>
+                    </a>
+
+                    <a
+                        href="pontaj.html"
+                        data-role="1"
+                        class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition"
+                    >
+                        <span>⏱️</span>
+                        <span>Pontaj</span>
+                    </a>
+
+                    <a
+                        href="cereri.html"
+                        data-role="1"
+                        class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition"
+                    >
+                        <span>📋</span>
+                        <span>Cereri / Absențe</span>
+                    </a>
+
+                    <a
+                        href="craftmecanics.html"
+                        data-role="1"
+                        class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition"
+                    >
+                        <span>🔨</span>
+                        <span>Craft Mecanics</span>
+                    </a>
+
+                    <a
+                        href="marketplace.html"
+                        data-role="1"
+                        class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition"
+                    >
+                        <span>🛒</span>
+                        <span>Marketplace</span>
+                    </a>
+
+                    <!-- NIVEL 3: LA FAMILIA ȘI ROLURI SUPERIOARE -->
+
+                    <a
+                        href="calculatorilegal.html"
+                        data-role="3"
+                        class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition"
+                    >
+                        <span>🧮</span>
+                        <span>Calculator Ilegal</span>
+                    </a>
+
+                    <a
+                        href="locatiiilegale.html"
+                        data-role="3"
+                        class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition"
+                    >
+                        <span>🗺️</span>
+                        <span>Locații Ilegale</span>
+                    </a>
+
+                    <a
+                        href="marketplace-ilegal.html"
+                        data-role="3"
+                        class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition"
+                    >
+                        <span>🚨</span>
+                        <span>Black Market</span>
+                    </a>
+
+                    <!-- NIVEL 4: MANAGER ȘI ROLURI SUPERIOARE -->
+
+                    <a
+                        href="rapoarte.html"
+                        data-role="4"
+                        class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition"
+                    >
+                        <span>📈</span>
+                        <span>Rapoarte</span>
+                    </a>
+
+                    <a
+                        href="contracte.html"
+                        data-role="4"
+                        class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition"
+                    >
+                        <span>📜</span>
+                        <span>Contracte</span>
+                    </a>
+
+                    <!-- NIVEL 7: DOAR COORDONATOR -->
+
+                    <a
+                        href="logs.html"
+                        data-role="7"
+                        class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-500/10 text-emerald-400 font-medium transition"
+                    >
+                        <span>🧾</span>
+                        <span>Loguri</span>
+                    </a>
+
+                    <a
+                        href="admin.html"
+                        data-role="7"
+                        class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition"
+                    >
+                        <span>👑</span>
+                        <span>Panou Admin</span>
+                    </a>
+
                 </nav>
             </div>
-            <div class="p-4 border-t border-slate-800 flex items-center justify-between gap-2"><div class="flex items-center gap-3 min-w-0"><img id="user-avatar" class="w-9 h-9 rounded-full border border-slate-700 object-cover" alt=""><div class="min-w-0"><p id="user-display-name" class="font-semibold truncate">Se încarcă...</p><p id="user-role" class="text-xs text-emerald-400 truncate">Manager</p></div></div><button onclick="logout()" class="text-xs text-rose-400 hover:text-rose-300">Ieșire</button></div>
-        </aside>
 
-        <main class="flex-1 md:ml-72 min-w-0">
-            <header class="h-16 border-b border-slate-800 bg-slate-900/70 backdrop-blur sticky top-0 z-10 px-5 md:px-8 flex items-center justify-between gap-3"><div><h2 class="text-lg font-bold">Jurnal de activitate</h2><p class="text-[11px] text-slate-500">Actualizat în timp real din Supabase</p></div><button onclick="loadLogs()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-2 rounded-xl text-xs font-semibold">↻ Reîmprospătează</button></header>
-            <div class="p-5 md:p-8 max-w-7xl mx-auto space-y-6">
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5"><p class="text-[10px] uppercase tracking-wider text-slate-500">Evenimente afișate</p><p id="count-all" class="text-3xl font-black mt-1">0</p></div>
-                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5"><p class="text-[10px] uppercase tracking-wider text-slate-500">Pontaje active</p><p id="count-active" class="text-3xl font-black mt-1 text-emerald-400">0</p></div>
-                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5"><p class="text-[10px] uppercase tracking-wider text-slate-500">Învoiri active</p><p id="count-absences" class="text-3xl font-black mt-1 text-indigo-400">0</p></div>
+            <!-- PROFIL UTILIZATOR -->
+            <div class="p-4 border-t border-slate-800 flex items-center justify-between gap-2">
+
+                <div class="flex items-center gap-3 min-w-0">
+
+                    <img
+                        id="user-avatar"
+                        class="w-9 h-9 rounded-full border border-slate-700 object-cover"
+                        alt="Avatar utilizator"
+                    >
+
+                    <div class="min-w-0">
+
+                        <p
+                            id="user-display-name"
+                            class="font-semibold truncate"
+                        >
+                            Se încarcă...
+                        </p>
+
+                        <p
+                            id="user-role"
+                            class="text-xs text-emerald-400 truncate"
+                        >
+                            Coordonator
+                        </p>
+
+                    </div>
                 </div>
 
+                <button
+                    type="button"
+                    onclick="logout()"
+                    class="text-xs text-rose-400 hover:text-rose-300"
+                >
+                    Ieșire
+                </button>
+
+            </div>
+        </aside>
+
+        <!-- CONȚINUT PRINCIPAL -->
+        <main class="flex-1 md:ml-72 min-w-0">
+
+            <header class="min-h-16 border-b border-slate-800 bg-slate-900/70 backdrop-blur sticky top-0 z-10 px-5 py-3 md:px-8 flex items-center justify-between gap-3">
+
+                <div>
+                    <h2 class="text-lg font-bold">
+                        Jurnal de activitate
+                    </h2>
+
+                    <p class="text-[11px] text-slate-500">
+                        Actualizat în timp real din Supabase
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    onclick="loadLogs()"
+                    class="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-2 rounded-xl text-xs font-semibold transition"
+                >
+                    ↻ Reîmprospătează
+                </button>
+
+            </header>
+
+            <div class="p-5 md:p-8 max-w-7xl mx-auto space-y-6">
+
+                <!-- STATISTICI -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+
+                        <p class="text-[10px] uppercase tracking-wider text-slate-500">
+                            Evenimente afișate
+                        </p>
+
+                        <p
+                            id="count-all"
+                            class="text-3xl font-black mt-1"
+                        >
+                            0
+                        </p>
+
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+
+                        <p class="text-[10px] uppercase tracking-wider text-slate-500">
+                            Pontaje active
+                        </p>
+
+                        <p
+                            id="count-active"
+                            class="text-3xl font-black mt-1 text-emerald-400"
+                        >
+                            0
+                        </p>
+
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+
+                        <p class="text-[10px] uppercase tracking-wider text-slate-500">
+                            Învoiri active
+                        </p>
+
+                        <p
+                            id="count-absences"
+                            class="text-3xl font-black mt-1 text-indigo-400"
+                        >
+                            0
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <!-- FILTRE -->
                 <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 space-y-4">
-                    <div class="flex flex-col md:flex-row md:items-end gap-3"><label class="block flex-1"><span class="text-xs text-slate-400">Caută</span><input id="search" oninput="renderLogs()" placeholder="Nume, ID, motiv sau produs..." class="mt-1 w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 outline-none focus:border-emerald-500"></label><label class="block md:w-52"><span class="text-xs text-slate-400">Tip</span><select id="type-filter" onchange="renderLogs()" class="mt-1 w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5"><option value="all">Toate</option><option value="pontaj">Pontaj</option><option value="absenta">Învoire / absență</option><option value="marketplace">Marketplace</option><option value="marketplace_ilegal">Black Market</option></select></label><label class="block md:w-44"><span class="text-xs text-slate-400">Perioadă</span><select id="period-filter" onchange="renderLogs()" class="mt-1 w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5"><option value="all">Tot istoricul</option><option value="today">Astăzi</option><option value="7">Ultimele 7 zile</option><option value="30">Ultimele 30 zile</option></select></label></div>
+
+                    <div class="flex flex-col md:flex-row md:items-end gap-3">
+
+                        <label class="block flex-1">
+
+                            <span class="text-xs text-slate-400">
+                                Caută
+                            </span>
+
+                            <input
+                                id="search"
+                                type="search"
+                                oninput="renderLogs()"
+                                placeholder="Nume, ID, motiv sau produs..."
+                                class="mt-1 w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 outline-none focus:border-emerald-500"
+                            >
+
+                        </label>
+
+                        <label class="block md:w-52">
+
+                            <span class="text-xs text-slate-400">
+                                Tip
+                            </span>
+
+                            <select
+                                id="type-filter"
+                                onchange="renderLogs()"
+                                class="mt-1 w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5"
+                            >
+                                <option value="all">
+                                    Toate
+                                </option>
+
+                                <option value="pontaj">
+                                    Pontaj
+                                </option>
+
+                                <option value="absenta">
+                                    Învoire / absență
+                                </option>
+
+                                <option value="marketplace">
+                                    Marketplace
+                                </option>
+
+                                <option value="marketplace_ilegal">
+                                    Black Market
+                                </option>
+                            </select>
+
+                        </label>
+
+                        <label class="block md:w-44">
+
+                            <span class="text-xs text-slate-400">
+                                Perioadă
+                            </span>
+
+                            <select
+                                id="period-filter"
+                                onchange="renderLogs()"
+                                class="mt-1 w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5"
+                            >
+                                <option value="all">
+                                    Tot istoricul
+                                </option>
+
+                                <option value="today">
+                                    Astăzi
+                                </option>
+
+                                <option value="7">
+                                    Ultimele 7 zile
+                                </option>
+
+                                <option value="30">
+                                    Ultimele 30 zile
+                                </option>
+                            </select>
+
+                        </label>
+
+                    </div>
                 </section>
 
-                <section class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden"><div class="px-5 py-4 border-b border-slate-800 flex justify-between"><h3 class="font-bold">Evenimente</h3><span id="visible-count" class="text-xs text-slate-500">0 rezultate</span></div><div id="logs-list" class="max-h-[62vh] overflow-y-auto divide-y divide-slate-800"><p class="p-8 text-center text-slate-500">Se încarcă logurile...</p></div></section>
+                <!-- LISTĂ LOGURI -->
+                <section class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+
+                    <div class="px-5 py-4 border-b border-slate-800 flex justify-between">
+
+                        <h3 class="font-bold">
+                            Evenimente
+                        </h3>
+
+                        <span
+                            id="visible-count"
+                            class="text-xs text-slate-500"
+                        >
+                            0 rezultate
+                        </span>
+
+                    </div>
+
+                    <div
+                        id="logs-list"
+                        class="max-h-[62vh] overflow-y-auto divide-y divide-slate-800"
+                    >
+                        <p class="p-8 text-center text-slate-500">
+                            Se încarcă logurile...
+                        </p>
+                    </div>
+
+                </section>
+
             </div>
         </main>
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://vkvsabbbawyiurnaiugo.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdnNhYmJiYXd5aXVybmFpdWdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwNDY5NTYsImV4cCI6MjEwMDYyMjk1Nn0.s2R8mdsoeQzOyz7a-NJOi5SQmyDmyy98cfUMfGqLo44';
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        let events = [], usersMap = {};
-        const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
-        const dateText = value => value ? new Date(value).toLocaleString('ro-RO', {dateStyle:'medium',timeStyle:'medium'}) : 'Dată necunoscută';
+        const SUPABASE_URL =
+            'https://vkvsabbbawyiurnaiugo.supabase.co';
+
+        const SUPABASE_KEY =
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXAiLCJyZWYiOiJ2a3ZzYWJiYmF3eWl1cm5haXVnbyIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzg1MDQ2OTU2LCJleHAiOjIxMDA2MjI5NTZ9.s2R8mdsoeQzOyz7a-NJOi5SQmyDmyy98cfUMfGqLo44';
+
+        const supabaseClient = window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_KEY
+        );
+
+        let events = [];
+        let usersMap = {};
+
+        const escapeHtml = (value) => {
+            return String(value ?? '').replace(
+                /[&<>'"]/g,
+                (character) => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                })[character]
+            );
+        };
+
+        const dateText = (value) => {
+            if (!value) {
+                return 'Dată necunoscută';
+            }
+
+            const date = new Date(value);
+
+            if (Number.isNaN(date.getTime())) {
+                return 'Dată necunoscută';
+            }
+
+            return date.toLocaleString('ro-RO', {
+                dateStyle: 'medium',
+                timeStyle: 'medium'
+            });
+        };
 
         document.addEventListener('DOMContentLoaded', async () => {
             const user = getUser();
-            if (!user) return;
-            if (typeof getRole !== 'function' || getRole() < 5) { window.location.replace('403.html'); return; }
-            const {data: dbUser} = await supabaseClient.from('users').select('*').eq('discord_id', user.discord_id || user.id).maybeSingle();
-            const activeUser = dbUser || user;
-            const activeRoleLevel = typeof getRoleFromUser === 'function' ? getRoleFromUser(activeUser) : getRole();
-            if (activeRoleLevel < 5) { window.location.replace('403.html'); return; }
-            document.getElementById('user-display-name').textContent = activeUser.display_name || activeUser.username || 'Manager';
-            document.getElementById('user-role').textContent = activeUser.role || activeUser.default_role || 'Manager';
-            document.getElementById('user-avatar').src = activeUser.avatar || activeUser.avatar_url || 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f468-200d-1f4bb.png';
-            await loadLogs();
-            supabaseClient.channel('logs-live').on('postgres_changes',{event:'*',schema:'public',table:'shifts'},loadLogs).on('postgres_changes',{event:'*',schema:'public',table:'absences'},loadLogs).on('postgres_changes',{event:'*',schema:'public',table:'marketplace'},loadLogs).on('postgres_changes',{event:'*',schema:'public',table:'marketplace_ilegal'},loadLogs).subscribe();
+
+            if (!user) {
+                window.location.replace('login.html');
+                return;
+            }
+
+            /*
+             * Logurile sunt disponibile doar pentru:
+             * Coordonator = nivelul 7
+             */
+            if (
+                typeof getRole !== 'function' ||
+                getRole() < Roles.COORDONATOR
+            ) {
+                window.location.replace('403.html');
+                return;
+            }
+
+            try {
+                const discordId = user.discord_id || user.id;
+
+                const { data: dbUser, error: userError } =
+                    await supabaseClient
+                        .from('users')
+                        .select('*')
+                        .eq('discord_id', discordId)
+                        .maybeSingle();
+
+                if (userError) {
+                    console.warn(
+                        'Utilizatorul nu a putut fi verificat în baza de date:',
+                        userError
+                    );
+                }
+
+                const activeUser = dbUser || user;
+
+                /*
+                 * Salvăm temporar utilizatorul verificat în localStorage,
+                 * pentru ca getRole() să citească rolul actual din Supabase.
+                 */
+                localStorage.setItem(
+                    'discord_user',
+                    JSON.stringify(activeUser)
+                );
+
+                const activeRoleLevel = getRole();
+
+                if (activeRoleLevel < Roles.COORDONATOR) {
+                    window.location.replace('403.html');
+                    return;
+                }
+
+                document.getElementById(
+                    'user-display-name'
+                ).textContent =
+                    activeUser.display_name ||
+                    activeUser.username ||
+                    'Coordonator';
+
+                document.getElementById(
+                    'user-role'
+                ).textContent =
+                    activeUser.role ||
+                    activeUser.default_role ||
+                    'Coordonator';
+
+                document.getElementById(
+                    'user-avatar'
+                ).src =
+                    activeUser.avatar ||
+                    activeUser.avatar_url ||
+                    'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f468-200d-1f4bb.png';
+
+                if (
+                    typeof applyRoleBasedVisibility === 'function'
+                ) {
+                    applyRoleBasedVisibility(activeRoleLevel);
+                }
+
+                await loadLogs();
+
+                supabaseClient
+                    .channel('logs-live')
+
+                    .on(
+                        'postgres_changes',
+                        {
+                            event: '*',
+                            schema: 'public',
+                            table: 'shifts'
+                        },
+                        loadLogs
+                    )
+
+                    .on(
+                        'postgres_changes',
+                        {
+                            event: '*',
+                            schema: 'public',
+                            table: 'absences'
+                        },
+                        loadLogs
+                    )
+
+                    .on(
+                        'postgres_changes',
+                        {
+                            event: '*',
+                            schema: 'public',
+                            table: 'marketplace'
+                        },
+                        loadLogs
+                    )
+
+                    .on(
+                        'postgres_changes',
+                        {
+                            event: '*',
+                            schema: 'public',
+                            table: 'marketplace_ilegal'
+                        },
+                        loadLogs
+                    )
+
+                    .subscribe();
+
+            } catch (error) {
+                console.error(
+                    'Eroare la inițializarea paginii de loguri:',
+                    error
+                );
+            }
         });
 
-        async function safeQuery(table, limit=200) { const {data,error}=await supabaseClient.from(table).select('*').order('created_at',{ascending:false}).limit(limit); return error ? [] : (data || []); }
+        async function safeQuery(table, limit = 200) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from(table)
+                    .select('*')
+                    .order('created_at', {
+                        ascending: false
+                    })
+                    .limit(limit);
+
+                if (error) {
+                    console.warn(
+                        `Nu s-au putut încărca datele din ${table}:`,
+                        error
+                    );
+
+                    return [];
+                }
+
+                return data || [];
+
+            } catch (error) {
+                console.warn(
+                    `Eroare la interogarea tabelului ${table}:`,
+                    error
+                );
+
+                return [];
+            }
+        }
+
         async function loadLogs() {
-            const list=document.getElementById('logs-list'); list.innerHTML='<p class="p-8 text-center text-slate-500">Se actualizează logurile...</p>';
-            const [users,shifts,absences,market,blackMarket] = await Promise.all([safeQuery('users',500),safeQuery('shifts',350),safeQuery('absences',250),safeQuery('marketplace',150),safeQuery('marketplace_ilegal',150)]);
-            usersMap=Object.fromEntries(users.map(user=>[user.discord_id,user.display_name || user.username || user.discord_id]));
-            events=[
-                ...shifts.map(shift=>({type:'pontaj',at:shift.ended_at || shift.started_at || shift.created_at,person:usersMap[shift.discord_id] || shift.discord_id,title:shift.status==='active'?'Pontaj pornit':shift.status==='paused'?'Pontaj în pauză':shift.status==='auto_completed'?'Pontaj încheiat automat':'Pontaj încheiat',detail:`Tură ${(shift.shift_type||'').toUpperCase()} · ${shift.duration || '00:00:00'}${shift.stop_reason ? ' · '+shift.stop_reason : ''}`,state:shift.status})),
-                ...absences.map(item=>({type:'absenta',at:item.created_at,person:item.colleague_name || usersMap[item.discord_id] || item.discord_id,title:'Învoire / absență înregistrată',detail:`${item.notice_type || 'Învoire'} · ${item.reason || item.notes || 'Fără motiv'}`,state:'absenta'})),
-                ...market.map(item=>({type:'marketplace',at:item.created_at,person:item.nume || item.display_name || 'Utilizator',title:'Anunț nou în Marketplace',detail:`${item.tip_actiune || ''} · ${item.produse || 'Fără detalii'}${item.pret ? ' · '+item.pret : ''}`,state:'marketplace'})),
-                ...blackMarket.map(item=>({type:'marketplace_ilegal',at:item.created_at,person:item.nume || 'Utilizator',title:'Anunț nou în Black Market',detail:`${item.tip_actiune || ''} · ${item.produse || 'Fără detalii'}${item.pret ? ' · '+item.pret : ''}`,state:'marketplace_ilegal'}))
-            ].sort((a,b)=>new Date(b.at)-new Date(a.at));
-            document.getElementById('count-active').textContent=shifts.filter(shift=>['active','paused'].includes(shift.status)).length;
-            document.getElementById('count-absences').textContent=absences.filter(item=>item.end_at && new Date(item.end_at)>=new Date()).length;
-            document.getElementById('count-all').textContent=events.length;
-            renderLogs();
+            const list =
+                document.getElementById('logs-list');
+
+            list.innerHTML = `
+                <p class="p-8 text-center text-slate-500">
+                    Se actualizează logurile...
+                </p>
+            `;
+
+            try {
+                const [
+                    users,
+                    shifts,
+                    absences,
+                    market,
+                    blackMarket
+                ] = await Promise.all([
+                    safeQuery('users', 500),
+                    safeQuery('shifts', 350),
+                    safeQuery('absences', 250),
+                    safeQuery('marketplace', 150),
+                    safeQuery('marketplace_ilegal', 150)
+                ]);
+
+                usersMap = Object.fromEntries(
+                    users.map((user) => [
+                        user.discord_id,
+                        user.display_name ||
+                        user.username ||
+                        user.discord_id
+                    ])
+                );
+
+                events = [
+                    ...shifts.map((shift) => ({
+                        type: 'pontaj',
+
+                        at:
+                            shift.ended_at ||
+                            shift.started_at ||
+                            shift.created_at,
+
+                        person:
+                            usersMap[shift.discord_id] ||
+                            shift.discord_id ||
+                            'Utilizator necunoscut',
+
+                        title:
+                            shift.status === 'active'
+                                ? 'Pontaj pornit'
+                                : shift.status === 'paused'
+                                    ? 'Pontaj în pauză'
+                                    : shift.status === 'auto_completed'
+                                        ? 'Pontaj încheiat automat'
+                                        : 'Pontaj încheiat',
+
+                        detail:
+                            `Tură ${(shift.shift_type || '').toUpperCase()} · ` +
+                            `${shift.duration || '00:00:00'}` +
+                            `${shift.stop_reason
+                                ? ` · ${shift.stop_reason}`
+                                : ''
+                            }`,
+
+                        state: shift.status
+                    })),
+
+                    ...absences.map((item) => ({
+                        type: 'absenta',
+
+                        at:
+                            item.created_at ||
+                            item.start_at,
+
+                        person:
+                            item.colleague_name ||
+                            usersMap[item.discord_id] ||
+                            item.discord_id ||
+                            'Utilizator necunoscut',
+
+                        title:
+                            'Învoire / absență înregistrată',
+
+                        detail:
+                            `${item.notice_type || 'Învoire'} · ` +
+                            `${item.reason || item.notes || 'Fără motiv'}`,
+
+                        state: 'absenta'
+                    })),
+
+                    ...market.map((item) => ({
+                        type: 'marketplace',
+
+                        at: item.created_at,
+
+                        person:
+                            item.nume ||
+                            item.display_name ||
+                            'Utilizator',
+
+                        title:
+                            'Anunț nou în Marketplace',
+
+                        detail:
+                            `${item.tip_actiune || ''} · ` +
+                            `${item.produse || 'Fără detalii'}` +
+                            `${item.pret
+                                ? ` · ${item.pret}`
+                                : ''
+                            }`,
+
+                        state: 'marketplace'
+                    })),
+
+                    ...blackMarket.map((item) => ({
+                        type: 'marketplace_ilegal',
+
+                        at: item.created_at,
+
+                        person:
+                            item.nume ||
+                            item.display_name ||
+                            'Utilizator',
+
+                        title:
+                            'Anunț nou în Black Market',
+
+                        detail:
+                            `${item.tip_actiune || ''} · ` +
+                            `${item.produse || 'Fără detalii'}` +
+                            `${item.pret
+                                ? ` · ${item.pret}`
+                                : ''
+                            }`,
+
+                        state: 'marketplace_ilegal'
+                    }))
+                ].sort((first, second) => {
+                    return (
+                        new Date(second.at).getTime() -
+                        new Date(first.at).getTime()
+                    );
+                });
+
+                document.getElementById(
+                    'count-active'
+                ).textContent = shifts.filter((shift) => {
+                    return ['active', 'paused'].includes(
+                        shift.status
+                    );
+                }).length;
+
+                document.getElementById(
+                    'count-absences'
+                ).textContent = absences.filter((item) => {
+                    return (
+                        item.end_at &&
+                        new Date(item.end_at) >= new Date()
+                    );
+                }).length;
+
+                document.getElementById(
+                    'count-all'
+                ).textContent = events.length;
+
+                renderLogs();
+
+            } catch (error) {
+                console.error(
+                    'Eroare la încărcarea logurilor:',
+                    error
+                );
+
+                list.innerHTML = `
+                    <p class="p-8 text-center text-rose-400">
+                        Logurile nu au putut fi încărcate.
+                    </p>
+                `;
+            }
         }
 
         function renderLogs() {
-            const query=document.getElementById('search').value.toLowerCase().trim(), type=document.getElementById('type-filter').value, period=document.getElementById('period-filter').value;
-            const now=Date.now(), maxAge=period==='today'?new Date().setHours(0,0,0,0):period==='all'?0:now-Number(period)*86400000;
-            const filtered=events.filter(item=>(type==='all'||item.type===type)&&(!maxAge||new Date(item.at)>=maxAge)&&(`${item.person} ${item.title} ${item.detail}`).toLowerCase().includes(query));
-            const icons={pontaj:'⏱️',absenta:'📋',marketplace:'🛒',marketplace_ilegal:'🚨'};
-            const colors={pontaj:'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',absenta:'text-indigo-400 bg-indigo-500/10 border-indigo-500/20',marketplace:'text-amber-400 bg-amber-500/10 border-amber-500/20',marketplace_ilegal:'text-rose-400 bg-rose-500/10 border-rose-500/20'};
-            document.getElementById('visible-count').textContent=`${filtered.length} rezultate`;
-            document.getElementById('logs-list').innerHTML=filtered.length?filtered.map(item=>`<article class="p-4 md:px-5 flex gap-4 hover:bg-slate-800/30"><span class="w-9 h-9 flex-none grid place-items-center rounded-xl border ${colors[item.type]}">${icons[item.type]}</span><div class="min-w-0 flex-1"><div class="flex flex-col sm:flex-row sm:justify-between gap-1"><p class="font-semibold text-slate-100">${escapeHtml(item.title)}</p><time class="text-[11px] text-slate-500 whitespace-nowrap">${dateText(item.at)}</time></div><p class="text-xs text-emerald-400 mt-1">${escapeHtml(item.person)}</p><p class="text-xs text-slate-400 mt-1 break-words">${escapeHtml(item.detail)}</p></div></article>`).join(''):'<p class="p-8 text-center text-slate-500">Nu există loguri pentru filtrele alese.</p>';
+            const searchInput =
+                document.getElementById('search');
+
+            const typeFilter =
+                document.getElementById('type-filter');
+
+            const periodFilter =
+                document.getElementById('period-filter');
+
+            const query =
+                searchInput.value
+                    .toLocaleLowerCase('ro-RO')
+                    .trim();
+
+            const selectedType =
+                typeFilter.value;
+
+            const selectedPeriod =
+                periodFilter.value;
+
+            const now = Date.now();
+
+            let minimumDate = 0;
+
+            if (selectedPeriod === 'today') {
+                const today = new Date();
+
+                today.setHours(0, 0, 0, 0);
+
+                minimumDate = today.getTime();
+
+            } else if (selectedPeriod !== 'all') {
+                minimumDate =
+                    now -
+                    Number(selectedPeriod) *
+                    24 *
+                    60 *
+                    60 *
+                    1000;
+            }
+
+            const filteredEvents = events.filter((item) => {
+                const matchesType =
+                    selectedType === 'all' ||
+                    item.type === selectedType;
+
+                const itemDate =
+                    new Date(item.at).getTime();
+
+                const matchesPeriod =
+                    !minimumDate ||
+                    (
+                        !Number.isNaN(itemDate) &&
+                        itemDate >= minimumDate
+                    );
+
+                const searchableText = `
+                    ${item.person}
+                    ${item.title}
+                    ${item.detail}
+                `.toLocaleLowerCase('ro-RO');
+
+                const matchesSearch =
+                    searchableText.includes(query);
+
+                return (
+                    matchesType &&
+                    matchesPeriod &&
+                    matchesSearch
+                );
+            });
+
+            const icons = {
+                pontaj: '⏱️',
+                absenta: '📋',
+                marketplace: '🛒',
+                marketplace_ilegal: '🚨'
+            };
+
+            const colors = {
+                pontaj:
+                    'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+
+                absenta:
+                    'text-indigo-400 bg-indigo-500/10 border-indigo-500/20',
+
+                marketplace:
+                    'text-amber-400 bg-amber-500/10 border-amber-500/20',
+
+                marketplace_ilegal:
+                    'text-rose-400 bg-rose-500/10 border-rose-500/20'
+            };
+
+            document.getElementById(
+                'visible-count'
+            ).textContent =
+                `${filteredEvents.length} rezultate`;
+
+            const logsList =
+                document.getElementById('logs-list');
+
+            if (!filteredEvents.length) {
+                logsList.innerHTML = `
+                    <p class="p-8 text-center text-slate-500">
+                        Nu există loguri pentru filtrele alese.
+                    </p>
+                `;
+
+                return;
+            }
+
+            logsList.innerHTML = filteredEvents
+                .map((item) => {
+                    const itemIcon =
+                        icons[item.type] || '📝';
+
+                    const itemColor =
+                        colors[item.type] ||
+                        'text-slate-400 bg-slate-500/10 border-slate-500/20';
+
+                    return `
+                        <article class="p-4 md:px-5 flex gap-4 hover:bg-slate-800/30 transition">
+
+                            <span class="w-9 h-9 flex-none grid place-items-center rounded-xl border ${itemColor}">
+                                ${itemIcon}
+                            </span>
+
+                            <div class="min-w-0 flex-1">
+
+                                <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+
+                                    <p class="font-semibold text-slate-100">
+                                        ${escapeHtml(item.title)}
+                                    </p>
+
+                                    <time class="text-[11px] text-slate-500 whitespace-nowrap">
+                                        ${dateText(item.at)}
+                                    </time>
+
+                                </div>
+
+                                <p class="text-xs text-emerald-400 mt-1">
+                                    ${escapeHtml(item.person)}
+                                </p>
+
+                                <p class="text-xs text-slate-400 mt-1 break-words">
+                                    ${escapeHtml(item.detail)}
+                                </p>
+
+                            </div>
+
+                        </article>
+                    `;
+                })
+                .join('');
         }
     </script>
+
     <script src="js/global-footer.js"></script>
+
 </body>
 </html>
