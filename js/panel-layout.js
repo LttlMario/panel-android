@@ -11,9 +11,12 @@
             .panel-responsive-sidebar.fixed { position:fixed; }
             #panel-theme-toggle { width:38px; height:38px; flex:none; display:grid; place-items:center; border:1px solid #334155; border-radius:11px; background:#0b1220; color:#cbd5e1; cursor:pointer; box-shadow:0 5px 16px rgba(0,0,0,.18); }
             #panel-theme-toggle:hover { border-color:#10b981; color:#6ee7b7; }
-            .panel-header-tools { position:absolute; left:50%; transform:translateX(-50%); z-index:25; width:min(620px,45vw); display:flex; align-items:center; justify-content:center; gap:10px; }
-            .panel-header-tools .panel-search-host { position:relative; width:100%; min-width:0; }
+            header { position:relative; }
+            header:has(.panel-header-tools) { padding-right:72px !important; }
+            .panel-header-tools { position:absolute; inset:0 18px; z-index:25; display:flex; align-items:center; pointer-events:none; }
+            .panel-header-tools .panel-search-host { position:absolute; left:50%; transform:translateX(-50%); width:min(620px,45vw); min-width:0; pointer-events:auto; }
             .panel-header-tools .panel-search-host > div, .panel-header-tools .panel-search-host .relative, .panel-header-tools .search-container { width:100% !important; max-width:none !important; }
+            .panel-header-tools #panel-theme-toggle { margin-left:auto; pointer-events:auto; }
 
             /* Tema Panel nu primește suprascrieri: păstrează exact designul original al paginilor. */
             html[data-panel-theme="dark"] { color-scheme:dark; --bg-main:#030712; --bg-panel:#080f1d; --bg-panel-hover:#111c2e; --card:#0a1220; --border:#223047; --text-main:#e5edf8; --text-muted:#91a0b6; }
@@ -23,15 +26,18 @@
             html[data-panel-theme="dark"] .bg-slate-800 { background-color:#111c2e !important; }
             html[data-panel-theme="dark"] .border-slate-800, html[data-panel-theme="dark"] .border-slate-700, html[data-panel-theme="dark"] .post, html[data-panel-theme="dark"] .dialog { border-color:#223047 !important; }
 
-            html[data-panel-theme="light"] { color-scheme:light; --bg-main:#e7edf4; --bg-panel:#f3f6fa; --bg-panel-hover:#dce5ef; --card:#f3f6fa; --border:#b8c5d4; --text-main:#172033; --text-muted:#5e6d82; }
-            html[data-panel-theme="light"] body, html[data-panel-theme="light"] main, html[data-panel-theme="light"] #app { background:#e7edf4 !important; color:#172033 !important; }
-            html[data-panel-theme="light"] aside, html[data-panel-theme="light"] header, html[data-panel-theme="light"] footer, html[data-panel-theme="light"] .bg-slate-900, html[data-panel-theme="light"] .post, html[data-panel-theme="light"] .dialog, html[data-panel-theme="light"] .panel, html[data-panel-theme="light"] .card { background-color:#f3f6fa !important; color:#172033 !important; }
-            html[data-panel-theme="light"] .bg-slate-950, html[data-panel-theme="light"] input, html[data-panel-theme="light"] textarea, html[data-panel-theme="light"] select, html[data-panel-theme="light"] .poll-option, html[data-panel-theme="light"] .tab, html[data-panel-theme="light"] .reaction, html[data-panel-theme="light"] .audience { background-color:#e4eaf1 !important; color:#172033 !important; }
-            html[data-panel-theme="light"] .bg-slate-800, html[data-panel-theme="light"] .badge { background-color:#d8e1eb !important; color:#263449 !important; }
+            html[data-panel-theme="light"] { color-scheme:light; --bg-main:#cbd5e1; --bg-panel:#dce4ed; --bg-panel-hover:#c2cedb; --card:#dce4ed; --border:#8fa0b4; --text-main:#172033; --text-muted:#536277; }
+            html[data-panel-theme="light"] body, html[data-panel-theme="light"] main, html[data-panel-theme="light"] #app { background:#cbd5e1 !important; color:#172033 !important; }
+            html[data-panel-theme="light"] aside, html[data-panel-theme="light"] header, html[data-panel-theme="light"] footer { background-color:#b8c5d4 !important; color:#172033 !important; }
+            html[data-panel-theme="light"] .bg-slate-900, html[data-panel-theme="light"] .post, html[data-panel-theme="light"] .dialog, html[data-panel-theme="light"] .panel, html[data-panel-theme="light"] .card { background-color:#dce4ed !important; color:#172033 !important; box-shadow:0 7px 20px rgba(51,65,85,.13); }
+            html[data-panel-theme="light"] .bg-slate-950, html[data-panel-theme="light"] input, html[data-panel-theme="light"] textarea, html[data-panel-theme="light"] select, html[data-panel-theme="light"] .poll-option, html[data-panel-theme="light"] .tab, html[data-panel-theme="light"] .reaction, html[data-panel-theme="light"] .audience { background-color:#c4d0dc !important; color:#172033 !important; }
+            html[data-panel-theme="light"] .bg-slate-800, html[data-panel-theme="light"] .badge { background-color:#b8c5d4 !important; color:#263449 !important; }
             html[data-panel-theme="light"] .text-slate-100, html[data-panel-theme="light"] .text-slate-200, html[data-panel-theme="light"] .text-slate-300, html[data-panel-theme="light"] .post-body, html[data-panel-theme="light"] h1, html[data-panel-theme="light"] h2, html[data-panel-theme="light"] h3 { color:#172033 !important; }
             html[data-panel-theme="light"] .text-slate-400, html[data-panel-theme="light"] .text-slate-500, html[data-panel-theme="light"] .muted, html[data-panel-theme="light"] .meta { color:#5e6d82 !important; }
-            html[data-panel-theme="light"] .border-slate-800, html[data-panel-theme="light"] .border-slate-700, html[data-panel-theme="light"] .post, html[data-panel-theme="light"] .dialog, html[data-panel-theme="light"] input, html[data-panel-theme="light"] textarea, html[data-panel-theme="light"] select { border-color:#b8c5d4 !important; }
-            html[data-panel-theme="light"] .nav-link:hover { background:#dce5ef !important; }
+            html[data-panel-theme="light"] .border-slate-800, html[data-panel-theme="light"] .border-slate-700, html[data-panel-theme="light"] .post, html[data-panel-theme="light"] .dialog, html[data-panel-theme="light"] input, html[data-panel-theme="light"] textarea, html[data-panel-theme="light"] select { border-color:#8fa0b4 !important; }
+            html[data-panel-theme="light"] .nav-link { margin-bottom:5px; border:1px solid #9aabbd; background:#c7d2de !important; color:#263449 !important; box-shadow:0 2px 7px rgba(51,65,85,.08); }
+            html[data-panel-theme="light"] .nav-link:hover { background:#b5c3d1 !important; border-color:#71849a; }
+            html[data-panel-theme="light"] .nav-link.bg-emerald-500\\/10 { background:#a9cabe !important; border-color:#4d9f82; color:#075f46 !important; }
             .panel-sidebar-toggle { position:absolute; top:18px; right:-14px; z-index:70; width:28px; height:28px; display:flex; align-items:center; justify-content:center; border:1px solid #334155; border-radius:999px; background:#0f172a; color:#cbd5e1; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.3); }
             .panel-sidebar-toggle:hover { background:#1e293b; color:#fff; }
             #panel-mobile-backdrop { display:none; position:fixed; inset:0; z-index:4000; background:rgba(2,6,23,.78); backdrop-filter:blur(3px); }
@@ -48,13 +54,15 @@
                 .panel-responsive-sidebar { display:none !important; }
                 .panel-sidebar-toggle { display:none !important; }
                 .panel-mobile-toggle { display:flex; }
-                .panel-header-tools { position:static; transform:none; order:20; width:100%; }
+                .panel-header-tools { position:static; order:20; width:100%; gap:10px; pointer-events:auto; }
+                .panel-header-tools .panel-search-host { position:static; transform:none; width:calc(100% - 48px); }
+                header:has(.panel-header-tools) { padding-right:16px !important; }
                 #app { grid-template-columns:1fr !important; grid-template-rows:64px 1fr !important; }
                 #app > header, #app > #map-container-wrapper { grid-column:1 !important; }
                 .panel-action-bar { justify-content:stretch; padding:12px 16px; }
                 .panel-action-bar > div, .panel-action-bar button { width:100%; }
             }
-            @media (min-width:768px) and (max-width:1100px) { .panel-header-tools { width:min(460px,42vw); } }
+            @media (min-width:768px) and (max-width:1100px) { .panel-header-tools .panel-search-host { width:min(460px,42vw); } }
         `;
         document.head.appendChild(style);
     }
