@@ -20,13 +20,13 @@
     <section id="access-denied" class="card warning">
       <p class="eyebrow">Acces restricționat</p>
       <h1>Doar pentru administratori</h1>
-      <p>Această pagină conține informații tehnice despre publicarea versiunilor și este disponibilă numai rolului Admin.</p>
+        <p>Această pagină conține informații tehnice și este disponibilă numai Coordonatorului, nivel 7.</p>
       <div class="actions"><a href="index.html">Înapoi la Dashboard</a></div>
     </section>
 
     <div id="admin-content">
       <header class="card warning">
-        <p class="eyebrow">Administrare internă • rol 5</p>
+        <p class="eyebrow">Administrare internă • nivel 7</p>
         <h1>Administrare versiuni</h1>
         <p>Versiunea curentă este <strong data-panel-version>v2.9.0</strong>. Informațiile de aici nu apar în changelog-ul public.</p>
         <div class="actions"><a href="index.html">← Dashboard</a><a href="changelog.html">Vezi changelog-ul public</a></div>
@@ -65,6 +65,17 @@
       </section>
 
       <section class="card">
+        <h2>Mutarea pe alt server Discord</h2>
+        <p>Toți pașii pentru aplicația Discord, server, roluri, webhook-uri, secrete Supabase și redeploy sunt centralizați într-un singur ghid.</p>
+        <ul>
+          <li><code>CONFIGURARE-DISCORD.md</code> — lista completă pentru relocare.</li>
+          <li><code>js/discord-config.js</code> — Client ID și scope-urile OAuth publice.</li>
+          <li><code>supabase/functions/.env.example</code> — denumirile tuturor secretelor necesare.</li>
+        </ul>
+        <div class="actions"><a href="CONFIGURARE-DISCORD.md">Deschide ghidul Discord</a></div>
+      </section>
+
+      <section class="card">
         <h2>Verificare înainte de publicare</h2>
         <ul>
           <li>Footer-ul apare o singură dată și la extremitatea de jos.</li>
@@ -83,7 +94,9 @@
         if (typeof value === "number") return value;
         const text = String(value || "").trim().toLowerCase();
         if (/^\d+$/.test(text)) return Number(text);
-        if (text.includes("admin") || text.includes("owner")) return 5;
+        if (text.includes("coordonator") || text.includes("admin") || text.includes("owner")) return 7;
+        if (text === "lider") return 6;
+        if (text.includes("colider") || text.includes("co lider") || text.includes("co-lider")) return 5;
         if (text.includes("manager")) return 4;
         if (text.includes("familia")) return 3;
         if (text.includes("șef") || text.includes("sef")) return 2;
@@ -96,7 +109,7 @@
       } catch (_) {}
 
       const role = roleNumber(user?.role ?? user?.default_role ?? user?.role_level);
-      const allowed = Boolean(user && role >= 5);
+      const allowed = Boolean(user && role >= 7);
 
       document.getElementById(allowed ? "admin-content" : "access-denied").style.display = "block";
 

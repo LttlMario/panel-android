@@ -236,8 +236,6 @@
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdnNhYmJiYXd5aXVybmFpdWdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwNDY5NTYsImV4cCI6MjEwMDYyMjk1Nn0.s2R8mdsoeQzOyz7a-NJOi5SQmyDmyy98cfUMfGqLo44";
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1531217999120568390/1zBGstFYhYI6SQC7xBl_IJn_taVHuZbrV0bZqceiWLg2RPMfnrMgATlwqbeu4IImFdCE';
-
         let currentUser = {
             discord_id: '',
             display_name: 'Mecanic',
@@ -553,8 +551,6 @@
         }
 
         async function trimitePeDiscord(anunt) {
-            if (!DISCORD_WEBHOOK_URL || DISCORD_WEBHOOK_URL.includes('URL_UL_TAU_DE_DISCORD_AICI')) return;
-
             const fields = [
                 { name: '👤 Nume', value: anunt.nume, inline: true },
                 { name: '📞 Telefon', value: anunt.telefon, inline: true },
@@ -604,10 +600,7 @@
             formData.append('payload_json', JSON.stringify(payload));
 
             try {
-                const response = await fetch(DISCORD_WEBHOOK_URL, {
-                    method: 'POST',
-                    body: formData
-                });
+                const response = await sendPanelDiscord('marketplace', formData);
                 
                 if (!response.ok) {
                     const errText = await response.text();
@@ -698,6 +691,7 @@
             return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
     </script>
+    <script src="js/discord-notifications.js"></script>
     <script src="js/global-footer.js"></script>
 </body>
 </html>

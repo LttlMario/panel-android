@@ -272,6 +272,38 @@
             }
         }
 
+        .mobile-results-button,
+        .mobile-edit-selection {
+            display: none;
+        }
+
+        @media (max-width: 767px) {
+            .calculator-container { gap: 14px; }
+            .calculator-container > .panel { padding: 14px; }
+            .mobile-results-button,
+            .mobile-edit-selection {
+                display: flex;
+                width: 100%;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                border: 1px solid rgba(16,185,129,.55);
+                border-radius: 11px;
+                background: linear-gradient(135deg,#059669,#047857);
+                color: #fff;
+                padding: 11px 14px;
+                font-size: .86rem;
+                font-weight: 800;
+                cursor: pointer;
+                box-shadow: 0 8px 20px rgba(5,150,105,.22);
+            }
+            .mobile-results-button { margin-top: 10px; }
+            .mobile-edit-selection { margin-bottom: 4px; background:linear-gradient(135deg,#334155,#1e293b); border-color:#475569; }
+            #calculator-input-panel.mobile-collapsed { display: none !important; }
+            .results-section.mobile-focus { scroll-margin-top: 76px; }
+            .grid-results { grid-template-columns:repeat(2,minmax(0,1fr)); }
+        }
+
         .panel {
             background-color: var(--bg-panel);
             border: 1px solid var(--border-color);
@@ -538,7 +570,7 @@
 
             <div class="calculator-container">
                 <!-- Panou Stânga: Input-uri -->
-                <div class="panel">
+                <div class="panel" id="calculator-input-panel">
                     <div style="font-size: 1.0rem; font-weight: 600; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
                         Selecție Rețete (Live)
                     </div>
@@ -652,11 +684,13 @@
 
                     <div class="btn-container">
                         <button type="button" class="btn-danger" onclick="resetCalculator()">Resetează Totul</button>
+                        <button type="button" class="mobile-results-button" onclick="showMobileResults()">Vezi rezultatele ↓</button>
                     </div>
                 </div>
 
                 <!-- Panou Dreapta: Rezultate Agregate -->
-                <div class="panel results-section">
+                <div class="panel results-section" id="calculator-results">
+                    <button type="button" class="mobile-edit-selection" onclick="showMobileCalculator()">↑ Modifică selecția</button>
                     <!-- Box 1A: Componente din Arme -->
                     <div class="result-box" id="box_weapons">
                         <h3>Componente Necesarare</h3>
@@ -912,6 +946,27 @@
             document.getElementById('weedResource').selectedIndex = 0;
             document.getElementById('mushroomsResource').selectedIndex = 0;
             calculateAll();
+        }
+
+        function showMobileResults() {
+            const firstResult = document.querySelector('.result-box.active');
+            if (!firstResult) {
+                alert('Introdu mai întâi o cantitate pentru calcul.');
+                return;
+            }
+            const inputPanel = document.getElementById('calculator-input-panel');
+            const resultsPanel = document.getElementById('calculator-results');
+            inputPanel.classList.add('mobile-collapsed');
+            resultsPanel.classList.add('mobile-focus');
+            requestAnimationFrame(() => resultsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+        }
+
+        function showMobileCalculator() {
+            const inputPanel = document.getElementById('calculator-input-panel');
+            const resultsPanel = document.getElementById('calculator-results');
+            inputPanel.classList.remove('mobile-collapsed');
+            resultsPanel.classList.remove('mobile-focus');
+            requestAnimationFrame(() => inputPanel.scrollIntoView({ behavior: 'smooth', block: 'start' }));
         }
 
         function calculateAll() {

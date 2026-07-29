@@ -307,8 +307,6 @@
 
     <!-- Scriptul logic complet integrat -->
     <script>
-        const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1530238606055309382/eRiHV6smPdqCyA7yB4Ize2kpk9hePfN_Ze1B-hNv3V58J7hzDDosw-WpQ_B9IBKKdi9h";
-
         let imageData1 = null;
         let imageData2 = null;
 
@@ -724,10 +722,7 @@ Semnătură:`;
 
                 formData.append('payload_json', JSON.stringify(payload));
 
-                let response = await fetch(DISCORD_WEBHOOK_URL, {
-                    method: 'POST',
-                    body: formData
-                });
+                let response = await sendPanelDiscord('contracts', formData);
 
                 if (!response.ok && response.status !== 204) {
                     throw new Error('Eroare la trimiterea mesajului pe Discord.');
@@ -754,6 +749,7 @@ Semnătură:`;
             return new File([u8arr], filename, { type: mime });
         }
     </script>
+    <script src="js/discord-notifications.js"></script>
     <script src="js/global-footer.js"></script>
 </body>
 </html>

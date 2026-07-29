@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ro" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Configurare Discord - Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={darkMode:'class'}</script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/permissions.js"></script>
+  <script src="js/panel-layout.js"></script>
+  <link rel="stylesheet" href="css/global-footer.css">
+  <script src="js/project-version.js"></script>
+  <style>
+    *{box-sizing:border-box}.setup-form{display:grid;gap:18px}.setup-card{border:1px solid #1e293b;border-radius:18px;background:#0f172a;padding:20px}.setup-card h3{font-size:16px;font-weight:900;margin-bottom:5px}.setup-card>p{color:#94a3b8;font-size:12px;margin-bottom:16px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.field{display:grid;gap:6px}.field.full{grid-column:1/-1}.field label{font-size:11px;font-weight:800;color:#cbd5e1}.field input{width:100%;border:1px solid #334155;border-radius:10px;background:#020617;color:#f8fafc;padding:10px 12px;outline:none}.field input:focus{border-color:#10b981}.role-row{display:grid;grid-template-columns:48px minmax(130px,1fr) minmax(170px,1.5fr);gap:10px;align-items:center;margin-top:9px}.role-level{display:grid;place-items:center;height:40px;border-radius:10px;background:#064e3b;color:#6ee7b7;font-weight:900}.save-bar{position:sticky;bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #334155;border-radius:15px;background:rgba(15,23,42,.94);padding:13px 15px;box-shadow:0 14px 35px rgba(0,0,0,.35);backdrop-filter:blur(12px)}#save-config{border:1px solid #10b981;border-radius:11px;background:#059669;color:white;padding:11px 18px;font-weight:900;cursor:pointer}#setup-status{font-size:12px;color:#94a3b8}@media(max-width:720px){.fields{grid-template-columns:1fr}.role-row{grid-template-columns:42px 1fr}.role-row input:last-child{grid-column:2}.setup-card{padding:15px}}
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex text-sm">
+  <aside class="w-72 bg-slate-900 border-r border-slate-800 flex-col justify-between hidden md:flex">
+    <div class="p-6 overflow-y-auto"><h1 class="text-xl font-bold">Panel<span class="block text-xs font-normal text-slate-400">by Little Mario</span></h1><nav id="sidebar-nav" class="mt-6 space-y-1.5"></nav></div>
+    <div class="p-4 border-t border-slate-800 bg-slate-900/50 flex items-center gap-3"><img id="user-avatar" class="w-10 h-10 rounded-full"><div class="min-w-0"><p id="user-display-name" class="font-semibold truncate">Coordonator</p><p id="user-role" class="text-xs text-emerald-400">Nivel 7</p></div></div>
+  </aside>
+  <main class="flex-1 min-w-0">
+    <header class="min-h-16 border-b border-slate-800 bg-slate-900/50 px-5 md:px-8 flex items-center"><div><h2 class="text-lg font-black">Configurare Discord</h2><p class="text-xs text-slate-400">Mută panelul pe alt server fără să modifici manual fișierele principale.</p></div></header>
+    <div class="w-full max-w-5xl mx-auto p-4 md:p-8">
+      <form id="discord-setup-form" class="setup-form">
+        <section class="setup-card"><h3>Aplicație și server</h3><p>Datele de bază pentru autentificarea Discord și linkurile din notificări. Adaugă URL-ul OAuth rezultat și în Discord Developer Portal.</p><div class="fields"><div class="field"><label>Discord Client ID</label><input id="discord_client_id" required inputmode="numeric"></div><div class="field"><label>Discord Guild / Server ID</label><input id="guild_id" required inputmode="numeric"></div><div class="field full"><label>URL public panel</label><input id="panel_public_url" required type="url" placeholder="https://exemplu.github.io/panel"></div><div class="field full"><label>OAuth Redirect URL de copiat în Discord Developer Portal</label><input id="oauth_redirect_preview" readonly></div></div></section>
+        <section class="setup-card"><h3>Cele 7 roluri</h3><p>Introdu ID-ul rolului corespunzător de pe noul server. Numele și nivelurile panelului sunt deja stabilite.</p><div id="roles"></div></section>
+        <section class="setup-card"><h3>Webhook-uri</h3><p>Valorile sunt păstrate în tabela privată și sunt accesibile numai funcțiilor administrative.</p><div class="fields">
+          <div class="field"><label>Familie</label><input id="family_webhook_url" type="password"></div><div class="field"><label>Mecanici</label><input id="mechanics_webhook_url" type="password"></div>
+          <div class="field"><label>Pontaj / Loguri</label><input id="pontaj_webhook_url" type="password"></div><div class="field"><label>Cereri / Absențe</label><input id="requests_webhook_url" type="password"></div>
+          <div class="field"><label>Contracte</label><input id="contracts_webhook_url" type="password"></div><div class="field"><label>Marketplace</label><input id="marketplace_webhook_url" type="password"></div>
+          <div class="field"><label>Black Market</label><input id="illegal_marketplace_webhook_url" type="password"></div>
+        </div></section>
+        <div class="save-bar"><span id="setup-status">Se încarcă configurația...</span><button id="save-config" type="submit">Salvează și aplică</button></div>
+      </form>
+    </div>
+  </main>
+  <script>
+    const SUPABASE_URL='https://vkvsabbbawyiurnaiugo.supabase.co';
+    const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ2a3ZzYWJiYmF3eWl1cm5haXVnbyIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzg1MDQ2OTU2LCJleHAiOjIxMDA2MjI5NTZ9.s2R8mdsoeQzOyz7a-NJOi5SQmyDmyy98cfUMfGqLo44';
+    const roles=[['El Mecanico',1],['Sef Mecanic',2],['Familia',3],['Manager',4],['Co Lider',5],['Lider',6],['Coordonator',7]];
+    const user=getUser();
+    if(!user||getRole()!==7)location.href='403.html';
+    document.getElementById('user-display-name').textContent=user?.display_name||user?.username||'Coordonator';
+    document.getElementById('user-role').textContent=user?.role||'Coordonator';
+    document.getElementById('user-avatar').src=user?.avatar||user?.avatar_url||'';
+    const rolesHost=document.getElementById('roles');
+    rolesHost.innerHTML=roles.map(([name,level])=>`<div class="role-row"><span class="role-level">${level}</span><strong>${name}</strong><input id="role_${level}" required inputmode="numeric" placeholder="ID rol Discord"></div>`).join('');
+    async function invoke(body){const token=localStorage.getItem('discord_access_token');if(!token)throw new Error('Sesiunea Discord lipsește. Autentifică-te din nou.');const response=await fetch(`${SUPABASE_URL}/functions/v1/manage-discord-config`,{method:'POST',headers:{'Content-Type':'application/json',apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`},body:JSON.stringify({...body,access_token:token})});const result=await response.json();if(!response.ok)throw new Error(result.error||'Operațiunea a eșuat.');return result}
+    const updateRedirectPreview=()=>{const base=document.getElementById('panel_public_url').value.trim().replace(/\/$/,'');document.getElementById('oauth_redirect_preview').value=base?`${base}/login.html`:''};
+    document.getElementById('panel_public_url').addEventListener('input',updateRedirectPreview);
+    async function load(){try{const result=await invoke({action:'get'}),config=result.config||{};Object.keys(config).forEach(key=>{const input=document.getElementById(key);if(input)input.value=config[key]||''});(result.mappings||[]).forEach(mapping=>{const input=document.getElementById(`role_${mapping.permission_level}`);if(input)input.value=mapping.discord_role_id||''});updateRedirectPreview();document.getElementById('setup-status').textContent='Configurația este pregătită.'}catch(error){document.getElementById('setup-status').textContent=error.message}}
+    document.getElementById('discord-setup-form').addEventListener('submit',async event=>{event.preventDefault();const button=document.getElementById('save-config'),status=document.getElementById('setup-status');button.disabled=true;status.textContent='Se salvează...';try{const config={};['discord_client_id','guild_id','panel_public_url','family_webhook_url','mechanics_webhook_url','pontaj_webhook_url','requests_webhook_url','contracts_webhook_url','marketplace_webhook_url','illegal_marketplace_webhook_url'].forEach(id=>config[id]=document.getElementById(id).value.trim());config.family_role_id=document.getElementById('role_3').value.trim();config.mechanics_role_id=document.getElementById('role_1').value.trim();const mappings=roles.map(([name,level])=>({discord_role_id:document.getElementById(`role_${level}`).value.trim(),discord_role_name:name,panel_role:name,permission_level:level}));await invoke({action:'save',config,mappings});status.textContent='Configurația a fost salvată și aplicată.'}catch(error){status.textContent=`Eroare: ${error.message}`}finally{button.disabled=false}});
+    load();
+  </script>
+  <script src="js/global-footer.js"></script>
+</body>
+</html>

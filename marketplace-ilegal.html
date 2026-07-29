@@ -274,8 +274,6 @@
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdnNhYmJiYXd5aXVybmFpdWdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwNDY5NTYsImV4cCI6MjEwMDYyMjk1Nn0.s2R8mdsoeQzOyz7a-NJOi5SQmyDmyy98cfUMfGqLo44";
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1530160265486667849/MVfKr4C_3zj9HzNEm3gTyxUEyoEsd95QKnY5DFxTtTpbi48jDoIcEzlTIzIul15mKRX8';
-
         let currentUser = {
             discord_id: '',
             username: '',
@@ -653,8 +651,6 @@
         }
 
         async function trimitePeDiscord(anunt) {
-            if (!DISCORD_WEBHOOK_URL || DISCORD_WEBHOOK_URL.includes('URL_UL_TAU_DE_DISCORD_AICI')) return;
-
             let pretText = anunt.pret ? anunt.pret : 'Negociabil / Nespecificat';
             let catText = anunt.categorie ? anunt.categorie : 'N/A';
             let subcatText = anunt.subcategorie ? ` / ${anunt.subcategorie}` : '';
@@ -699,10 +695,7 @@
             formData.append('payload_json', JSON.stringify(payload));
 
             try {
-                const response = await fetch(DISCORD_WEBHOOK_URL, {
-                    method: 'POST',
-                    body: formData
-                });
+                const response = await sendPanelDiscord('illegal_marketplace', formData);
                 
                 if (!response.ok) {
                     const errText = await response.text();
@@ -788,6 +781,7 @@
             return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
     </script>
+    <script src="js/discord-notifications.js"></script>
     <script src="js/global-footer.js"></script>
 </body>
 </html>

@@ -368,7 +368,6 @@
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdnNhYmJiYXd5aXVybmFpdWdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwNDY5NTYsImV4cCI6MjEwMDYyMjk1Nn0.s2R8mdsoeQzOyz7a-NJOi5SQmyDmyy98cfUMfGqLo44";
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const WEBHOOK_LOGS = "https://discord.com/api/webhooks/1530882813824466944/yKrptcBA86amfq3a9nerXLYpr9wf78VxGLXfE93P7DKaYMbthEjkpJ3HhBAL2EMPOOm-";
         const ROMANIA_TIME_ZONE = 'Europe/Bucharest';
 
         function getRomanianTime(date = new Date()) {
@@ -618,7 +617,7 @@
         async function sendGeneralDiscordWebhook(title, description, color) {
             const payload = { embeds: [{ title: title, description: description, color: color, timestamp: new Date().toISOString() }] };
             try {
-                await fetch(WEBHOOK_LOGS, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                await sendPanelDiscord('pontaj', payload);
             } catch (err) {}
         }
 
@@ -637,7 +636,7 @@
                 }]
             };
             try {
-                await fetch(WEBHOOK_LOGS, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                await sendPanelDiscord('pontaj', payload);
             } catch (err) {}
         }
 
@@ -1171,11 +1170,7 @@
             };
 
             try {
-                let response = await fetch(WEBHOOK_LOGS, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+                let response = await sendPanelDiscord('pontaj', payload);
                 return response.ok;
             } catch (err) {
                 console.error('Erore webhook raport:', err);
@@ -1218,6 +1213,7 @@
             }
         }
     </script>
+    <script src="js/discord-notifications.js"></script>
     <script src="js/global-footer.js"></script>
 </body>
 </html>
