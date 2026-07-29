@@ -7,7 +7,8 @@
         const style = document.createElement('style');
         style.id = 'panel-layout-styles';
         style.textContent = `
-            .panel-responsive-sidebar { transition: width .2s ease; position: relative; }
+            .panel-responsive-sidebar { transition: width .2s ease; position:sticky; top:0; height:100vh; align-self:flex-start; }
+            .panel-responsive-sidebar.fixed { position:fixed; }
             .panel-sidebar-toggle { position:absolute; top:18px; right:-14px; z-index:70; width:28px; height:28px; display:flex; align-items:center; justify-content:center; border:1px solid #334155; border-radius:999px; background:#0f172a; color:#cbd5e1; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.3); }
             .panel-sidebar-toggle:hover { background:#1e293b; color:#fff; }
             #panel-mobile-backdrop { display:none; position:fixed; inset:0; z-index:4000; background:rgba(2,6,23,.78); backdrop-filter:blur(3px); }
@@ -56,6 +57,7 @@
         if (!document.getElementById('map-container-wrapper')) relocateHeaderActions();
         setupAdminSaveArea();
         const main = document.querySelector('main');
+        if (main) main.style.minHeight = '100vh';
         const originalMainMargin = main?.style.marginLeft || '';
         const originalSidebarWidth = sidebar.style.width || '';
 
@@ -205,7 +207,12 @@
             const action = `${button.id} ${button.getAttribute('onclick') || ''} ${button.textContent || ''}`.toLocaleLowerCase('ro-RO');
             return action.includes('logout') || action.includes('ieșire') || action.includes('iesire');
         });
-        if (existingLogout) return;
+        if (existingLogout) {
+            const label = existingLogout.querySelector('span:last-child');
+            if (label) label.textContent = 'Logout';
+            else existingLogout.textContent = 'Logout';
+            return;
+        }
 
         const avatar = sidebar.querySelector('#user-avatar');
         if (!avatar) return;
