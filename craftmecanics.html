@@ -112,7 +112,7 @@
                         <span>📜</span>
                         <span>Contracte</span>
                     </a>
-                    <a href="admin.html" data-role="5" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
+                    <a href="admin.html" data-role="7" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
                         <span>👑</span>
                         <span>Panou Admin</span>
                     </a>
@@ -156,7 +156,8 @@
         </aside>
 
         <!-- Conținutul Principal (Galerie) -->
-        <main class="flex-1 overflow-y-auto p-8 flex flex-col items-center bg-slate-950">
+        <main class="flex-1 min-w-0 overflow-y-auto bg-slate-950 flex flex-col">
+            <div class="p-4 md:p-8 flex-1 flex flex-col items-center">
             <header class="text-center mb-8 w-full max-w-2xl">
                 <h1 class="text-2xl font-bold text-slate-100 mb-2">Galerie Capturi Rețete & Echipamente</h1>
                 <p class="text-slate-400 text-sm">By Little Mario</p>
@@ -790,6 +791,10 @@
                 </div>
 
             </div>
+            </div>
+
+            <!-- Footer global, limitat la zona de conținut -->
+            <div id="global-footer-container" class="w-full flex-shrink-0"></div>
         </main>
     </div>
 
@@ -917,5 +922,32 @@
         });
     </script>
     <script src="js/global-footer.js"></script>
+    <script>
+        // Mută footerul generat de global-footer.js în coloana principală,
+        // astfel încât să nu se mai întindă sub sidebar.
+        (function placeGlobalFooterInsideMain() {
+            const container = document.getElementById('global-footer-container');
+            if (!container) return;
+
+            function moveFooter() {
+                const candidates = Array.from(document.body.children).filter((element) => {
+                    if (element === container || container.contains(element)) return false;
+                    return element.tagName === 'FOOTER' ||
+                        element.id === 'global-footer' ||
+                        element.classList.contains('global-footer');
+                });
+
+                candidates.forEach((footer) => container.appendChild(footer));
+            }
+
+            moveFooter();
+            requestAnimationFrame(moveFooter);
+            setTimeout(moveFooter, 100);
+
+            const observer = new MutationObserver(moveFooter);
+            observer.observe(document.body, { childList: true });
+            setTimeout(() => observer.disconnect(), 2000);
+        })();
+    </script>
 </body>
 </html>
