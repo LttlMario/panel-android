@@ -63,7 +63,7 @@
         const questions = ['Cum pornesc pontajul?', 'Unde găsesc Runflat?', 'Cum trimit o învoire?'];
         if (engine.role >= 3) questions.push('Ce găsesc la locații ilegale?');
         if (engine.role >= 4) questions.push('Cum văd pontajele active?');
-        if (engine.role >= 5) questions.push('Cum schimb ora de închidere?');
+        if (engine.role >= 7) questions.push('Cum schimb ora de închidere?');
         return questions;
     }
 

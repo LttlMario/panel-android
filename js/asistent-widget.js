@@ -275,7 +275,7 @@
         const questions = ['Cum pornesc pontajul?', 'Unde găsesc Runflat?', 'Cum trimit o învoire?'];
         if (engine.role >= 3) questions.push('Unde se procesează cocaina?');
         if (engine.role >= 4) questions.push('Cine este pontat acum?');
-        if (engine.role >= 5) questions.push('Cum schimb ora de închidere?');
+        if (engine.role >= 7) questions.push('Cum schimb ora de închidere?');
         return questions;
     }
 

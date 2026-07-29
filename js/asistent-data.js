@@ -134,25 +134,25 @@ window.PANEL_ASSISTANT_KNOWLEDGE = [
     },
     {
         title: 'Panoul Admin',
-        category: 'admin', role: 5, page: 'admin.html',
+        category: 'admin', role: 7, page: 'admin.html',
         keywords: ['admin', 'panou admin', 'setari', 'utilizatori', 'roluri', 'oprire toate turele'],
         answer: 'Panoul Admin gestionează utilizatorii, rolurile, setările paginilor și configurația pontajului. Include statistici operaționale și oprirea de urgență a tuturor turelor active.'
     },
     {
         title: 'Rolurile și nivelurile de acces',
-        category: 'admin', role: 5, page: 'admin.html',
+        category: 'admin', role: 7, page: 'admin.html',
         keywords: ['roluri', 'lider', 'colider', 'coordonator', 'manager', 'familia', 'sef mecanic', 'el mecanico', 'permisiuni'],
         answer: 'Nivelurile configurate sunt: El Mecanico 1, Șef Mecanic 2, La Familia 3, Manager 4, iar Coordonator, CoLider și Lider au nivel 5. Rolurile sunt sincronizate din Discord la autentificare.'
     },
     {
         title: 'Configurarea orelor de închidere',
-        category: 'admin', role: 5, page: 'admin.html',
+        category: 'admin', role: 7, page: 'admin.html',
         keywords: ['schimb ora pontaj', 'ora inchidere zi', 'ora inchidere noapte', 'exclude pauze'],
         answer: 'Administratorii pot modifica în Panoul Admin ora de închidere pentru tura de zi și noapte, modul de pontaj, mesajul global și excluderea pauzelor. Modificările trebuie salvate cu butonul din partea de jos.'
     },
     {
         title: 'Loguri',
-        category: 'admin', role: 5, page: 'logs.html',
+        category: 'admin', role: 7, page: 'logs.html',
         keywords: ['loguri', 'jurnal', 'evenimente', 'istoric activitate', 'audit'],
         answer: 'Jurnalul de activitate afișează evenimentele disponibile din pontaje, învoiri, Marketplace și Black Market și permite filtrarea după text, tip și perioadă.'
     }
@@ -169,6 +169,6 @@ window.PANEL_ASSISTANT_PAGES = [
     { file: 'marketplace-ilegal.html', label: 'Black Market', role: 3 },
     { file: 'rapoarte.html', label: 'Rapoarte', role: 4 },
     { file: 'contracte.html', label: 'Contracte', role: 4 },
-    { file: 'admin.html', label: 'Panou Admin', role: 5 },
-    { file: 'logs.html', label: 'Loguri', role: 5 }
+    { file: 'admin.html', label: 'Panou Admin', role: 7 },
+    { file: 'logs.html', label: 'Loguri', role: 7 }
 ];

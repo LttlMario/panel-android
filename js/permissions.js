@@ -22,6 +22,7 @@ const PagePermissions = {
     'cereri.html': 1,
     'craftmecanics.html': 1,
     'marketplace.html': 1,
+    'anunturi.html': 1,
 
     // Nivel 3: La Familia și rolurile superioare
     'calculatorilegal.html': 3,

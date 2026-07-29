@@ -42,6 +42,8 @@
         const sidebar = navigation?.closest('aside');
         if (!navigation || !sidebar) return;
 
+        ensureCommunityLink(navigation, currentPage);
+
         addStyles();
         navigation.querySelectorAll('a[href="asistent.html"]').forEach((link) => link.remove());
         sidebar.classList.add('panel-responsive-sidebar');
@@ -148,6 +150,20 @@
             };
             document.head.appendChild(script);
         });
+    }
+
+    function ensureCommunityLink(navigation, currentPage) {
+        if (navigation.querySelector('a[href="anunturi.html"]')) return;
+        const link = document.createElement('a');
+        link.href = 'anunturi.html';
+        link.dataset.role = '1';
+        link.className = 'nav-link flex items-center space-x-3 px-4 py-3 rounded-xl transition text-sm';
+        link.classList.add(...(currentPage === 'anunturi.html'
+            ? ['bg-emerald-500/10', 'text-emerald-400', 'font-medium']
+            : ['text-slate-300', 'hover:bg-slate-800']));
+        link.innerHTML = '<span>📣</span><span>Anunțuri & Sondaje</span>';
+        const marketplace = navigation.querySelector('a[href="marketplace.html"]');
+        navigation.insertBefore(link, marketplace || null);
     }
 
     async function setupAssistantWidget(currentPage) {

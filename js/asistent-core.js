@@ -265,7 +265,7 @@
         function specialResponse(question) {
             const query = normalize(question);
             const restrictedTopics = [
-                { role: 5, pattern: /\b(panou admin|admin|schimb rol|modific rol|rol utilizator|utilizator din panou|schimb ora|configurez ora|oprire toate turele|opresc toate turele|sterge utilizator|loguri|jurnal activitate)\b/ },
+                { role: 7, pattern: /\b(panou admin|admin|schimb rol|modific rol|rol utilizator|utilizator din panou|schimb ora|configurez ora|oprire toate turele|opresc toate turele|sterge utilizator|loguri|jurnal activitate)\b/ },
                 { role: 4, pattern: /\b(rapoarte|mecanici activi|cine este pontaj|cine e pontaj|opresc tura cuiva|opresc tura altuia|editez pontaj|modific pontajul altuia|sterg pontaj|contracte|generez contract)\b/ },
                 { role: 3, pattern: /\b(calculator ilegal|locatii ilegale|black market|piata neagra|cocaina|marijuana|jointuri|acetona|cayo)\b/ }
             ];
