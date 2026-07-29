@@ -862,7 +862,26 @@
                 const update = { status: automatic ? 'auto_completed' : 'completed', end_time: getRomanianTime(now), duration: formatTime(workedSeconds), duration_ms: workedSeconds * 1000, ended_at: now.toISOString(), stop_reason: reason };
                 const { data, error } = await supabaseClient.from('shifts').update(update).eq('id', record.id).in('status', ['active', 'paused']).select('*');
                 if (error) throw error;
-                if (!data?.length) { activeShiftRecord = null; resetTimerState(); return; }
+                if (!data?.length) {
+                    // Un UPDATE cu zero rânduri nu înseamnă automat că tura a fost
+                    // închisă. RLS sau o cerere concurentă pot lăsa rândul activ.
+                    const { data: remoteShift, error: verifyError } = await supabaseClient
+                        .from('shifts')
+                        .select('*')
+                        .eq('id', record.id)
+                        .maybeSingle();
+                    if (verifyError) throw verifyError;
+                    if (remoteShift && ['active', 'paused'].includes(remoteShift.status) && !remoteShift.end_time) {
+                        activeShiftRecord = remoteShift;
+                        syncActiveShiftUI();
+                        startTimer();
+                        throw new Error('Baza de date nu a confirmat închiderea pontajului.');
+                    }
+                    activeShiftRecord = null;
+                    resetTimerState();
+                    fetchShiftsHistory();
+                    return;
+                }
                 const finished = data[0];
                 await sendStopShiftDiscordWebhook({ ...finished, colleague_name: currentUser.display_name, reason });
                 activeShiftRecord = null; activeShiftId = null; resetTimerState(); fetchShiftsHistory();

@@ -695,6 +695,9 @@
             if (!canManagePontaj) return;
             const container = document.getElementById('active-shifts-container');
             try {
+                // Numele se poate schimba la o autentificare Discord, deci directorul
+                // trebuie reîmprospătat și la actualizarea listei de ture active.
+                await fetchUsersData();
                 const { data, error } = await supabaseClient.from('shifts').select('*').in('status', ['active', 'paused']).order('created_at', { ascending: false });
                 if (error) throw error;
                 activeShiftsData = data || [];
