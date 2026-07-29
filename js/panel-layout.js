@@ -43,6 +43,11 @@
         if (!navigation || !sidebar) return;
 
         ensureCommunityLink(navigation, currentPage);
+        normalizeNavigation(navigation, currentPage);
+        if (typeof applyRoleBasedVisibility === 'function' && typeof getRole === 'function') {
+            applyRoleBasedVisibility(getRole());
+        }
+        ensureSidebarLogout(sidebar);
 
         addStyles();
         navigation.querySelectorAll('a[href="asistent.html"]').forEach((link) => link.remove());
@@ -164,6 +169,64 @@
         link.innerHTML = '<span>📣</span><span>Anunțuri & Sondaje</span>';
         const marketplace = navigation.querySelector('a[href="marketplace.html"]');
         navigation.insertBefore(link, marketplace || null);
+    }
+
+    function normalizeNavigation(navigation, currentPage) {
+        const links = [
+            ['index.html', 1, '📊', 'Dashboard'],
+            ['anunturi.html', 1, '📣', 'Anunțuri & Sondaje'],
+            ['pontaj.html', 1, '⏱️', 'Pontaj'],
+            ['cereri.html', 1, '📋', 'Cereri / Absențe'],
+            ['contracte.html', 4, '📜', 'Contracte'],
+            ['calculatorilegal.html', 3, '🧮', 'Calculator Ilegal'],
+            ['craftmecanics.html', 1, '🔨', 'Craft Mecanics'],
+            ['locatiiilegale.html', 3, '🗺️', 'Locații Ilegale'],
+            ['marketplace.html', 1, '🛒', 'Marketplace'],
+            ['marketplace-ilegal.html', 3, '🚨', 'Black Market'],
+            ['rapoarte.html', 4, '📈', 'Rapoarte'],
+            ['logs.html', 7, '🧾', 'Loguri'],
+            ['admin.html', 7, '👑', 'Panou Admin']
+        ];
+
+        navigation.innerHTML = links.map(([href, role, icon, label]) => {
+            const active = currentPage === href;
+            const stateClasses = active
+                ? 'bg-emerald-500/10 text-emerald-400 font-medium'
+                : 'text-slate-300 hover:bg-slate-800';
+            return `<a href="${href}" data-role="${role}" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl transition text-sm ${stateClasses}"><span>${icon}</span><span>${label}</span></a>`;
+        }).join('');
+
+        const existingMobileNavigation = document.querySelector('#mobile-menu nav');
+        if (existingMobileNavigation) existingMobileNavigation.innerHTML = navigation.innerHTML;
+    }
+
+    function ensureSidebarLogout(sidebar) {
+        const existingLogout = [...sidebar.querySelectorAll('button')].find((button) => {
+            const action = `${button.id} ${button.getAttribute('onclick') || ''} ${button.textContent || ''}`.toLocaleLowerCase('ro-RO');
+            return action.includes('logout') || action.includes('ieșire') || action.includes('iesire');
+        });
+        if (existingLogout) return;
+
+        const avatar = sidebar.querySelector('#user-avatar');
+        if (!avatar) return;
+        let footer = avatar.parentElement;
+        while (footer?.parentElement && footer.parentElement !== sidebar) footer = footer.parentElement;
+        if (!footer) return;
+
+        footer.classList.add('flex', 'items-center', 'justify-between', 'gap-3');
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = 'Logout';
+        button.className = 'flex-shrink-0 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl transition cursor-pointer text-xs font-medium';
+        button.addEventListener('click', () => {
+            if (typeof logout === 'function') logout();
+            else if (typeof handleLogout === 'function') handleLogout();
+            else {
+                localStorage.clear();
+                location.href = 'login.html';
+            }
+        });
+        footer.appendChild(button);
     }
 
     async function setupAssistantWidget(currentPage) {
