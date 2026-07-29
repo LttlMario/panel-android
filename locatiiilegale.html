@@ -1433,7 +1433,7 @@
             activeFilters: Object.keys(CONFIG.categories),
             favorites: JSON.parse(localStorage.getItem('gta_guide_illegal_fav')) || [],
             selectedLocationId: null,
-            theme: localStorage.getItem('gta_guide_illegal_theme') || 'dark'
+            theme: localStorage.getItem('panel_theme') === 'light' ? 'light' : 'dark'
         };
 
         let maps = {};
@@ -2012,12 +2012,6 @@
                 const textToCopy = `[${loc.title}] - Hartă: ${loc.map.toUpperCase()} | Descriere: ${loc.description} | Cerințe: ${loc.requirements} | Recompense: ${loc.rewards}`;
                 navigator.clipboard.writeText(textToCopy);
                 showToast('Informațiile au fost copiate!');
-            });
-
-            document.getElementById('theme-toggle-btn').addEventListener('click', () => {
-                state.theme = state.theme === 'dark' ? 'light' : 'dark';
-                document.documentElement.setAttribute('data-theme', state.theme);
-                localStorage.setItem('gta_guide_illegal_theme', state.theme);
             });
 
             setupSearch();
