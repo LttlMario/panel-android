@@ -564,6 +564,7 @@
                 let catBadge = item.categorie || '';
                 let subBadge = item.subcategorie ? ` / ${item.subcategorie}` : '';
                 let textCurat = item.produse || '';
+                const poateSterge = getRole() === 7 || String(item.created_by_discord_id || '') === String(currentUser.discord_id || '');
 
                 let imaginiHtml = '';
                 let listaImaginiFinala = [];
@@ -617,6 +618,7 @@
                                 </div>
                                 <div>
                                     ${dataFormatata ? `<div class="text-[10px] text-slate-500">Publicat: ${dataFormatata}</div>` : ''}
+                                    ${poateSterge ? `<button type="button" onclick="stergeAnuntMarketplace('${item.id}')" class="mt-2 px-2.5 py-1 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 text-[10px] font-bold">Șterge</button>` : ''}
                                 </div>
                             </div>
                             ${imaginiHtml}
@@ -624,6 +626,19 @@
                     </div>
                 `;
             });
+        }
+
+        async function stergeAnuntMarketplace(id) {
+            if (!confirm('Ștergi definitiv acest anunț?')) return;
+            const token = localStorage.getItem('discord_access_token');
+            const response = await fetch(`${SUPABASE_URL}/functions/v1/manage-community-posts`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}` },
+                body: JSON.stringify({ action: 'marketplace_delete', table: 'marketplace_ilegal', item_id: id, access_token: token })
+            });
+            const result = await response.json();
+            if (!response.ok) return alert(result.error || 'Anunțul nu a putut fi șters.');
+            await incarcaAnunturi();
         }
 
         function dataURItoBlob(dataURI) {
@@ -743,6 +758,7 @@
                 pret: pretValoare,
                 imagini_json: imaginiJsonValoare,
                 imagine_url: imagineUrlDirectValoare !== '' ? imagineUrlDirectValoare : null
+                ,created_by_discord_id: currentUser.discord_id
             };
 
             const { error } = await supabaseClient
