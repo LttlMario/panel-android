@@ -1,4 +1,4 @@
-# Panel Mafie pentru Android
+# Panel pentru Android
 
 Acesta este proiectul mobil separat. Site-ul web original nu este modificat.
 

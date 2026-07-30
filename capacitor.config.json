@@ -1,6 +1,6 @@
 {
   "appId": "ro.littlemario.panelmafie",
-  "appName": "Panel Mafie",
+  "appName": "Panel",
   "webDir": "www",
   "server": {
     "hostname": "panel.local",

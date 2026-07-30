@@ -1,6 +1,6 @@
-# Panel Mafie pentru Android
+# Panel pentru Android
 
-Aplicația Android separată pentru Panel Mafie. Versiunea web originală rămâne disponibilă în repository-ul `panel-mafie`.
+Aplicația Android separată pentru Panel. Versiunea web originală rămâne disponibilă la adresa sa actuală.
 
 ## Descărcare
 
