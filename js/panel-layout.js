@@ -21,6 +21,11 @@
             header > div:not(.panel-header-tools) { min-width:0; }
             header h1,header h2 { font-size:clamp(1.05rem,2vw,1.35rem) !important; line-height:1.25 !important; white-space:normal !important; overflow-wrap:anywhere; }
             header p { white-space:normal; line-height:1.35; }
+            .panel-page-header { width:100% !important; max-width:none !important; min-height:76px !important; margin:0 !important; padding:12px 24px !important; display:flex !important; align-items:center !important; justify-content:flex-start !important; flex:none; border-bottom:1px solid #1e293b; background:rgba(15,23,42,.72); text-align:left !important; }
+            .panel-page-header > div:first-child { min-width:0; }
+            .panel-page-header h1,.panel-page-header h2 { margin:0 !important; }
+            .panel-page-header p { margin:4px 0 0 !important; color:#94a3b8; font-size:12px; }
+            .community-toolbar { justify-content:flex-end !important; margin-bottom:18px !important; }
             header:has(.panel-header-tools) { padding-right:72px !important; }
             .panel-header-tools { position:absolute; inset:0 18px; z-index:25; display:flex; align-items:center; pointer-events:none; }
             .panel-header-tools .panel-search-host { position:absolute; left:50%; transform:translateX(-50%); width:min(620px,45vw); min-width:0; pointer-events:auto; }
@@ -59,6 +64,7 @@
                 header { min-height:88px !important; padding:12px 14px !important; display:flex !important; flex-wrap:wrap !important; align-content:center; }
                 header > div:not(.panel-header-tools) { flex:1; min-width:calc(100% - 58px); }
                 header h1,header h2 { font-size:1.08rem !important; }
+                .panel-page-header { min-height:76px !important; padding:12px 14px !important; }
                 .panel-header-tools { position:static; order:20; width:100%; gap:10px; pointer-events:auto; inset:auto; }
                 .panel-header-tools .panel-search-host { position:static; transform:none; width:calc(100% - 48px); }
                 header:has(.panel-header-tools) { padding-right:14px !important; }
@@ -103,6 +109,7 @@
         ensureThemeToggle(sidebar);
 
         addStyles();
+        normalizePageHeader(currentPage);
         navigation.querySelectorAll('a[href="asistent.html"]').forEach((link) => link.remove());
         sidebar.classList.add('panel-responsive-sidebar');
         relocateHeaderActions();
@@ -185,6 +192,37 @@
             mobileToggle.setAttribute('aria-label', 'Deschide meniul');
             mobileToggle.addEventListener('click', openMobileMenu);
             header.insertBefore(mobileToggle, header.firstChild);
+        }
+    }
+
+    function normalizePageHeader(currentPage) {
+        const main = document.querySelector('main');
+        if (!main) return;
+        if (currentPage === 'anunturi.html') {
+            let header = main.querySelector(':scope > header');
+            if (!header) {
+                header = document.createElement('header');
+                header.innerHTML = '<div><h2>📣 Anunțuri & Sondaje</h2><p>Comunicare pentru Familie și Mecanici.</p></div>';
+                main.prepend(header);
+            }
+            header.classList.add('panel-page-header');
+            const hero = main.querySelector('.community-hero');
+            hero?.querySelector(':scope > div')?.remove();
+            hero?.classList.add('community-toolbar');
+            return;
+        }
+        if (currentPage === 'calculatorilegal.html') {
+            const header = main.querySelector(':scope > header');
+            if (!header) return;
+            header.className = 'panel-page-header';
+            header.innerHTML = '<div><h2>🧮 Calculator Ilegal</h2><p>Calcul pentru arme, muniție și plicuri.</p></div>';
+            return;
+        }
+        if (currentPage === 'craftmecanics.html') {
+            const header = main.querySelector(':scope > header');
+            if (!header) return;
+            header.className = 'panel-page-header';
+            header.innerHTML = '<div><h2>🔨 Craft Mechanics</h2><p>Galerie capturi, rețete și echipamente.</p></div>';
         }
     }
 
