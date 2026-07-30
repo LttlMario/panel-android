@@ -263,17 +263,6 @@
             padding: 0 2rem 2rem;
         }
 
-        .calculator-section-title {
-            width: calc(100% - 4rem);
-            max-width: 1200px;
-            margin: 1.5rem auto 0;
-            padding-bottom: 0.75rem;
-            border-bottom: 1px solid var(--border-color);
-            color: var(--text-main);
-            font-size: 1rem;
-            font-weight: 700;
-            text-align: left;
-        }
 
         @media (max-width: 1100px) {
             .calculator-container {
@@ -292,9 +281,12 @@
             display: none;
         }
 
+        .mobile-results-overlay {
+            display: none;
+        }
+
         @media (max-width: 767px) {
             .calculator-container { gap: 14px; margin-top: 1rem; padding: 0 12px 18px; }
-            .calculator-section-title { width: calc(100% - 24px); margin-top: 1rem; }
             .calculator-container > .panel { padding: 14px; }
             .mobile-results-button,
             .mobile-edit-selection {
@@ -314,9 +306,35 @@
                 box-shadow: 0 8px 20px rgba(5,150,105,.22);
             }
             .mobile-results-button { margin-top: 10px; }
-            .mobile-edit-selection { margin-bottom: 4px; background:linear-gradient(135deg,#334155,#1e293b); border-color:#475569; }
-            #calculator-input-panel.mobile-collapsed { display: none !important; }
-            .results-section.mobile-focus { scroll-margin-top: 76px; }
+            .mobile-edit-selection {
+                position: sticky;
+                top: 0;
+                z-index: 2;
+                margin-bottom: 14px;
+                background: linear-gradient(135deg,#334155,#1e293b);
+                border-color: #475569;
+            }
+            #calculator-results { display: none; }
+            #calculator-results.mobile-modal-open {
+                display: block;
+                position: fixed;
+                inset: 12px;
+                z-index: 10001;
+                max-height: calc(100dvh - 24px);
+                overflow-y: auto;
+                overscroll-behavior: contain;
+                border-color: rgba(56,189,248,.45);
+                box-shadow: 0 24px 80px rgba(0,0,0,.72);
+            }
+            .mobile-results-overlay.active {
+                display: block;
+                position: fixed;
+                inset: 0;
+                z-index: 10000;
+                background: rgba(2,6,23,.82);
+                backdrop-filter: blur(5px);
+            }
+            body.calculator-modal-open { overflow: hidden !important; }
             .grid-results { grid-template-columns:repeat(2,minmax(0,1fr)); }
         }
 
@@ -585,13 +603,14 @@
                 </div>
             </header>
 
-            <div class="calculator-section-title">Selecție Rețete (Live)</div>
-
-            <div class="calculator-container">
+<div class="calculator-container">
                 <!-- Panou Stânga: Input-uri -->
                 <div class="panel" id="calculator-input-panel">
+                    <div style="font-size: 1.0rem; font-weight: 600; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                        Selecție Rețete (Live)
+                    </div>
 
-                    <!-- Categorie 1: Arme -->
+<!-- Categorie 1: Arme -->
                     <div class="category-group" id="cat-weapons">
                         <div class="category-header" onclick="toggleCategory('cat-weapons')">🔫 Arme</div>
                         <div class="category-content" id="weaponsForm"></div>
@@ -705,8 +724,9 @@
                 </div>
 
                 <!-- Panou Dreapta: Rezultate Agregate -->
-                <div class="panel results-section" id="calculator-results">
-                    <button type="button" class="mobile-edit-selection" onclick="showMobileCalculator()">↑ Modifică selecția</button>
+                <div class="mobile-results-overlay" id="calculator-results-overlay" onclick="showMobileCalculator()"></div>
+                <div class="panel results-section" id="calculator-results" role="dialog" aria-modal="true" aria-label="Rezultatele calculului">
+                    <button type="button" class="mobile-edit-selection" onclick="showMobileCalculator()">✕ Închide rezultatele</button>
                     <!-- Box 1A: Componente din Arme -->
                     <div class="result-box" id="box_weapons">
                         <h3>Componente Necesarare</h3>
@@ -970,20 +990,25 @@
                 alert('Introdu mai întâi o cantitate pentru calcul.');
                 return;
             }
-            const inputPanel = document.getElementById('calculator-input-panel');
             const resultsPanel = document.getElementById('calculator-results');
-            inputPanel.classList.add('mobile-collapsed');
-            resultsPanel.classList.add('mobile-focus');
-            requestAnimationFrame(() => resultsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+            const overlay = document.getElementById('calculator-results-overlay');
+            resultsPanel.classList.add('mobile-modal-open');
+            overlay.classList.add('active');
+            document.body.classList.add('calculator-modal-open');
+            resultsPanel.scrollTop = 0;
         }
 
         function showMobileCalculator() {
-            const inputPanel = document.getElementById('calculator-input-panel');
             const resultsPanel = document.getElementById('calculator-results');
-            inputPanel.classList.remove('mobile-collapsed');
-            resultsPanel.classList.remove('mobile-focus');
-            requestAnimationFrame(() => inputPanel.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+            const overlay = document.getElementById('calculator-results-overlay');
+            resultsPanel.classList.remove('mobile-modal-open');
+            overlay.classList.remove('active');
+            document.body.classList.remove('calculator-modal-open');
         }
+
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape') showMobileCalculator();
+        });
 
         function calculateAll() {
             let hasWeapons = false;
