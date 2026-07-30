@@ -216,9 +216,9 @@
             max-width: none;
         }
         .main-content #panel-global-footer {
-            width: 100%;
-            margin-left: 0;
-            margin-right: 0;
+            width: calc(100% + 4rem);
+            margin-left: -2rem;
+            margin-right: -2rem;
         }
 
         header {
@@ -259,8 +259,6 @@
             gap: 24px;
             width: 100%;
             max-width: 1200px;
-            margin: 2rem auto 0;
-            padding: 0 2rem 2rem;
         }
 
         @media (max-width: 1100px) {
@@ -575,7 +573,323 @@
             <div class="calculator-container">
                 <!-- Panou Stânga: Input-uri -->
                 <div class="panel" id="calculator-input-panel">
-            …5761 tokens truncated… "Teava Pistol"], gold: 1 }
+                    <div style="font-size: 1.0rem; font-weight: 600; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                        Selecție Rețete (Live)
+                    </div>
+
+                    <!-- Categorie 1: Arme -->
+                    <div class="category-group" id="cat-weapons">
+                        <div class="category-header" onclick="toggleCategory('cat-weapons')">🔫 Arme</div>
+                        <div class="category-content" id="weaponsForm"></div>
+                    </div>
+
+                    <!-- Categorie 2: Piese de Armă -->
+                    <div class="category-group" id="cat-weapon-parts">
+                        <div class="category-header" onclick="toggleCategory('cat-weapon-parts')">⚙️ Piese de Armă</div>
+                        <div class="category-content" id="weaponPartsForm">
+                            <div class="item-row">
+                                <span class="item-name">Teavă Pistol</span>
+                                <input type="number" id="part_teava_pistol" min="0" value="0" placeholder="0" oninput="calculateAll()">
+                            </div>
+                            <div class="item-row">
+                                <span class="item-name">Corp Pistol</span>
+                                <input type="number" id="part_corp_pistol" min="0" value="0" placeholder="0" oninput="calculateAll()">
+                            </div>
+                            <div class="item-row">
+                                <span class="item-name">Teavă SMG</span>
+                                <input type="number" id="part_teava_smg" min="0" value="0" placeholder="0" oninput="calculateAll()">
+                            </div>
+                            <div class="item-row">
+                                <span class="item-name">Corp SMG</span>
+                                <input type="number" id="part_corp_smg" min="0" value="0" placeholder="0" oninput="calculateAll()">
+                            </div>
+                            <div class="item-row">
+                                <span class="item-name">Teavă Rifle</span>
+                                <input type="number" id="part_teava_rifle" min="0" value="0" placeholder="0" oninput="calculateAll()">
+                            </div>
+                            <div class="item-row">
+                                <span class="item-name">Corp Rifle</span>
+                                <input type="number" id="part_corp_rifle" min="0" value="0" placeholder="0" oninput="calculateAll()">
+                            </div>
+                            <div class="item-row">
+                                <span class="item-name">Butstock</span>
+                                <input type="number" id="part_butstock" min="0" value="0" placeholder="0" oninput="calculateAll()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Categorie 3: Muniție -->
+                    <div class="category-group" id="cat-ammo">
+                        <div class="category-header" onclick="toggleCategory('cat-ammo')">📦 Muniție (Gloanțe)</div>
+                        <div class="category-content" id="ammoForm"></div>
+                    </div>
+
+                    <!-- Categorie 4: Plicuri -->
+                    <div class="category-group" id="cat-plicuri">
+                        <div class="category-header" onclick="toggleCategory('cat-plicuri')">💊 Plicuri Cocaină</div>
+                        <div class="category-content" id="plicuriForm">
+                            <div class="item-row" style="margin-bottom: 10px;">
+                                <span class="item-name">Tip Resursă</span>
+                                <select id="plicuriResource" onchange="calculateAll()" style="width: 100%;">
+                                    <option value="frunze">Frunze</option>
+                                    <option value="tavi">Tăvi</option>
+                                    <option value="ape">Ape (Sticle)</option>
+                                    <option value="brichete">Brichete</option>
+                                    <option value="plicuri_goale">Plicuri Goale</option>
+                                    <option value="plicuri_facute">Plicuri Făcute</option>
+                                </select>
+                            </div>
+                            <div class="item-row">
+                                <span class="item-name">Cantitate</span>
+                                <input type="number" id="plicuriQty" min="0" value="0" placeholder="0" oninput="calculateAll()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Categorie 5: Marijuana -->
+                    <div class="category-group" id="cat-weed">
+                        <div class="category-header" onclick="toggleCategory('cat-weed')">🌿 Marijuana (Joints)</div>
+                        <div class="category-content" id="weedForm">
+                            <div class="item-row" style="margin-bottom: 10px;">
+                                <span class="item-name">Tip Resursă</span>
+                                <select id="weedResource" onchange="calculateAll()" style="width: 100%;">
+                                    <option value="frunze">Frunze</option>
+                                    <option value="foite">Foițe</option>
+                                    <option value="jointuri">Joint-uri</option>
+                                </select>
+                            </div>
+                            <div class="item-row">
+                                <span class="item-name">Cantitate</span>
+                                <input type="number" id="weedQty" min="0" value="0" placeholder="0" oninput="calculateAll()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Categorie 6: Plicuri Ciuperci -->
+                    <div class="category-group" id="cat-mushrooms">
+                        <div class="category-header" onclick="toggleCategory('cat-mushrooms')">🍄 Plicuri Ciuperci</div>
+                        <div class="category-content" id="mushroomsForm">
+                            <div class="item-row" style="margin-bottom: 10px;">
+                                <span class="item-name">Tip Plic Ciuperci</span>
+                                <select id="mushroomsResource" onchange="calculateAll()" style="width: 100%;">
+                                    <option value="red_fire_x3">Red Fire x3</option>
+                                    <option value="green_haze">Green Haze x3</option>
+                                    <option value="blue_current_x3">Blue Current x3</option>
+                                </select>
+                            </div>
+                            <div class="item-row">
+                                <span class="item-name">Cantitate</span>
+                                <input type="number" id="mushroomsQty" min="0" value="0" placeholder="0" oninput="calculateAll()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="btn-container">
+                        <button type="button" class="btn-danger" onclick="resetCalculator()">Resetează Totul</button>
+                        <button type="button" class="mobile-results-button" onclick="showMobileResults()">Vezi rezultatele ↓</button>
+                    </div>
+                </div>
+
+                <!-- Panou Dreapta: Rezultate Agregate -->
+                <div class="panel results-section" id="calculator-results">
+                    <button type="button" class="mobile-edit-selection" onclick="showMobileCalculator()">↑ Modifică selecția</button>
+                    <!-- Box 1A: Componente din Arme -->
+                    <div class="result-box" id="box_weapons">
+                        <h3>Componente Necesarare</h3>
+                        <div class="grid-results" id="weaponsResultsGrid">
+                            <div class="result-card"><div class="item-title">Necesar Piese Armă</div><div class="item-value" id="res_w_piese_arme">0</div></div>
+                            <div class="result-card"><div class="item-title">Blueprint-uri</div><div class="item-value" id="res_w_blueprint">0</div></div>
+                            <div class="result-card"><div class="item-title">Teavă Pistol</div><div class="item-value" id="res_w_teava_pistol">0</div></div>
+                            <div class="result-card"><div class="item-title">Corp Pistol</div><div class="item-value" id="res_w_corp_pistol">0</div></div>
+                            <div class="result-card"><div class="item-title">Teavă SMG</div><div class="item-value" id="res_w_teava_smg">0</div></div>
+                            <div class="result-card"><div class="item-title">Corp SMG</div><div class="item-value" id="res_w_corp_smg">0</div></div>
+                            <div class="result-card"><div class="item-title">Teavă Rifle</div><div class="item-value" id="res_w_teava_rifle">0</div></div>
+                            <div class="result-card"><div class="item-title">Corp Rifle</div><div class="item-value" id="res_w_corp_rifle">0</div></div>
+                            <div class="result-card"><div class="item-title">Butstock</div><div class="item-value" id="res_w_butstock">0</div></div>
+                            <div class="result-card"><div class="item-title">Aur</div><div class="item-value gold" id="res_w_gold">0</div></div>
+                            <div class="result-card"><div class="item-title">Diamante</div><div class="item-value" id="res_w_diamonds">0</div></div>
+                            <div class="result-card"><div class="item-title">Rubine</div><div class="item-value" id="res_w_rubies">0</div></div>
+                            <div class="result-card"><div class="item-title">Emeralde</div><div class="item-value" id="res_w_emeralds">0</div></div>
+                        </div>
+                    </div>
+
+                    <!-- Box 1B: Materiale pentru Piese de Armă -->
+                    <div class="result-box" id="box_weapon_parts">
+                        <h3>Necesar Materiale (Din Meniul Independent de Piese)</h3>
+                        <div class="grid-results" id="partsResultsGrid">
+                            <div class="result-card"><div class="item-title">Total Piese Armă</div><div class="item-value" id="res_p_total_piese">0</div></div>
+                        </div>
+                    </div>
+
+                    <!-- Box 2: Necesar Materiale Plicuri Cocaină -->
+                    <div class="result-box" id="box_plicuri">
+                        <h3>Necesar Materiale Plicuri Cocaină</h3>
+                        <div class="grid-results" id="plicuriResultsGrid">
+                            <div class="result-card"><div class="item-title">Frunze</div><div class="item-value" id="plic_res_frunze">0 buc</div></div>
+                            <div class="result-card"><div class="item-title">Tăvi</div><div class="item-value" id="plic_res_tavi">0 buc</div></div>
+                            <div class="result-card"><div class="item-title">Ape (Sticle)</div><div class="item-value" id="plic_res_ape">0 buc</div></div>
+                            <div class="result-card"><div class="item-title">Brichete</div><div class="item-value" id="plic_res_brichete">0 buc</div></div>
+                            <div class="result-card"><div class="item-title">Plicuri Goale</div><div class="item-value" id="plic_res_goale">0 buc</div></div>
+                            <div class="result-card"><div class="item-title">Plicuri Făcute</div><div class="item-value" id="plic_res_facute">0 buc</div></div>
+                            <div class="result-card"><div class="item-title">Total Greutate</div><div class="item-value" id="plic_res_kg">0.0 KG</div></div>
+                            <div class="result-card"><div class="item-title">Profit Estimat</div><div class="item-value gold" id="plic_res_profit">0 $</div></div>
+                        </div>
+                    </div>
+
+                    <!-- Box 3: Necesar Materiale Marijuana -->
+                    <div class="result-box" id="box_weed">
+                        <h3>Necesar Materiale Marijuana</h3>
+                        <div class="grid-results" id="weedResultsGrid">
+                            <div class="result-card"><div class="item-title">Frunze</div><div class="item-value" id="weed_res_frunze">0 buc</div></div>
+                            <div class="result-card"><div class="item-title">Foițe</div><div class="item-value" id="weed_res_foite">0 buc</div></div>
+                            <div class="result-card"><div class="item-title">Joint-uri</div><div class="item-value" id="weed_res_jointuri">0 buc</div></div>
+                            <div class="result-card"><div class="item-title">Total Greutate</div><div class="item-value" id="weed_res_kg">0.0 KG</div></div>
+                        </div>
+                    </div>
+
+                    <!-- Box 5: Necesar Materiale Plicuri Ciuperci -->
+                    <div class="result-box" id="box_mushrooms">
+                        <h3>Necesar Materiale Plicuri Ciuperci</h3>
+                        <div class="grid-results" id="mushroomsResultsGrid">
+                            <div class="result-card"><div class="item-title">Acetona</div><div class="item-value" id="mush_res_acetona">0 buc</div></div>
+                            <div class="result-card"><div class="item-title">Pink Light</div><div class="item-value" id="mush_res_pink_light">0 buc</div></div>
+                            <div class="result-card"><div class="item-title">Oyster Rosu</div><div class="item-value" id="mush_res_oyster_rosu">0 buc</div></div>
+                            <div class="result-card"><div class="item-title">Amanita Rosie</div><div class="item-value" id="mush_res_amanita_rosie">0 buc</div></div>
+                            <div class="result-card"><div class="item-title">Blue Light</div><div class="item-value" id="mush_res_blue_light">0 buc</div></div>
+                            <div class="result-card"><div class="item-title">Oyster Galben</div><div class="item-value" id="mush_res_oyster_galben">0 buc</div></div>
+                            <div class="result-card"><div class="item-title">Amanita Verde</div><div class="item-value" id="mush_res_amanita_verde">0 buc</div></div>
+                            <div class="result-card"><div class="item-title">Purple Light</div><div class="item-value" id="mush_res_purple_light">0 buc</div></div>
+                            <div class="result-card"><div class="item-title">Oyster Albastru</div><div class="item-value" id="mush_res_oyster_albastru">0 buc</div></div>
+                            <div class="result-card"><div class="item-title">Psilocybe</div><div class="item-value" id="mush_res_psilocybe">0 buc</div></div>
+                            <div class="result-card"><div class="item-title">Plicuri Goale</div><div class="item-value" id="mush_res_plicuri_goale">0 buc</div></div>
+                            <div class="result-card"><div class="item-title">Total Greutate</div><div class="item-value" id="mush_res_kg">0.0 KG</div></div>
+                        </div>
+                    </div>
+
+                    <!-- Box 4: Total Materiale Brute -->
+                    <div class="result-box" id="box_raw_materials">
+                        <h3>Total Materiale Brute Necesare (Arme, Componente & Muniții)</h3>
+                        <div class="grid-results" id="rawMaterialsResultsGrid">
+                            <div class="result-card"><div class="item-title">Arc</div><div class="item-value" id="raw_arc">0</div></div>
+                            <div class="result-card"><div class="item-title">Oțel</div><div class="item-value" id="raw_otel">0</div></div>
+                            <div class="result-card"><div class="item-title">Plumb</div><div class="item-value" id="raw_plumb">0</div></div>
+                            <div class="result-card"><div class="item-title">Aluminiu</div><div class="item-value" id="raw_aluminiu">0</div></div>
+                            <div class="result-card"><div class="item-title">Praf de Pusca</div><div class="item-value" id="raw_p_praf">0</div></div>
+                            <div class="result-card"><div class="item-title">Sulf</div><div class="item-value" id="raw_sulf">0</div></div>
+                            <div class="result-card"><div class="item-title">Cărbune</div><div class="item-value" id="raw_carbune">0</div></div>
+                            <div class="result-card"><div class="item-title">Fier</div><div class="item-value" id="raw_fier">0</div></div>
+                            <div class="result-card"><div class="item-title">Plastic</div><div class="item-value" id="raw_plastic">0</div></div>
+                            <div class="result-card"><div class="item-title">Scrap</div><div class="item-value" id="raw_scrap">0</div></div>
+                            <div class="result-card"><div class="item-title">Cupru</div><div class="item-value" id="raw_cupru">0</div></div>
+                            <div class="result-card"><div class="item-title">Carcasa</div><div class="item-value" id="raw_carcasa">0</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Script de integrare Supabase și interfață identic cu index.html -->
+    <script>
+        const SUPABASE_URL = window.PANEL_SUPABASE_CONFIG.url;
+        const SUPABASE_KEY = window.PANEL_SUPABASE_CONFIG.publishableKey;
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const currentPage = window.location.pathname.split("/").pop() || "index.html";
+            document.querySelectorAll('.nav-link').forEach(link => {
+                const linkHref = link.getAttribute('href');
+                if (linkHref === currentPage) {
+                    link.classList.remove('text-slate-300', 'hover:bg-slate-800');
+                    link.classList.add('bg-emerald-500/10', 'text-emerald-400', 'font-medium');
+                }
+            });
+
+            const cachedUser = localStorage.getItem('discord_user');
+            if (!cachedUser) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                const localData = JSON.parse(cachedUser);
+                if (!localData || !localData.discord_id) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                let { data: dbUser } = await supabaseClient
+                    .from('users')
+                    .select('*')
+                    .eq('discord_id', localData.discord_id)
+                    .maybeSingle();
+
+                let activeUser = dbUser || localData;
+
+                const displayName = activeUser.display_name || activeUser.username || 'Mecanic';
+                const role = activeUser.role || activeUser.default_role || 'Mecanic';
+                const userAvatar = activeUser.avatar || 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f468-200d-1f4bb.png';
+
+                document.getElementById('user-display-name').textContent = displayName;
+                document.getElementById('user-role').textContent = role;
+                document.getElementById('user-avatar').src = userAvatar;
+
+                const roleLower = role.toLowerCase();
+                const isPrivileged = roleLower.includes('sef') || roleLower.includes('șef') || roleLower.includes('manager') || roleLower.includes('admin') || roleLower.includes('owner');
+
+                if (isPrivileged) {
+                    const navLogs = document.getElementById('nav-logs');
+                    if (navLogs) navLogs.classList.remove('hidden');
+                }
+
+                localStorage.setItem('discord_user', JSON.stringify(activeUser));
+
+                initForms();
+            } catch (err) {
+                console.error('Erore sesiune:', err);
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', () => {
+                    localStorage.clear();
+                    window.location.href = 'login.html';
+                });
+            }
+        });
+
+        const PRICE_PER_ENVELOPE = 13600;
+
+        const componentCost = {
+            "Teava Pistol": 1,
+            "Corp Pistol": 1,
+            "Teava SMG": 2,
+            "Corp SMG": 2,
+            "Corp Rifle": 3,
+            "Teava Rifle": 3,
+            "Butstock": 2
+        };
+
+        const weapons = {
+            "Navy Pistol": { blueprint: 1, parts: 6, components: ["Teava Rifle", "Corp Pistol"] },
+            "Combat MG": { blueprint: 1, parts: 4, components: ["Teava Rifle", "Corp Rifle", "Butstock"] },
+            "Assault SMG": { blueprint: 1, parts: 4, components: ["Teava SMG", "Corp Rifle", "Butstock"] },
+            "Gadget Pistol": { blueprint: 1, parts: 20, components: ["Teava Rifle", "Corp Pistol"], gold: 10, diamonds: 2, rubies: 2, emeralds: 2 },
+            "Shotgun": { blueprint: 1, parts: 4, components: ["Teava SMG", "Corp Pistol"] },
+            "Heavy Revolver": { blueprint: 1, parts: 4, components: ["Teava Rifle", "Corp Pistol"] },
+            "MG": { parts: 3, components: ["Teava Rifle", "Corp Rifle", "Butstock"] },
+            "Assault Rifle MK2": { parts: 3, components: ["Teava Rifle", "Corp Rifle", "Butstock"] },
+            "Pistol": { components: ["Corp Pistol", "Teava Pistol"] },
+            "Tec-9": { parts: 1, components: ["Corp Pistol", "Teava SMG"] },
+            "Pistol Mk2": { parts: 1, components: ["Corp Pistol", "Teava Pistol"] },
+            "Micro SMG": { parts: 1, components: ["Corp SMG", "Teava SMG"] },
+            "Mini Ak": { parts: 1, components: ["Corp Rifle", "Teava SMG"] },
+            "Vintage Pistol": { parts: 2, components: ["Corp Pistol", "Teava Pistol"] },
+            "SMG Mk2": { parts: 1, components: ["Corp SMG", "Teava SMG"] },
+            "Tommy Gun": { parts: 1, components: ["Teava Rifle", "Corp Rifle", "Butstock"] },
+            "DB": { parts: 3, components: ["Corp Pistol", "Teava Pistol"], gold: 1 }
         };
 
         const ammoData = {
@@ -946,4 +1260,3 @@
     <script src="js/global-footer.js"></script>
 </body>
 </html>
-
