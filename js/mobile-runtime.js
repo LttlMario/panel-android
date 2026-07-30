@@ -13,9 +13,42 @@
   const app = plugins.App;
   const browser = plugins.Browser;
   const tokenKey = 'discord_access_token';
+  const secureKeyPrefix = 'capacitor-storage_';
   const consumedCallbackKey = 'panel_consumed_oauth_callback';
   const pendingOAuthTokenKey = 'panel_pending_discord_oauth_token';
   let secureReady = false;
+
+  const secureStore = securePreferences ? {
+    async getItem(key) {
+      if (typeof securePreferences.getItem === 'function') {
+        return securePreferences.getItem(key);
+      }
+      const result = await securePreferences.internalGetItem({
+        prefixedKey: `${secureKeyPrefix}${key}`,
+        sync: false
+      });
+      return result?.data ?? null;
+    },
+    async setItem(key, value) {
+      if (typeof securePreferences.setItem === 'function') {
+        return securePreferences.setItem(key, value);
+      }
+      return securePreferences.internalSetItem({
+        prefixedKey: `${secureKeyPrefix}${key}`,
+        data: String(value),
+        sync: false
+      });
+    },
+    async removeItem(key) {
+      if (typeof securePreferences.removeItem === 'function') {
+        return securePreferences.removeItem(key);
+      }
+      return securePreferences.internalRemoveItem({
+        prefixedKey: `${secureKeyPrefix}${key}`,
+        sync: false
+      });
+    }
+  } : null;
 
   function handleDiscordCallback(url) {
     if (!url || !url.startsWith(discordRedirect)) return false;
@@ -43,9 +76,9 @@
   app?.getLaunchUrl?.().then(result => handleDiscordCallback(result?.url)).catch(() => {});
 
   async function restoreSecureToken() {
-    if (!securePreferences) return;
+    if (!secureStore) return;
     try {
-      const value = await securePreferences.getItem(tokenKey);
+      const value = await secureStore.getItem(tokenKey);
       if (value && !localStorage.getItem(tokenKey)) {
         localStorage.setItem(tokenKey, value);
       }
@@ -57,11 +90,11 @@
   }
 
   function persistTokenIfChanged(event) {
-    if (!securePreferences || event?.key !== tokenKey) return;
+    if (!secureStore || event?.key !== tokenKey) return;
     if (event.newValue) {
-      securePreferences.setItem(tokenKey, event.newValue).catch(console.warn);
+      secureStore.setItem(tokenKey, event.newValue).catch(console.warn);
     } else if (secureReady) {
-      securePreferences.removeItem(tokenKey).catch(console.warn);
+      secureStore.removeItem(tokenKey).catch(console.warn);
     }
   }
 
@@ -72,21 +105,21 @@
   const originalClear = Storage.prototype.clear;
   Storage.prototype.setItem = function (key, value) {
     originalSetItem.call(this, key, value);
-    if (this === localStorage && key === tokenKey && securePreferences) {
-      securePreferences.setItem(key, String(value)).catch(console.warn);
+    if (this === localStorage && key === tokenKey && secureStore) {
+      secureStore.setItem(key, String(value)).catch(console.warn);
     }
   };
   Storage.prototype.removeItem = function (key) {
     originalRemoveItem.call(this, key);
-    if (this === localStorage && key === tokenKey && securePreferences && secureReady) {
-      securePreferences.removeItem(key).catch(console.warn);
+    if (this === localStorage && key === tokenKey && secureStore && secureReady) {
+      secureStore.removeItem(key).catch(console.warn);
     }
   };
   Storage.prototype.clear = function () {
     const isAppStorage = this === localStorage;
     originalClear.call(this);
-    if (isAppStorage && securePreferences && secureReady) {
-      securePreferences.removeItem(tokenKey).catch(console.warn);
+    if (isAppStorage && secureStore && secureReady) {
+      secureStore.removeItem(tokenKey).catch(console.warn);
     }
   };
 
