@@ -29,32 +29,6 @@
             html[data-panel-theme="dark"] .bg-slate-800 { background-color:#111c2e !important; }
             html[data-panel-theme="dark"] .border-slate-800, html[data-panel-theme="dark"] .border-slate-700, html[data-panel-theme="dark"] .post, html[data-panel-theme="dark"] .dialog { border-color:#223047 !important; }
 
-            html[data-panel-theme="light"] { color-scheme:light; --bg-main:#8293a6; --bg-panel:#b7c3cf; --bg-panel-hover:#a7b5c3; --card:#b7c3cf; --border:#61758b; --text-main:#0f172a; --text-muted:#3c4e63; }
-            html[data-panel-theme="light"] body, html[data-panel-theme="light"] main, html[data-panel-theme="light"] #app { background-color:#8293a6 !important; background-image:radial-gradient(circle at 78% 8%,rgba(203,213,225,.22),transparent 32%),linear-gradient(145deg,#8fa0b1 0%,#76899e 58%,#687b91 100%) !important; color:#0f172a !important; }
-            html[data-panel-theme="light"] :is(.bg-slate-900, [class^="bg-slate-900/"], [class*=" bg-slate-900/"]), html[data-panel-theme="light"] .post, html[data-panel-theme="light"] .dialog, html[data-panel-theme="light"] .panel, html[data-panel-theme="light"] .card { background-color:#172337 !important; background-image:radial-gradient(circle at 12% 0%,rgba(16,185,129,.1),transparent 28%),linear-gradient(145deg,#203149 0%,#17253a 58%,#111d30 100%) !important; color:#e7eef7 !important; border-color:#40546d !important; box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 10px 26px rgba(15,23,42,.34); }
-            html[data-panel-theme="light"] :is(.bg-slate-950, [class^="bg-slate-950/"], [class*=" bg-slate-950/"]), html[data-panel-theme="light"] input, html[data-panel-theme="light"] textarea, html[data-panel-theme="light"] select, html[data-panel-theme="light"] .poll-option, html[data-panel-theme="light"] .tab, html[data-panel-theme="light"] .reaction, html[data-panel-theme="light"] .audience { background-color:#101b2d !important; background-image:linear-gradient(145deg,#1a2940,#101b2d) !important; color:#e7eef7 !important; border-color:#40546d !important; box-shadow:inset 0 1px 0 rgba(255,255,255,.06); }
-            html[data-panel-theme="light"] :is(.bg-slate-800, [class^="bg-slate-800/"], [class*=" bg-slate-800/"]), html[data-panel-theme="light"] .badge { background:#2a3c54 !important; color:#e7eef7 !important; }
-            html[data-panel-theme="light"] .text-slate-100, html[data-panel-theme="light"] .text-slate-200, html[data-panel-theme="light"] .text-slate-300, html[data-panel-theme="light"] .post-body { color:#e7eef7 !important; }
-            html[data-panel-theme="light"] .text-slate-400, html[data-panel-theme="light"] .text-slate-500, html[data-panel-theme="light"] .muted, html[data-panel-theme="light"] .meta { color:#a9b7c8 !important; }
-            html[data-panel-theme="light"] .border-slate-800, html[data-panel-theme="light"] .border-slate-700, html[data-panel-theme="light"] .post, html[data-panel-theme="light"] .dialog, html[data-panel-theme="light"] input, html[data-panel-theme="light"] textarea, html[data-panel-theme="light"] select { border-color:#566a82 !important; }
-            html[data-panel-theme="light"] .nav-link { margin-bottom:5px; border:1px solid #40536b; background:#2c3e55 !important; color:#e7eef7 !important; box-shadow:0 3px 10px rgba(2,6,23,.28); }
-            html[data-panel-theme="light"] .nav-link:hover { background:#3b5069 !important; border-color:#71869d; }
-            html[data-panel-theme="light"] .nav-link.bg-emerald-500\\/10 { background:#397d69 !important; border-color:#69b69d; color:#ecfdf5 !important; }
-            /* Aceste reguli trebuie să fie după regulile cardurilor: sidebarul și antetul au și clase bg-slate. */
-            html[data-panel-theme="light"] aside { background:#172337 !important; color:#f1f5f9 !important; border-color:#314158 !important; box-shadow:8px 0 24px rgba(15,23,42,.22); }
-            html[data-panel-theme="light"] header { background:#26364c !important; color:#f8fafc !important; border-color:#3e5068 !important; box-shadow:0 4px 16px rgba(15,23,42,.18); }
-            html[data-panel-theme="light"] footer { background:#26364c !important; color:#e2e8f0 !important; border-color:#3e5068 !important; }
-            html[data-panel-theme="light"] header h1, html[data-panel-theme="light"] header h2, html[data-panel-theme="light"] header h3 { color:#f8fafc !important; }
-            html[data-panel-theme="light"] aside h1, html[data-panel-theme="light"] aside #user-display-name { color:#f8fafc !important; }
-            html[data-panel-theme="light"] aside #user-role { color:#6ee7b7 !important; }
-            html[data-panel-theme="light"] body .panel-responsive-sidebar { background-color:#172337 !important; background-image:radial-gradient(circle at 18% 12%,rgba(16,185,129,.12),transparent 26%),linear-gradient(180deg,#1d2d44 0%,#142034 55%,#101a2b 100%) !important; border-color:#34465e !important; box-shadow:8px 0 28px rgba(15,23,42,.32); }
-            html[data-panel-theme="light"] body .panel-responsive-sidebar > div:first-child { background:transparent !important; }
-            html[data-panel-theme="light"] body .panel-responsive-sidebar > div:last-child { background:rgba(8,15,28,.5) !important; border-color:#34465e !important; }
-            html[data-panel-theme="light"] body .panel-responsive-sidebar .nav-link { background-image:linear-gradient(135deg,rgba(51,72,97,.96),rgba(35,52,75,.96)) !important; }
-            html[data-panel-theme="light"] body .panel-responsive-sidebar .nav-link:hover { background-image:linear-gradient(135deg,#435d7a,#314962) !important; transform:translateX(2px); }
-            html[data-panel-theme="light"] body .panel-responsive-sidebar .nav-link.bg-emerald-500\\/10 { background-image:linear-gradient(135deg,#2f8068,#286955) !important; }
-            html[data-panel-theme="light"] body main :is(.bg-slate-900, [class^="bg-slate-900/"], [class*=" bg-slate-900/"]) .text-slate-400,
-            html[data-panel-theme="light"] body main :is(.bg-slate-900, [class^="bg-slate-900/"], [class*=" bg-slate-900/"]) .text-slate-500 { color:#a9b7c8 !important; }
             .panel-sidebar-toggle { position:absolute; top:18px; right:-14px; z-index:70; width:28px; height:28px; display:flex; align-items:center; justify-content:center; border:1px solid #334155; border-radius:999px; background:#0f172a; color:#cbd5e1; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.3); }
             .panel-sidebar-toggle:hover { background:#1e293b; color:#fff; }
             #panel-mobile-backdrop { display:none; position:fixed; inset:0; z-index:4000; background:rgba(2,6,23,.78); backdrop-filter:blur(3px); }
@@ -293,14 +267,14 @@
         while (footer?.parentElement && footer.parentElement !== sidebar) footer = footer.parentElement;
         if (!footer) return;
 
-        const modes = ['panel', 'dark', 'light'];
-        const icons = { panel: '🎨', dark: '🌙', light: '☀️' };
-        const labels = { panel: 'Tema Panel (originală)', dark: 'Tema Dark', light: 'Tema Light confortabilă' };
+        const modes = ['panel', 'dark'];
+        const icons = { panel: '🎨', dark: '🌙' };
+        const labels = { panel: 'Tema Panel (originală)', dark: 'Tema Dark' };
         const apply = (mode) => {
             document.documentElement.dataset.panelTheme = mode;
             // Unele pagini vechi își citesc culorile din data-theme; Panel folosește paleta lor originală întunecată.
-            document.documentElement.dataset.theme = mode === 'light' ? 'light' : 'dark';
-            document.documentElement.classList.toggle('dark', mode !== 'light');
+            document.documentElement.dataset.theme = 'dark';
+            document.documentElement.classList.add('dark');
             const button = document.getElementById('panel-theme-toggle');
             if (button) {
                 button.textContent = icons[mode];
@@ -310,7 +284,10 @@
         };
 
         let mode = localStorage.getItem('panel_theme') || 'panel';
-        if (mode === 'system' || !modes.includes(mode)) mode = 'panel';
+        if (mode === 'system' || mode === 'light' || !modes.includes(mode)) {
+            mode = 'panel';
+            localStorage.setItem('panel_theme', mode);
+        }
         const legacyButton = document.getElementById('theme-toggle-btn');
         const button = legacyButton || document.createElement('button');
         if (legacyButton) legacyButton.removeAttribute('onclick');
