@@ -885,7 +885,9 @@
                     return;
                 }
                 const finished = data[0];
-                await sendStopShiftDiscordWebhook({ ...finished, colleague_name: currentUser.display_name, reason });
+                // Închiderea automată este notificată de Edge Function, care poate
+                // reîncerca fără să depindă de browser sau de sesiunea Discord.
+                if (!automatic) await sendStopShiftDiscordWebhook({ ...finished, colleague_name: currentUser.display_name, reason });
                 activeShiftRecord = null; activeShiftId = null; resetTimerState(); fetchShiftsHistory();
                 if (automatic) alert('Tura a fost încheiată automat: programul maxim a fost atins.');
             } catch (error) { console.error('Eroare închidere pontaj:', error); alert('Tura nu a putut fi închisă corect.'); }
