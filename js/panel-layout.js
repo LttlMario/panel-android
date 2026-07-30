@@ -57,6 +57,15 @@
             #panel-mobile-menu.is-open { transform:translateX(0); }
             #panel-mobile-menu .panel-mobile-top { height:64px; padding:0 18px; border-bottom:1px solid #1e293b; display:flex; align-items:center; justify-content:space-between; }
             #panel-mobile-menu .panel-mobile-nav { padding:16px; }
+            html.native-app :is(#panel-mobile-menu,#mobile-menu) { display:flex; flex-direction:column; overflow:hidden; padding-bottom:env(safe-area-inset-bottom); }
+            html.native-app :is(#panel-mobile-menu,#mobile-menu) nav { flex:1; min-height:0; height:auto !important; overflow-y:auto; }
+            .panel-mobile-account { flex:none; display:flex; align-items:center; gap:10px; padding:14px; border-top:1px solid #1e293b; background:rgba(15,23,42,.98); }
+            .panel-mobile-account img { width:40px; height:40px; flex:none; border-radius:999px; border:1px solid #334155; object-fit:cover; }
+            .panel-mobile-account-copy { flex:1; min-width:0; }
+            .panel-mobile-account-name { overflow:hidden; color:#e2e8f0; font-size:13px; font-weight:700; text-overflow:ellipsis; white-space:nowrap; }
+            .panel-mobile-account-role { overflow:hidden; margin-top:2px; color:#34d399; font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
+            .panel-mobile-logout { flex:none; min-height:38px; padding:0 11px; border:1px solid rgba(244,63,94,.3); border-radius:11px; background:rgba(244,63,94,.1); color:#fb7185; font-size:11px; font-weight:700; cursor:pointer; }
+            .panel-mobile-logout:active { background:rgba(244,63,94,.22); }
             .panel-mobile-toggle { display:none; position:relative; z-index:40; width:40px; height:40px; flex:none; align-items:center; justify-content:center; border:1px solid #334155; border-radius:12px; background:#020617; color:#e2e8f0; font-size:18px; cursor:pointer; }
             .panel-action-bar { display:flex; align-items:center; justify-content:flex-end; gap:12px; flex-wrap:wrap; padding:12px max(16px, calc((100vw - 1280px) / 2)); border-bottom:1px solid #1e293b; background:rgba(15,23,42,.72); }
             .panel-action-bar > div { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
@@ -167,7 +176,11 @@
         });
 
         // Dashboard are deja propriul meniu mobil, păstrat pentru compatibilitate.
-        if (document.getElementById('mobile-menu')) return;
+        const existingMobileMenu = document.getElementById('mobile-menu');
+        if (existingMobileMenu) {
+            ensureAndroidMobileAccount(existingMobileMenu, sidebar);
+            return;
+        }
 
         const backdrop = document.createElement('div');
         backdrop.id = 'panel-mobile-backdrop';
@@ -175,6 +188,7 @@
         mobileMenu.id = 'panel-mobile-menu';
         mobileMenu.innerHTML = `<div class="panel-mobile-top"><div><strong class="text-slate-100">Panel</strong><p class="text-[10px] text-slate-400">Meniu navigare</p></div><button type="button" class="w-9 h-9 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-lg" aria-label="Închide meniul">×</button></div><nav class="panel-mobile-nav space-y-1.5"></nav>`;
         document.body.append(backdrop, mobileMenu);
+        ensureAndroidMobileAccount(mobileMenu, sidebar);
 
         const mobileNav = mobileMenu.querySelector('.panel-mobile-nav');
         mobileNav.innerHTML = navigation.innerHTML;
@@ -202,6 +216,69 @@
             mobileToggle.setAttribute('aria-label', 'Deschide meniul');
             mobileToggle.addEventListener('click', openMobileMenu);
             header.insertBefore(mobileToggle, header.firstChild);
+        }
+    }
+
+    function ensureAndroidMobileAccount(mobileMenu, desktopSidebar) {
+        if (!window.Capacitor?.isNativePlatform?.() || !mobileMenu || mobileMenu.querySelector('.panel-mobile-account')) return;
+
+        let cachedUser = {};
+        try {
+            cachedUser = JSON.parse(localStorage.getItem('discord_user') || '{}') || {};
+        } catch (_) {}
+
+        const fallbackAvatar = 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f468-200d-1f4bb.png';
+        const account = document.createElement('div');
+        account.className = 'panel-mobile-account';
+
+        const avatar = document.createElement('img');
+        avatar.alt = 'Avatar utilizator';
+        avatar.src = cachedUser.avatar || desktopSidebar?.querySelector('#user-avatar')?.src || fallbackAvatar;
+
+        const copy = document.createElement('div');
+        copy.className = 'panel-mobile-account-copy';
+        const name = document.createElement('p');
+        name.className = 'panel-mobile-account-name';
+        name.textContent = cachedUser.display_name || cachedUser.username || 'Utilizator';
+        const role = document.createElement('p');
+        role.className = 'panel-mobile-account-role';
+        role.textContent = cachedUser.role || cachedUser.default_role || 'Membru';
+        copy.append(name, role);
+
+        const logoutButton = document.createElement('button');
+        logoutButton.type = 'button';
+        logoutButton.className = 'panel-mobile-logout';
+        logoutButton.textContent = 'Deconectare';
+        logoutButton.addEventListener('click', () => {
+            if (typeof logout === 'function') logout();
+            else {
+                localStorage.clear();
+                location.href = 'login.html';
+            }
+        });
+
+        account.append(avatar, copy, logoutButton);
+        mobileMenu.appendChild(account);
+
+        const desktopName = desktopSidebar?.querySelector('#user-display-name');
+        const desktopRole = desktopSidebar?.querySelector('#user-role');
+        const desktopAvatar = desktopSidebar?.querySelector('#user-avatar');
+        const syncProfile = () => {
+            const updatedName = desktopName?.textContent?.trim();
+            const updatedRole = desktopRole?.textContent?.trim();
+            if (updatedName && !updatedName.toLocaleLowerCase('ro-RO').includes('se încarcă')) name.textContent = updatedName;
+            if (updatedRole) role.textContent = updatedRole;
+            if (desktopAvatar?.src) avatar.src = desktopAvatar.src;
+        };
+        syncProfile();
+        if (desktopName || desktopRole || desktopAvatar) {
+            new MutationObserver(syncProfile).observe(desktopSidebar, {
+                attributes: true,
+                attributeFilter: ['src'],
+                childList: true,
+                characterData: true,
+                subtree: true
+            });
         }
     }
 
