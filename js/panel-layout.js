@@ -14,7 +14,13 @@
             .panel-responsive-sidebar .nav-link, .panel-mobile-nav .nav-link, #mobile-menu .nav-link { border:1px solid #2d4058; background:linear-gradient(135deg,rgba(30,45,65,.9),rgba(19,31,49,.92)); box-shadow:0 3px 10px rgba(2,6,23,.2); }
             .panel-responsive-sidebar .nav-link:hover, .panel-mobile-nav .nav-link:hover, #mobile-menu .nav-link:hover { border-color:#48617d; background:linear-gradient(135deg,#293e58,#1d3048); transform:translateX(2px); }
             .panel-responsive-sidebar .nav-link.bg-emerald-500\\/10, .panel-mobile-nav .nav-link.bg-emerald-500\\/10, #mobile-menu .nav-link.bg-emerald-500\\/10 { border-color:rgba(52,211,153,.45); background:linear-gradient(135deg,rgba(5,150,105,.34),rgba(6,95,70,.3)); }
-            header { position:relative; }
+            html,body { max-width:100%; overflow-x:hidden; }
+            body,main,#app { min-width:0; }
+            img,svg,video,canvas { max-width:100%; }
+            header { position:relative; min-height:76px !important; height:auto !important; padding-top:12px !important; padding-bottom:12px !important; gap:12px; }
+            header > div:not(.panel-header-tools) { min-width:0; }
+            header h1,header h2 { font-size:clamp(1.05rem,2vw,1.35rem) !important; line-height:1.25 !important; white-space:normal !important; overflow-wrap:anywhere; }
+            header p { white-space:normal; line-height:1.35; }
             header:has(.panel-header-tools) { padding-right:72px !important; }
             .panel-header-tools { position:absolute; inset:0 18px; z-index:25; display:flex; align-items:center; pointer-events:none; }
             .panel-header-tools .panel-search-host { position:absolute; left:50%; transform:translateX(-50%); width:min(620px,45vw); min-width:0; pointer-events:auto; }
@@ -40,19 +46,41 @@
             .panel-action-bar { display:flex; align-items:center; justify-content:flex-end; gap:12px; flex-wrap:wrap; padding:12px max(16px, calc((100vw - 1280px) / 2)); border-bottom:1px solid #1e293b; background:rgba(15,23,42,.72); }
             .panel-action-bar > div { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
             .panel-bottom-save-bar { position:sticky; bottom:0; z-index:30; display:flex; justify-content:flex-end; padding:14px 16px; border-top:1px solid #1e293b; background:rgba(15,23,42,.96); backdrop-filter:blur(10px); }
+            main table { max-width:100%; }
+            main :is(input,select,textarea,button,a) { touch-action:manipulation; }
+            main :is(input,select,textarea) { max-width:100%; }
+            main :is(.modal,.dialog,[role="dialog"]) { max-width:100vw; }
             #panel-save-reminder { position:fixed; right:16px; bottom:94px; z-index:100; max-width:min(360px, calc(100vw - 32px)); padding:12px 14px; border:1px solid rgba(251,191,36,.4); border-radius:14px; background:#3b2f09; color:#fef3c7; font-size:12px; box-shadow:0 14px 35px rgba(0,0,0,.35); }
             @media (max-width:767px) {
+                body { min-height:100dvh; }
                 .panel-responsive-sidebar { display:none !important; }
                 .panel-sidebar-toggle { display:none !important; }
                 .panel-mobile-toggle { display:flex; }
-                .panel-header-tools { position:static; order:20; width:100%; gap:10px; pointer-events:auto; }
+                header { min-height:88px !important; padding:12px 14px !important; display:flex !important; flex-wrap:wrap !important; align-content:center; }
+                header > div:not(.panel-header-tools) { flex:1; min-width:calc(100% - 58px); }
+                header h1,header h2 { font-size:1.08rem !important; }
+                .panel-header-tools { position:static; order:20; width:100%; gap:10px; pointer-events:auto; inset:auto; }
                 .panel-header-tools .panel-search-host { position:static; transform:none; width:calc(100% - 48px); }
-                header:has(.panel-header-tools) { padding-right:16px !important; }
-                #app { grid-template-columns:1fr !important; grid-template-rows:64px 1fr !important; }
+                header:has(.panel-header-tools) { padding-right:14px !important; }
+                #app { grid-template-columns:1fr !important; grid-template-rows:auto 1fr !important; width:100% !important; }
                 #app:has(#map-container-wrapper) { grid-template-rows:auto minmax(0,1fr) !important; }
                 #app > header, #app > #map-container-wrapper { grid-column:1 !important; }
                 .panel-action-bar { justify-content:stretch; padding:12px 16px; }
                 .panel-action-bar > div, .panel-action-bar button { width:100%; }
+                main { width:100% !important; max-width:100vw !important; margin-left:0 !important; overflow-x:hidden; }
+                main > :is(.p-8,.p-6,.p-5) { padding:14px !important; }
+                main :is(.grid-cols-2,.grid-cols-3,.grid-cols-4,.grid-cols-5,.grid-cols-6) { grid-template-columns:minmax(0,1fr) !important; }
+                main :is(.md\\:grid-cols-2,.md\\:grid-cols-3,.lg\\:grid-cols-2,.lg\\:grid-cols-3,.lg\\:grid-cols-4) { grid-template-columns:minmax(0,1fr) !important; }
+                main :is(.flex) { min-width:0; }
+                main :is(input,select,textarea) { width:100%; font-size:16px !important; }
+                main button,main a[class*="px-"] { min-height:42px; }
+                main table { display:block; width:100%; overflow-x:auto; overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch; }
+                main th,main td { white-space:nowrap; }
+                main :is(.rounded-2xl,.rounded-xl,.card,.panel,.post) { max-width:100%; }
+                main :is(.modal,.fixed.inset-0) { padding:10px !important; }
+                main :is(.dialog,[role="dialog"],.modal-content) { width:100% !important; max-height:calc(100dvh - 20px) !important; overflow:auto; border-radius:16px !important; }
+                footer { padding-left:12px !important; padding-right:12px !important; padding-bottom:max(18px,env(safe-area-inset-bottom)) !important; }
+                #panel-save-reminder { right:10px; bottom:82px; max-width:calc(100vw - 20px); }
             }
             @media (min-width:768px) and (max-width:1100px) { .panel-header-tools .panel-search-host { width:min(460px,42vw); } }
         `;
