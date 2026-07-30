@@ -51,15 +51,23 @@ Deno.serve(async (request) => {
 
   const supabase = createClient(Deno.env.get('SUPABASE_URL')!, getSecretKey());
   const now = new Date();
+  // Preluăm atât turele care trebuie închise, cât și turele închise automat
+  // pentru care confirmarea Discord nu a fost încă livrată.
   const { data: expired, error } = await supabase.from('shifts').select('*')
-    .in('status', ['active', 'paused']).lte('auto_stop_at', now.toISOString());
+    .or(`and(status.in.(active,paused),auto_stop_at.lte.${now.toISOString()}),and(status.eq.auto_completed,discord_close_notified_at.is.null)`)
+    .order('auto_stop_at', { ascending: true })
+    .limit(100);
 
   if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders });
 
   const { data: panelConfig } = await supabase.from('discord_panel_config').select('pontaj_webhook_url').eq('id', 1).maybeSingle();
   const webhookUrl = panelConfig?.pontaj_webhook_url || Deno.env.get('DISCORD_PONTAJ_WEBHOOK_URL');
   const results = await Promise.all((expired ?? []).map(async (shift) => {
-    const seconds = workedSeconds(shift, now);
+    const alreadyClosed = shift.status === 'auto_completed';
+    const finishedAt = alreadyClosed && shift.ended_at ? new Date(String(shift.ended_at)) : now;
+    const seconds = alreadyClosed && Number(shift.duration_ms) >= 0
+      ? Math.floor(Number(shift.duration_ms) / 1000)
+      : workedSeconds(shift, finishedAt);
     const reason = 'Încheiere automată – program maxim atins';
     let colleagueName = String(shift.colleague_name || '').trim();
     if (!colleagueName) {
@@ -67,16 +75,22 @@ Deno.serve(async (request) => {
         .select('display_name, username').eq('discord_id', shift.discord_id).maybeSingle();
       colleagueName = String(member?.display_name || member?.username || shift.discord_id || 'Necunoscut');
     }
-    const { data: updated, error: updateError } = await supabase.from('shifts').update({
-      status: 'auto_completed', ended_at: now.toISOString(), end_time: romanianTime(now),
-      duration: formatDuration(seconds), duration_ms: seconds * 1000, stop_reason: reason,
-      colleague_name: colleagueName,
-    }).eq('id', shift.id).in('status', ['active', 'paused']).select('*');
+    if (!alreadyClosed) {
+      const { data: updated, error: updateError } = await supabase.from('shifts').update({
+        status: 'auto_completed', ended_at: now.toISOString(), end_time: romanianTime(now),
+        duration: formatDuration(seconds), duration_ms: seconds * 1000, stop_reason: reason,
+        colleague_name: colleagueName,
+      }).eq('id', shift.id).in('status', ['active', 'paused']).select('id');
+      if (updateError || !updated?.length) return { id: shift.id, closed: false, notified: false };
+    }
 
-    if (updateError || !updated?.length) return { id: shift.id, closed: false };
+    if (!webhookUrl) {
+      await supabase.from('shifts').update({ discord_close_notification_error: 'Webhook-ul de pontaj nu este configurat.' }).eq('id', shift.id);
+      return { id: shift.id, closed: true, notified: false };
+    }
 
-    if (webhookUrl) {
-      await fetch(webhookUrl, {
+    try {
+      const webhookResponse = await fetch(webhookUrl, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ embeds: [{
           title: `⏹️ Pontaj Încheiat - Tură de ${String(shift.shift_type).toUpperCase()}`,
           color: shift.shift_type === 'zi' ? 16766720 : 65535,
@@ -85,12 +99,31 @@ Deno.serve(async (request) => {
             { name: '📅 Data', value: String(shift.date || ''), inline: true },
             { name: '⏳ Timp Total Lucrat', value: `**${formatDuration(seconds)}**`, inline: true },
             { name: '📝 Motiv', value: reason, inline: false },
-          ], timestamp: now.toISOString(),
+          ], timestamp: finishedAt.toISOString(),
         }] }),
       });
+      if (!webhookResponse.ok) {
+        const details = (await webhookResponse.text()).slice(0, 500);
+        throw new Error(`Discord HTTP ${webhookResponse.status}${details ? `: ${details}` : ''}`);
+      }
+      await supabase.from('shifts').update({
+        discord_close_notified_at: new Date().toISOString(),
+        discord_close_notification_error: null,
+      }).eq('id', shift.id);
+      return { id: shift.id, closed: true, notified: true };
+    } catch (notificationError) {
+      const message = notificationError instanceof Error ? notificationError.message : 'Eroare Discord necunoscută.';
+      console.error(`Notificarea automată pentru tura ${shift.id} a eșuat:`, message);
+      await supabase.from('shifts').update({ discord_close_notification_error: message.slice(0, 1000) }).eq('id', shift.id);
+      return { id: shift.id, closed: true, notified: false };
     }
-    return { id: shift.id, closed: true };
   }));
 
-  return new Response(JSON.stringify({ closed: results.filter((item) => item.closed).length }), { headers: corsHeaders });
+  return new Response(JSON.stringify({
+    processed: results.length,
+    closed: results.filter((item) => item.closed).length,
+    notified: results.filter((item) => item.notified).length,
+    pending_notifications: results.filter((item) => item.closed && !item.notified).length,
+  }), { headers: corsHeaders });
 });
+
