@@ -20,11 +20,16 @@
     if (!url || !url.startsWith(discordRedirect)) return false;
     if (sessionStorage.getItem(consumedCallbackKey) === url) return false;
     const hashIndex = url.indexOf('#');
-    const hash = hashIndex >= 0 ? url.slice(hashIndex) : '';
-    if (!hash.includes('access_token')) return false;
+    const queryIndex = url.indexOf('?');
+    const oauthPayload = hashIndex >= 0
+      ? url.slice(hashIndex + 1)
+      : queryIndex >= 0
+        ? url.slice(queryIndex + 1)
+        : '';
+    if (!oauthPayload.includes('access_token')) return false;
     sessionStorage.setItem(consumedCallbackKey, url);
     browser?.close?.().catch(() => {});
-    window.location.replace(`login.html${hash}`);
+    window.location.replace(`login.html#${oauthPayload}`);
     return true;
   }
 
