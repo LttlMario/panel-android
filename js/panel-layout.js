@@ -30,6 +30,10 @@
             .panel-header-tools { position:absolute; inset:0 18px; z-index:25; display:flex; align-items:center; pointer-events:none; }
             .panel-header-tools .panel-search-host { position:absolute; left:50%; transform:translateX(-50%); width:min(620px,45vw); min-width:0; pointer-events:auto; }
             .panel-header-tools .panel-search-host > div, .panel-header-tools .panel-search-host .relative, .panel-header-tools .search-container { width:100% !important; max-width:none !important; }
+            .panel-global-search { width:100%; height:40px; padding:0 15px; border:1px solid #334155; border-radius:12px; outline:none; background:#07101f; color:#e2e8f0; font-size:13px; box-shadow:inset 0 1px 0 rgba(255,255,255,.025); transition:border-color .18s,box-shadow .18s; }
+            .panel-global-search::placeholder { color:#64748b; }
+            .panel-global-search:focus { border-color:#10b981; box-shadow:0 0 0 3px rgba(16,185,129,.12); }
+            .panel-global-search-match { outline:2px solid rgba(16,185,129,.7) !important; outline-offset:2px; }
             .panel-header-tools #panel-theme-toggle { margin-left:auto; pointer-events:auto; }
 
             /* Tema Panel nu primește suprascrieri: păstrează exact designul original al paginilor. */
@@ -112,7 +116,7 @@
         normalizePageHeader(currentPage);
         navigation.querySelectorAll('a[href="asistent.html"]').forEach((link) => link.remove());
         sidebar.classList.add('panel-responsive-sidebar');
-        relocateHeaderActions();
+        relocateHeaderActions(currentPage);
         setupAdminSaveArea();
         const main = document.querySelector('main');
         if (main) main.style.minHeight = '100vh';
@@ -393,7 +397,67 @@
         }
     }
 
-    function relocateHeaderActions() {
+
+    function createGlobalPageSearch(header, currentPage) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'search-container';
+        const input = document.createElement('input');
+        input.type = 'search';
+        input.id = 'global-search';
+        input.className = 'panel-global-search';
+        const title = header.querySelector('h1,h2')?.textContent?.trim() || 'pagină';
+        input.placeholder = `Caută în ${title}...`;
+        input.setAttribute('aria-label', `Caută în ${title}`);
+        input.addEventListener('input', () => runGlobalPageSearch(input.value));
+        input.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                input.value = '';
+                runGlobalPageSearch('');
+                input.blur();
+            }
+        });
+        wrapper.appendChild(input);
+        header.appendChild(wrapper);
+        return input;
+    }
+
+    function runGlobalPageSearch(value) {
+        const query = String(value || '').trim().toLocaleLowerCase('ro');
+        const main = document.querySelector('main');
+        if (!main) return;
+
+        const selectorGroups = [
+            '.gallery-card',
+            'tbody tr',
+            '.community-post, .announcement-card, .post',
+            '.marketplace-card, .listing-card',
+            '[data-searchable]'
+        ];
+        let items = [];
+        for (const selector of selectorGroups) {
+            items = Array.from(main.querySelectorAll(selector)).filter(item => !item.closest('header,footer,[role="dialog"]'));
+            if (items.length) break;
+        }
+
+        if (!items.length) {
+            main.querySelectorAll('.panel-global-search-match').forEach(item => item.classList.remove('panel-global-search-match'));
+            if (!query) return;
+            const match = Array.from(main.querySelectorAll('h1,h2,h3,h4,a,button,label'))
+                .find(item => item.textContent.toLocaleLowerCase('ro').includes(query));
+            if (match) {
+                match.classList.add('panel-global-search-match');
+                match.scrollIntoView({ behavior:'smooth', block:'center' });
+            }
+            return;
+        }
+
+        items.forEach(item => {
+            const visible = !query || item.textContent.toLocaleLowerCase('ro').includes(query);
+            item.style.display = visible ? '' : 'none';
+        });
+    }
+
+    function relocateHeaderActions(currentPage) {
         const header = document.querySelector('header');
         const themeButton = document.getElementById('panel-theme-toggle');
         if (!header || !themeButton || document.querySelector('.panel-header-tools')) return;
@@ -401,8 +465,10 @@
         const tools = document.createElement('div');
         tools.className = 'panel-header-tools';
         const search = document.getElementById('global-search')
-            || header.querySelector('.search-container input, input[type="search"], input[placeholder*="Caută"], input[placeholder*="caută"]');
+            || header.querySelector('.search-container input, input[type="search"], input[placeholder*="Caută"], input[placeholder*="caută"]')
+            || createGlobalPageSearch(header, currentPage);
         if (search) {
+            search.classList.add('panel-global-search');
             const originalWrapper = search.closest('.search-container, .relative') || search.parentElement;
             if (originalWrapper) {
                 const searchHost = document.createElement('div');
