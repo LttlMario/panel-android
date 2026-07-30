@@ -55,11 +55,11 @@
             .panel-action-bar { display:flex; align-items:center; justify-content:flex-end; gap:12px; flex-wrap:wrap; padding:12px max(16px, calc((100vw - 1280px) / 2)); border-bottom:1px solid #1e293b; background:rgba(15,23,42,.72); }
             .panel-action-bar > div { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
             .panel-bottom-save-bar { position:sticky; bottom:0; z-index:30; display:flex; justify-content:flex-end; padding:14px 16px; border-top:1px solid #1e293b; background:rgba(15,23,42,.96); backdrop-filter:blur(10px); }
+            #panel-save-reminder { position:fixed; right:16px; bottom:94px; z-index:100; max-width:min(360px, calc(100vw - 32px)); padding:12px 14px; border:1px solid rgba(251,191,36,.4); border-radius:14px; background:#3b2f09; color:#fef3c7; font-size:12px; box-shadow:0 14px 35px rgba(0,0,0,.35); }
             main table { max-width:100%; }
             main :is(input,select,textarea,button,a) { touch-action:manipulation; }
             main :is(input,select,textarea) { max-width:100%; }
             main :is(.modal,.dialog,[role="dialog"]) { max-width:100vw; }
-            #panel-save-reminder { position:fixed; right:16px; bottom:94px; z-index:100; max-width:min(360px, calc(100vw - 32px)); padding:12px 14px; border:1px solid rgba(251,191,36,.4); border-radius:14px; background:#3b2f09; color:#fef3c7; font-size:12px; box-shadow:0 14px 35px rgba(0,0,0,.35); }
             @media (max-width:767px) {
                 body { min-height:100dvh; }
                 .panel-responsive-sidebar { display:none !important; }
@@ -203,6 +203,7 @@
         const main = document.querySelector('main');
         if (!main) return;
         let header = main.querySelector(':scope > header');
+
         if (currentPage === 'anunturi.html') {
             if (!header) {
                 header = document.createElement('header');
@@ -215,6 +216,7 @@
             hero?.classList.add('community-toolbar');
             return;
         }
+
         if (currentPage === 'calculatorilegal.html') {
             if (!header) return;
             header.className = 'panel-global-header';
@@ -223,12 +225,14 @@
             if (search) header.appendChild(search);
             return;
         }
+
         if (currentPage === 'craftmecanics.html') {
             if (!header) return;
             header.className = 'panel-global-header';
             header.innerHTML = '<div class="panel-global-title"><h2>🔨 Craft Mechanics</h2><p>Galerie capturi, rețete și echipamente.</p></div>';
             return;
         }
+
         if (header) header.classList.add('panel-global-header');
     }
 
@@ -396,7 +400,6 @@
             console.warn('Asistentul plutitor nu a putut fi inițializat.', error);
         }
     }
-
 
     function createGlobalPageSearch(header, currentPage) {
         const wrapper = document.createElement('div');
