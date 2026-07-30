@@ -36,6 +36,12 @@
             .panel-global-search-match { outline:2px solid rgba(16,185,129,.7) !important; outline-offset:2px; }
             .panel-header-tools #panel-theme-toggle { margin-left:auto; pointer-events:auto; }
 
+            @media (min-width:768px) {
+                .panel-global-header:has(.panel-header-tools) { min-height:132px !important; padding-top:16px !important; padding-bottom:66px !important; }
+                .panel-global-header .panel-header-tools { align-items:flex-start; padding-top:17px; }
+                .panel-global-header .panel-header-tools .panel-search-host { top:72px; }
+            }
+
             /* Tema Panel nu primește suprascrieri: păstrează exact designul original al paginilor. */
             html[data-panel-theme="dark"] { color-scheme:dark; --bg-main:#030712; --bg-panel:#080f1d; --bg-panel-hover:#111c2e; --card:#0a1220; --border:#223047; --text-main:#e5edf8; --text-muted:#91a0b6; }
             html[data-panel-theme="dark"] body, html[data-panel-theme="dark"] main, html[data-panel-theme="dark"] #app { background:#030712 !important; color:#e5edf8 !important; }
