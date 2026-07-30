@@ -14,6 +14,7 @@
   const browser = plugins.Browser;
   const tokenKey = 'discord_access_token';
   const consumedCallbackKey = 'panel_consumed_oauth_callback';
+  const pendingOAuthTokenKey = 'panel_pending_discord_oauth_token';
   let secureReady = false;
 
   function handleDiscordCallback(url) {
@@ -26,10 +27,15 @@
       : queryIndex >= 0
         ? url.slice(queryIndex + 1)
         : '';
-    if (!oauthPayload.includes('access_token')) return false;
+    const params = new URLSearchParams(oauthPayload);
+    const accessToken = params.get('access_token');
+    if (!accessToken) return false;
     sessionStorage.setItem(consumedCallbackKey, url);
+    sessionStorage.setItem(pendingOAuthTokenKey, accessToken);
     browser?.close?.().catch(() => {});
-    window.location.replace(`login.html#${oauthPayload}`);
+    // Tokenul rămâne doar în memoria sesiunii, nu în URL. Parametrul forțează
+    // reîncărcarea paginii chiar dacă WebView-ul se află deja pe login.html.
+    window.location.replace('login.html?oauth_return=1');
     return true;
   }
 

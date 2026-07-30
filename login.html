@@ -84,6 +84,19 @@
         });
 
         document.addEventListener('DOMContentLoaded', async () => {
+            const pendingMobileTokenKey = 'panel_pending_discord_oauth_token';
+            const pendingMobileToken = sessionStorage.getItem(pendingMobileTokenKey);
+
+            // Aplicația Android păstrează temporar tokenul în memoria WebView-ului,
+            // apoi reîncarcă această pagină pentru a continua autentificarea sigur.
+            if (pendingMobileToken) {
+                sessionStorage.removeItem(pendingMobileTokenKey);
+                window.history.replaceState({}, document.title, 'login.html');
+                document.getElementById('status-msg').textContent = "Se procesează datele de autentificare...";
+                await processDiscordLogin(pendingMobileToken);
+                return;
+            }
+
             const hash = window.location.hash;
             
             // Dacă avem token în hash (venit de la Discord)
