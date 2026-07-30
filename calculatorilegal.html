@@ -259,7 +259,7 @@
             gap: 24px;
             width: 100%;
             max-width: 1200px;
-            margin: 6rem auto 0;
+            margin: 1rem auto 0;
             padding: 0 2rem 2rem;
         }
 
@@ -600,6 +600,9 @@
                 <div class="panel-global-title">
                     <h2>🧮 Calculator Ilegal</h2>
                     <p>Calculează rapid materialele necesare pentru arme, muniție și plicuri.</p>
+                </div>
+                <div class="search-container w-full max-w-2xl relative">
+                    <input type="search" id="calculator-search" class="w-full py-3 pl-4 pr-4 bg-slate-900 border border-slate-700 rounded-xl text-slate-100 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition" placeholder="Caută armă, muniție sau rețetă..." oninput="filterCalculatorRecipes(this.value)">
                 </div>
             </header>
 
@@ -946,6 +949,33 @@
                 currentElement.classList.add('active');
             }
         }
+        function filterCalculatorRecipes(value) {
+            const query = String(value || '').trim().toLocaleLowerCase('ro');
+            document.querySelectorAll('#calculator-input-panel .category-group').forEach(category => {
+                const header = category.querySelector('.category-header');
+                const rows = Array.from(category.querySelectorAll('.item-row'));
+                const headerMatches = (header?.textContent || '').toLocaleLowerCase('ro').includes(query);
+
+                if (!query) {
+                    category.style.display = '';
+                    rows.forEach(row => row.style.display = '');
+                    category.classList.remove('active');
+                    return;
+                }
+
+                let visibleRows = 0;
+                rows.forEach(row => {
+                    const matches = headerMatches || row.textContent.toLocaleLowerCase('ro').includes(query);
+                    row.style.display = matches ? '' : 'none';
+                    if (matches) visibleRows++;
+                });
+
+                const categoryMatches = headerMatches || visibleRows > 0;
+                category.style.display = categoryMatches ? '' : 'none';
+                category.classList.toggle('active', categoryMatches);
+            });
+        }
+
 
         function initForms() {
             const weaponsContainer = document.getElementById('weaponsForm');
