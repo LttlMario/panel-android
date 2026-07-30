@@ -1,0 +1,14 @@
+{
+  "appId": "ro.littlemario.panelmafie",
+  "appName": "Panel Mafie",
+  "webDir": "www",
+  "server": {
+    "hostname": "panel.local",
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  }
+}

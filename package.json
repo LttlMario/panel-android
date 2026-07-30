@@ -1,0 +1,22 @@
+{
+  "name": "panel-mafie-android",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Aplicatia Android separata pentru Panel Mafie",
+  "scripts": {
+    "build:web": "node scripts/build-web.mjs",
+    "android:sync": "npm run build:web && cap sync android",
+    "android:open": "cap open android",
+    "android:build:debug": "npm run android:sync && powershell -ExecutionPolicy Bypass -File scripts/build-android.ps1 Debug",
+    "android:build:release": "npm run android:sync && powershell -ExecutionPolicy Bypass -File scripts/build-android.ps1 Release"
+  },
+  "dependencies": {
+    "@capacitor/android": "latest",
+    "@capacitor/app": "latest",
+    "@capacitor/core": "latest",
+    "@aparajita/capacitor-secure-storage": "latest"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "latest"
+  }
+}
