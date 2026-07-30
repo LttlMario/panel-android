@@ -35,9 +35,9 @@
         }
 
         main #panel-global-footer {
-            width: calc(100% + 4rem);
-            margin-left: -2rem;
-            margin-right: -2rem;
+            width: 100%;
+            margin-left: 0;
+            margin-right: 0;
         }
         .zoom-btn {
             position: absolute;
@@ -171,22 +171,24 @@
         </aside>
 
         <!-- Conținutul Principal (Galerie) -->
-        <main class="flex-1 overflow-y-auto p-8 flex flex-col items-center bg-slate-950">
-            <header class="text-center mb-8 w-full max-w-2xl">
-                <h1 class="text-2xl font-bold text-slate-100 mb-2">Galerie Capturi Rețete & Echipamente</h1>
-                <p class="text-slate-400 text-sm">By Little Mario</p>
+        <main class="flex-1 overflow-y-auto p-0 flex flex-col items-center bg-slate-950">
+            <header class="panel-global-header">
+                <div class="panel-global-title">
+                    <h2>🔨 Craft Mechanics</h2>
+                    <p>Galerie capturi, rețete și echipamente.</p>
+                </div>
+
+                <!-- Bara de căutare, integrată în headerul global -->
+                <div class="search-container w-full max-w-2xl relative">
+                    <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                    </svg>
+                    <input type="search" id="searchInput" class="w-full py-3.5 pl-12 pr-4 bg-slate-900 border border-slate-800 rounded-xl text-slate-100 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition" placeholder="Caută rețetă, unealtă sau jantă..." onkeyup="filterGallery()">
+                </div>
             </header>
 
-            <!-- Bara de căutare -->
-            <div class="w-full max-w-2xl mb-8 relative">
-                <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-                </svg>
-                <input type="text" id="searchInput" class="w-full py-3.5 pl-12 pr-4 bg-slate-900 border border-slate-800 rounded-xl text-slate-100 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition" placeholder="Caută rețetă, unealtă sau jantă..." onkeyup="filterGallery()">
-            </div>
-
             <!-- Grila Galeriei - 52 Imagini unice -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 w-full max-w-7xl" id="galleryGrid">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 w-full max-w-7xl px-4 md:px-8 pt-8 pb-8 mx-auto" id="galleryGrid">
                 
                 <!-- 1 -->
                 <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Unelte x 10" data-desc="Set format din 10 unelte esențiale pentru activitățile de mecanică.">
@@ -277,409 +279,7 @@
                     <div class="w-full h-48 bg-black relative overflow-hidden">
                         <img src="img/7.png" alt="Jante Addon 85" class="w-full h-full object-cover transition duration-300 hover:scale-105">
                         <button class="zoom-btn" onclick="openModal('7.png', 'Jante Addon 85', 'Model custom de jante addon 85 pentru personalizarea estetică a roților.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Jante Addon 85[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Model custom de jante addon 85 pentru personalizarea estetică a roților.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 8 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Jante Addon 98" data-desc="Model custom de jante addon 98 pentru personalizarea estetică a roților.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/8.png" alt="Jante Addon 98" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('8.png', 'Jante Addon 98', 'Model custom de jante addon 98 pentru personalizarea estetică a roților.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Jante Addon 98[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Model custom de jante addon 98 pentru personalizarea estetică a roților.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 9 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Xenon albastru" data-desc="Sistem de iluminat Xenon cu tentă de culoare albastră intensă.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/9.png" alt="Xenon albastru" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('9.png', 'Xenon albastru', 'Sistem de iluminat Xenon cu tentă de culoare albastră intensă.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Xenon albastru[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Sistem de iluminat Xenon cu tentă de culoare albastră intensă.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 10 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Xenon albastru deschis" data-desc="Sistem de iluminat Xenon cu tentă de culoare albastru deschis.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/10.png" alt="Xenon albastru deschis" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('10.png', 'Xenon albastru deschis', 'Sistem de iluminat Xenon cu tentă de culoare albastru deschis.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Xenon albastru deschis[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Sistem de iluminat Xenon cu tentă de culoare albastru deschis.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 11 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Xenon verde" data-desc="Sistem de iluminat Xenon cu tentă de culoare verde.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/11.png" alt="Xenon verde" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('11.png', 'Xenon verde', 'Sistem de iluminat Xenon cu tentă de culoare verde.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Xenon verde[cite: 8, 11]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Sistem de iluminat Xenon cu tentă de culoare verde.[cite: 8, 11]</div>
-                    </div>
-                </div>
-
-                <!-- 12 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Xenon verde deschis" data-desc="Sistem de iluminat Xenon cu tentă de culoare verde deschis.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/12.png" alt="Xenon verde deschis" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('12.png', 'Xenon verde deschis', 'Sistem de iluminat Xenon cu tentă de culoare verde deschis.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Xenon verde deschis[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Sistem de iluminat Xenon cu tentă de culoare verde deschis.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 13 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Xenon galben deschis" data-desc="Sistem de iluminat Xenon cu tentă de culoare galben deschis.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/13.png" alt="Xenon galben deschis" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('13.png', 'Xenon galben deschis', 'Sistem de iluminat Xenon cu tentă de culoare galben deschis.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Xenon galben deschis[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Sistem de iluminat Xenon cu tentă de culoare galben deschis.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 14 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Xenon galben" data-desc="Sistem de iluminat Xenon cu tentă de culoare galbenă clasică.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/14.png" alt="Xenon galben" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('14.png', 'Xenon galben', 'Sistem de iluminat Xenon cu tentă de culoare galbenă clasică.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Xenon galben[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Sistem de iluminat Xenon cu tentă de culoare galbenă clasică.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 15 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Xenon portocaliu" data-desc="Sistem de iluminat Xenon cu tentă de culoare portocalie.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/15.png" alt="Xenon portocaliu" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('15.png', 'Xenon portocaliu', 'Sistem de iluminat Xenon cu tentă de culoare portocalie.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Xenon portocaliu[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Sistem de iluminat Xenon cu tentă de culoare portocalie.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 16 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Xenon roșu" data-desc="Sistem de iluminat Xenon cu tentă de culoare roșie.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/16.png" alt="Xenon roșu" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('16.png', 'Xenon roșu', 'Sistem de iluminat Xenon cu tentă de culoare roșie.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Xenon roșu[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Sistem de iluminat Xenon cu tentă de culoare roșie.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 17 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Xenon roz deschis" data-desc="Sistem de iluminat Xenon cu tentă de culoare roz deschis.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/17.png" alt="Xenon roz deschis" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('17.png', 'Xenon roz deschis', 'Sistem de iluminat Xenon cu tentă de culoare roz deschis.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Xenon roz deschis[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Sistem de iluminat Xenon cu tentă de culoare roz deschis.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 18 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Xenon roz" data-desc="Sistem de iluminat Xenon cu tentă de culoare roz.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/18.png" alt="Xenon roz" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('18.png', 'Xenon roz', 'Sistem de iluminat Xenon cu tentă de culoare roz.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Xenon roz[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Sistem de iluminat Xenon cu tentă de culoare roz.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 19 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Xenon mov" data-desc="Sistem de iluminat Xenon cu tentă de culoare mov.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/19.png" alt="Xenon mov" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('19.png', 'Xenon mov', 'Sistem de iluminat Xenon cu tentă de culoare mov.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Xenon mov[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Sistem de iluminat Xenon cu tentă de culoare mov.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 20 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Xenon mov deschis" data-desc="Sistem de iluminat Xenon cu tentă de culoare mov deschis.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/20.png" alt="Xenon mov deschis" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('20.png', 'Xenon mov deschis', 'Sistem de iluminat Xenon cu tentă de culoare mov deschis.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Xenon mov deschis[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Sistem de iluminat Xenon cu tentă de culoare mov deschis.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 21 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Turometru - TB Numeric" data-desc="Indicator de bord stil TB Numeric pentru afișarea turațiilor motorului.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/21.png" alt="Turometru - TB Numeric" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('21.png', 'Turometru - TB Numeric', 'Indicator de bord stil TB Numeric pentru afișarea turațiilor motorului.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Turometru - TB Numeric[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Indicator de bord stil TB Numeric pentru afișarea turațiilor motorului.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 22 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Turometru - GMG" data-desc="Indicator de bord stil GMG pentru afișarea turațiilor motorului.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/22.png" alt="Turometru - GMG" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('22.png', 'Turometru - GMG', 'Indicator de bord stil GMG pentru afișarea turațiilor motorului.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Turometru - GMG[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Indicator de bord stil GMG pentru afișarea turațiilor motorului.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 23 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Jante Addon 55" data-desc="Model custom de jante addon 55 pentru personalizarea estetică a roților.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/23.png" alt="Jante Addon 55" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('23.png', 'Jante Addon 55', 'Model custom de jante addon 55 pentru personalizarea estetică a roților.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Jante Addon 55[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Model custom de jante addon 55 pentru personalizarea estetică a roților.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 24 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Jante Addon 56" data-desc="Model custom de jante addon 56 pentru personalizarea estetică a roților.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/24.png" alt="Jante Addon 56" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('24.png', 'Jante Addon 56', 'Model custom de jante addon 56 pentru personalizarea estetică a roților.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Jante Addon 56[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Model custom de jante addon 56 pentru personalizarea estetică a roților.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 25 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Jante Addon 57" data-desc="Model custom de jante addon 57 pentru personalizarea estetică a roților.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/25.png" alt="Jante Addon 57" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('25.png', 'Jante Addon 57', 'Model custom de jante addon 57 pentru personalizarea estetică a roților.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Jante Addon 57[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Model custom de jante addon 57 pentru personalizarea estetică a roților.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 26 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Jante Addon 58" data-desc="Model custom de jante addon 58 pentru personalizarea estetică a roților.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/26.png" alt="Jante Addon 58" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('26.png', 'Jante Addon 58', 'Model custom de jante addon 58 pentru personalizarea estetică a roților.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Jante Addon 58[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Model custom de jante addon 58 pentru personalizarea estetică a roților.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 27 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Jante Addon 59" data-desc="Model custom de jante addon 59 pentru personalizarea estetică a roților.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/27.png" alt="Jante Addon 59" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('27.png', 'Jante Addon 59', 'Model custom de jante addon 59 pentru personalizarea estetică a roților.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Jante Addon 59[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Model custom de jante addon 59 pentru personalizarea estetică a roților.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 28 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Jante Addon 60" data-desc="Model custom de jante addon 60 pentru personalizarea estetică a roților.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/28.png" alt="Jante Addon 60" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('28.png', 'Jante Addon 60', 'Model custom de jante addon 60 pentru personalizarea estetică a roților.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Jante Addon 60[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Model custom de jante addon 60 pentru personalizarea estetică a roților.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 29 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Jante Addon 61" data-desc="Model custom de jante addon 61 pentru personalizarea estetică a roților.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/29.png" alt="Jante Addon 61" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('29.png', 'Jante Addon 61', 'Model custom de jante addon 61 pentru personalizarea estetică a roților.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Jante Addon 61[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Model custom de jante addon 61 pentru personalizarea estetică a roților.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 30 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Jante Addon 62" data-desc="Model custom de jante addon 62 pentru personalizarea estetică a roților.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/30.png" alt="Jante Addon 62" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('30.png', 'Jante Addon 62', 'Model custom de jante addon 62 pentru personalizarea estetică a roților.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Jante Addon 62[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Model custom de jante addon 62 pentru personalizarea estetică a roților.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 31 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Jante Addon 63" data-desc="Model custom de jante addon 63 pentru personalizarea estetică a roților.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/31.png" alt="Jante Addon 63" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('31.png', 'Jante Addon 63', 'Model custom de jante addon 63 pentru personalizarea estetică a roților.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Jante Addon 63[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Model custom de jante addon 63 pentru personalizarea estetică a roților.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 32 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Jante Addon 64" data-desc="Model custom de jante addon 64 pentru personalizarea estetică a roților.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/32.png" alt="Jante Addon 64" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('32.png', 'Jante Addon 64', 'Model custom de jante addon 64 pentru personalizarea estetică a roților.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Jante Addon 64[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Model custom de jante addon 64 pentru personalizarea estetică a roților.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 33 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Jante Addon 65" data-desc="Model custom de jante addon 65 pentru personalizarea estetică a roților.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/33.png" alt="Jante Addon 65" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('33.png', 'Jante Addon 65', 'Model custom de jante addon 65 pentru personalizarea estetică a roților.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Jante Addon 65[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Model custom de jante addon 65 pentru personalizarea estetică a roților.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 34 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Jante Addon 66" data-desc="Model custom de jante addon 66 pentru personalizarea estetică a roților.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/34.png" alt="Jante Addon 66" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('34.png', 'Jante Addon 66', 'Model custom de jante addon 66 pentru personalizarea estetică a roților.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Jante Addon 66[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Model custom de jante addon 66 pentru personalizarea estetică a roților.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 35 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Jante Addon 67" data-desc="Model custom de jante addon 67 pentru personalizarea estetică a roților.">
-                    <div class="w-full h-48 bg-black relative overflow-hidden">
-                        <img src="img/35.png" alt="Jante Addon 67" class="w-full h-full object-cover transition duration-300 hover:scale-105">
-                        <button class="zoom-btn" onclick="openModal('35.png', 'Jante Addon 67', 'Model custom de jante addon 67 pentru personalizarea estetică a roților.')" title="Mărește imaginea">
-                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="p-5 flex flex-col gap-2 flex-1">
-                        <div class="font-semibold text-slate-100 text-base">Jante Addon 67[cite: 8]</div>
-                        <div class="text-xs text-slate-400 leading-relaxed">Model custom de jante addon 67 pentru personalizarea estetică a roților.[cite: 8]</div>
-                    </div>
-                </div>
-
-                <!-- 36 -->
-                <div class="gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Jante Addon 68" data-desc="Model custom de jante addon 68 pentru personalizarea estetică a roților.">
+                            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12…10758 tokens truncated…rder-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg" data-title="Jante Addon 68" data-desc="Model custom de jante addon 68 pentru personalizarea estetică a roților.">
                     <div class="w-full h-48 bg-black relative overflow-hidden">
                         <img src="img/36.png" alt="Jante Addon 68" class="w-full h-full object-cover transition duration-300 hover:scale-105">
                         <button class="zoom-btn" onclick="openModal('36.png', 'Jante Addon 68', 'Model custom de jante addon 68 pentru personalizarea estetică a roților.')" title="Mărește imaginea">
@@ -942,3 +542,4 @@
     <script src="js/global-footer.js"></script>
 </body>
 </html>
+
