@@ -214,7 +214,9 @@
         if (currentPage === 'calculatorilegal.html') {
             if (!header) return;
             header.className = 'panel-global-header';
+            const search = header.querySelector('.search-container');
             header.innerHTML = '<div class="panel-global-title"><h2>🧮 Calculator Ilegal</h2><p>Calcul pentru arme, muniție și plicuri.</p></div>';
+            if (search) header.appendChild(search);
             return;
         }
         if (currentPage === 'craftmecanics.html') {
