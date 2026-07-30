@@ -56,6 +56,8 @@ create table if not exists public.shifts (
   paused_at timestamptz,
   paused_seconds integer not null default 0,
   stop_reason text,
+  discord_close_notified_at timestamptz,
+  discord_close_notification_error text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint shifts_type_check check (shift_type in ('zi', 'noapte')),
@@ -71,6 +73,8 @@ alter table public.shifts add column if not exists ended_at timestamptz;
 alter table public.shifts add column if not exists auto_stop_at timestamptz;
 alter table public.shifts add column if not exists status text not null default 'completed';
 alter table public.shifts add column if not exists paused_at timestamptz;
+alter table public.shifts add column if not exists discord_close_notified_at timestamptz;
+alter table public.shifts add column if not exists discord_close_notification_error text;
 alter table public.shifts add column if not exists paused_seconds integer not null default 0;
 alter table public.shifts add column if not exists stop_reason text;
 alter table public.shifts add column if not exists updated_at timestamptz not null default now();
@@ -411,3 +415,4 @@ revoke all on public.admin_audit_log,public.panel_notifications,public.panel_not
 grant select on public.admin_audit_log to anon;
 drop policy if exists anon_audit_read on public.admin_audit_log;
 create policy anon_audit_read on public.admin_audit_log for select to anon using(true);
+
