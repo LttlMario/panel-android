@@ -72,7 +72,10 @@
             } catch (_) {
                 // Configurația locală rămâne fallback pentru prima instalare.
             }
-            const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=${encodeURIComponent(DISCORD_SCOPES)}`;
+            const mobileState = window.PANEL_MOBILE_OAUTH_STATE
+                ? `&state=${encodeURIComponent(window.PANEL_MOBILE_OAUTH_STATE)}`
+                : '';
+            const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=${encodeURIComponent(DISCORD_SCOPES)}${mobileState}`;
             if (window.Capacitor?.isNativePlatform?.() && window.Capacitor?.Plugins?.Browser) {
                 await window.Capacitor.Plugins.Browser.open({ url: discordAuthUrl });
             } else {
