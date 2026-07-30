@@ -73,7 +73,11 @@
                 // Configurația locală rămâne fallback pentru prima instalare.
             }
             const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=${encodeURIComponent(DISCORD_SCOPES)}`;
-            window.location.href = discordAuthUrl;
+            if (window.Capacitor?.isNativePlatform?.() && window.Capacitor?.Plugins?.Browser) {
+                await window.Capacitor.Plugins.Browser.open({ url: discordAuthUrl });
+            } else {
+                window.location.href = discordAuthUrl;
+            }
         });
 
         document.addEventListener('DOMContentLoaded', async () => {

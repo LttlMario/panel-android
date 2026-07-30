@@ -6,7 +6,7 @@ Acesta este proiectul mobil separat. Site-ul web original nu este modificat.
 
 În Discord Developer Portal, la aplicația folosită de panel, adaugă exact următorul OAuth2 Redirect URI:
 
-`https://panel.local/login.html`
+`discord-1531023771211792384:/authorize/callback`
 
 ## Comenzi
 

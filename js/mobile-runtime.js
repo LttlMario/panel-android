@@ -4,13 +4,28 @@
   if (!isNative) return;
 
   document.documentElement.classList.add('native-app', 'native-android');
-  window.PANEL_MOBILE_REDIRECT_URI = 'https://panel.local/login.html';
+  const discordRedirect = 'discord-1531023771211792384:/authorize/callback';
+  window.PANEL_MOBILE_REDIRECT_URI = discordRedirect;
 
   const plugins = capacitor.Plugins || {};
   const securePreferences = plugins.SecureStorage;
   const app = plugins.App;
+  const browser = plugins.Browser;
   const tokenKey = 'discord_access_token';
   let secureReady = false;
+
+  function handleDiscordCallback(url) {
+    if (!url || !url.startsWith(discordRedirect)) return false;
+    const hashIndex = url.indexOf('#');
+    const hash = hashIndex >= 0 ? url.slice(hashIndex) : '';
+    if (!hash.includes('access_token')) return false;
+    browser?.close?.().catch(() => {});
+    window.location.replace(`login.html${hash}`);
+    return true;
+  }
+
+  app?.addListener?.('appUrlOpen', ({ url }) => handleDiscordCallback(url));
+  app?.getLaunchUrl?.().then(result => handleDiscordCallback(result?.url)).catch(() => {});
 
   async function restoreSecureToken() {
     if (!securePreferences) return;

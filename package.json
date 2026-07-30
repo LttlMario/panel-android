@@ -13,6 +13,7 @@
   "dependencies": {
     "@capacitor/android": "latest",
     "@capacitor/app": "latest",
+    "@capacitor/browser": "latest",
     "@capacitor/core": "latest",
     "@aparajita/capacitor-secure-storage": "latest"
   },
