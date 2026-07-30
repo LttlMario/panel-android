@@ -216,9 +216,9 @@
             max-width: none;
         }
         .main-content #panel-global-footer {
-            width: calc(100% + 4rem);
-            margin-left: -2rem;
-            margin-right: -2rem;
+            width: 100%;
+            margin-left: 0;
+            margin-right: 0;
         }
 
         header {
@@ -259,6 +259,20 @@
             gap: 24px;
             width: 100%;
             max-width: 1200px;
+            margin: 1rem auto 0;
+            padding: 0 2rem 2rem;
+        }
+
+        .calculator-section-title {
+            width: calc(100% - 4rem);
+            max-width: 1200px;
+            margin: 1.5rem auto 0;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+            font-size: 1rem;
+            font-weight: 700;
+            text-align: left;
         }
 
         @media (max-width: 1100px) {
@@ -280,6 +294,7 @@
 
         @media (max-width: 767px) {
             .calculator-container { gap: 14px; margin-top: 1rem; padding: 0 12px 18px; }
+            .calculator-section-title { width: calc(100% - 24px); margin-top: 1rem; }
             .calculator-container > .panel { padding: 14px; }
             .mobile-results-button,
             .mobile-edit-selection {
@@ -570,12 +585,11 @@
                 </div>
             </header>
 
+            <div class="calculator-section-title">Selecție Rețete (Live)</div>
+
             <div class="calculator-container">
                 <!-- Panou Stânga: Input-uri -->
                 <div class="panel" id="calculator-input-panel">
-                    <div style="font-size: 1.0rem; font-weight: 600; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
-                        Selecție Rețete (Live)
-                    </div>
 
                     <!-- Categorie 1: Arme -->
                     <div class="category-group" id="cat-weapons">
