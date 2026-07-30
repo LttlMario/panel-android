@@ -13,13 +13,16 @@
   const app = plugins.App;
   const browser = plugins.Browser;
   const tokenKey = 'discord_access_token';
+  const consumedCallbackKey = 'panel_consumed_oauth_callback';
   let secureReady = false;
 
   function handleDiscordCallback(url) {
     if (!url || !url.startsWith(discordRedirect)) return false;
+    if (sessionStorage.getItem(consumedCallbackKey) === url) return false;
     const hashIndex = url.indexOf('#');
     const hash = hashIndex >= 0 ? url.slice(hashIndex) : '';
     if (!hash.includes('access_token')) return false;
+    sessionStorage.setItem(consumedCallbackKey, url);
     browser?.close?.().catch(() => {});
     window.location.replace(`login.html${hash}`);
     return true;
