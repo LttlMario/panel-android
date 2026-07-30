@@ -12,6 +12,7 @@
     const historyKey = `panel_assistant_history_v2_${userId}_role_${engine.role}`;
     const state = {
         open: false,
+        teaserDismissed: false,
         messages: loadHistory(),
         queue: Promise.resolve(),
         typingSequence: 0
@@ -25,6 +26,11 @@
     updateStatus(engine.getEntryCount());
     engine.indexLocalPages().catch((error) => console.warn('Asistent: indexarea locală nu a fost finalizată.', error));
     watchMapSidebar();
+    window.setTimeout(() => {
+        state.teaserDismissed = true;
+        elements.teaser.classList.add('is-hiding');
+        window.setTimeout(() => { elements.teaser.hidden = true; }, 220);
+    }, 3000);
 
     function injectStyles() {
         if (document.getElementById('panel-assistant-widget-styles')) return;
@@ -41,7 +47,8 @@
             .paw-launcher:focus-visible,.paw-icon-button:focus-visible,.paw-send:focus-visible,.paw-chip:focus-visible,.paw-teaser:focus-visible { outline:3px solid rgba(52,211,153,.42); outline-offset:3px; }
             .paw-launcher img { width:100%; height:100%; display:block; border-radius:50%; }
             .paw-online { position:absolute; right:1px; bottom:3px; width:15px; height:15px; border:3px solid #020617; border-radius:50%; background:#34d399; box-shadow:0 0 10px rgba(52,211,153,.75); }
-            .paw-teaser { position:absolute; right:76px; bottom:7px; width:228px; padding:11px 14px; border:1px solid #334155; border-radius:16px 16px 4px 16px; background:#0f172a; color:#f8fafc; text-align:left; cursor:pointer; pointer-events:auto; box-shadow:0 14px 34px rgba(2,6,23,.52); animation:paw-arrive .3s ease-out; }
+            .paw-teaser { position:absolute; right:76px; bottom:7px; width:228px; padding:11px 14px; border:1px solid #334155; border-radius:16px 16px 4px 16px; background:#0f172a; color:#f8fafc; text-align:left; cursor:pointer; pointer-events:auto; box-shadow:0 14px 34px rgba(2,6,23,.52); animation:paw-arrive .3s ease-out; transition:opacity .2s ease,transform .2s ease; }
+            .paw-teaser.is-hiding { opacity:0; transform:translateY(6px) scale(.97); pointer-events:none; }
             .paw-teaser strong { display:block; font-size:13px; line-height:1.35; }
             .paw-teaser span { display:block; margin-top:3px; color:#94a3b8; font-size:10px; line-height:1.3; }
             .paw-panel { position:absolute; right:0; bottom:78px; width:390px; height:min(560px,calc(100dvh - 112px)); min-height:390px; display:flex; flex-direction:column; overflow:hidden; border:1px solid #334155; border-radius:22px; background:#0b1220; pointer-events:auto; box-shadow:0 24px 70px rgba(2,6,23,.72); transform-origin:bottom right; animation:paw-open .18s ease-out; }
@@ -244,7 +251,7 @@
     function setOpen(open) {
         state.open = Boolean(open);
         elements.panel.hidden = !state.open;
-        elements.teaser.hidden = state.open;
+        elements.teaser.hidden = state.open || state.teaserDismissed;
         elements.launcher.setAttribute('aria-expanded', String(state.open));
         elements.launcher.setAttribute('aria-label', state.open ? 'Chatul este deschis' : 'Deschide asistentul');
         if (state.open) {
