@@ -9,9 +9,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js"></script>
   <script src="js/permissions.js"></script>
-  <script src="js/panel-layout.js?v=3.2.8"></script>
+  <script src="js/panel-layout.js?v=3.2.9"></script>
   <link rel="stylesheet" href="css/global-footer.css">
-  <script src="js/project-version.js?v=3.2.8"></script>
+  <script src="js/project-version.js?v=3.2.9"></script>
   <style>
 *{box-sizing:border-box}
 
@@ -402,12 +402,16 @@
         <section class="setup-card"><h3>Webhook-uri</h3><p>Valorile sunt păstrate în tabela privată și sunt accesibile numai funcțiilor administrative.</p><div class="fields">
           <div class="field"><label>Anunțuri Familie / Birouri</label><input id="family_webhook_url" type="password" placeholder="Webhook pentru anunțurile familiei sau birourilor"><button class="config-action test-webhook" data-channel="family" data-label="Anunțuri Familie" type="button">Verifică Anunțuri Familie</button></div>
           <div class="field"><label>Anunțuri Angajați / Mecanici</label><input id="mechanics_webhook_url" type="password" placeholder="Webhook pentru anunțurile angajaților"><button class="config-action test-webhook" data-channel="mechanics" data-label="Anunțuri Mecanici" type="button">Verifică Anunțuri Mecanici</button></div>
-          <div class="field"><label>Pontaj / Loguri</label><input id="pontaj_webhook_url" type="password" placeholder="Webhook pentru pornire, pauză și oprire pontaj"><button class="config-action test-webhook" data-channel="pontaj" data-label="Pontaj" type="button">Verifică Pontaj</button></div>
-          <div class="field"><label>Cereri / Absențe</label><input id="requests_webhook_url" type="password" placeholder="Webhook pentru învoiri, cereri și absențe"><button class="config-action test-webhook" data-channel="requests" data-label="Cereri / Absențe" type="button">Verifică Cereri</button></div>
-          <div class="field"><label>Contracte</label><input id="contracts_webhook_url" type="password" placeholder="Webhook pentru contractele generate"><button class="config-action test-webhook" data-channel="contracts" data-label="Contracte" type="button">Verifică Contracte</button></div>
+          <div class="field"><label>Pontaj / Loguri — webhook 1</label><input id="pontaj_webhook_url" type="password" placeholder="Destinația principală pentru pontaj"><button class="config-action test-webhook" data-channel="pontaj" data-label="destinațiile Pontaj" type="button">Verifică destinațiile Pontaj</button></div>
+          <div class="field"><label>Pontaj / Loguri — webhook 2 (opțional)</label><input id="pontaj_secondary_webhook_url" type="password" placeholder="A doua destinație pentru același pontaj"></div>
+          <div class="field"><label>Concedii / Învoiri — Familie</label><input id="requests_webhook_url" type="password" placeholder="Canalul familiei pentru concedii și învoiri"><button class="config-action test-webhook" data-channel="requests" data-label="destinațiile Concedii / Învoiri" type="button">Verifică ambele canale</button></div>
+          <div class="field"><label>Concedii / Învoiri — Mecanici (opțional)</label><input id="requests_secondary_webhook_url" type="password" placeholder="Canalul mecanicilor pentru concedii și învoiri"></div>
+          <div class="field"><label>Contracte — webhook 1</label><input id="contracts_webhook_url" type="password" placeholder="Destinația principală pentru contracte"><button class="config-action test-webhook" data-channel="contracts" data-label="destinațiile Contracte" type="button">Verifică destinațiile Contracte</button></div>
+          <div class="field"><label>Contracte — webhook 2 (opțional)</label><input id="contracts_secondary_webhook_url" type="password" placeholder="A doua destinație pentru aceleași contracte"></div>
           <div class="field"><label>Marketplace legal — webhook 1</label><input id="marketplace_webhook_url" type="password" placeholder="Webhook principal pentru anunțurile Marketplace"><button class="config-action test-webhook" data-channel="marketplace" data-label="ambele webhook-uri Marketplace legal" type="button">Verifică destinațiile Marketplace</button></div>
           <div class="field"><label>Marketplace legal — webhook 2 (opțional)</label><input id="marketplace_secondary_webhook_url" type="password" placeholder="Al doilea webhook pentru aceleași anunțuri Marketplace"></div>
-          <div class="field"><label>Black Market</label><input id="illegal_marketplace_webhook_url" type="password" placeholder="Webhook pentru anunțurile Black Market"><button class="config-action test-webhook" data-channel="illegal_marketplace" data-label="Black Market" type="button">Verifică Black Market</button></div>
+          <div class="field"><label>Black Market — webhook 1</label><input id="illegal_marketplace_webhook_url" type="password" placeholder="Destinația principală pentru Black Market"><button class="config-action test-webhook" data-channel="illegal_marketplace" data-label="destinațiile Black Market" type="button">Verifică destinațiile Black Market</button></div>
+          <div class="field"><label>Black Market — webhook 2 (opțional)</label><input id="illegal_marketplace_secondary_webhook_url" type="password" placeholder="A doua destinație pentru aceleași anunțuri"></div>
         </div></section>
         <section class="setup-card"><h3>Ce mai trebuie făcut la mutarea Supabase</h3><p>Interfața poate pregăti datele publice, însă un site GitHub Pages nu poate instala singur baza sau funcțiile fără cheia secretă de administrator.</p><ul class="migration-list"><li>1️⃣ <span><b>Rulează schema completă:</b> <code>supabase/setup-complet-baza-de-date.sql</code>, apoi migrarea de reparare a pontajelor.</span></li><li>2️⃣ <span><b>Publică cele 5 Edge Functions:</b> sync-discord-role, manage-discord-config, manage-community-posts, send-discord-notification și close-expired-shifts.</span></li><li>3️⃣ <span><b>Configurează secretele Edge Functions:</b> SUPABASE_SERVICE_ROLE_KEY (sau secret key), DISCORD_GUILD_ID și CRON_SECRET.</span></li><li>4️⃣ <span><b>Încarcă pe GitHub</b> fișierul <code>js/supabase-config.js</code> descărcat mai sus.</span></li><li>5️⃣ <span><b>Deschide din nou configuratorul</b> pe noul panel și salvează rolurile, webhook-urile, Guild ID-ul și Client ID-ul.</span></li><li>6️⃣ <span><b>Discord Developer Portal:</b> adaugă URL-ul OAuth Redirect afișat mai sus.</span></li></ul></section>
         <section class="setup-card"><h3>Verificarea sistemului</h3><p>După salvare, rulează diagnosticul complet pentru Supabase, Discord, webhook-uri, Edge Functions și fișierele publicate.</p><a class="config-action" href="diagnostic.html">Deschide Verificare sistem</a></section>
@@ -697,11 +701,20 @@
         config.pontaj_webhook_url =
             document.getElementById('pontaj_webhook_url').value.trim();
 
+        config.pontaj_secondary_webhook_url =
+            document.getElementById('pontaj_secondary_webhook_url').value.trim();
+
         config.requests_webhook_url =
             document.getElementById('requests_webhook_url').value.trim();
 
+        config.requests_secondary_webhook_url =
+            document.getElementById('requests_secondary_webhook_url').value.trim();
+
         config.contracts_webhook_url =
             document.getElementById('contracts_webhook_url').value.trim();
+
+        config.contracts_secondary_webhook_url =
+            document.getElementById('contracts_secondary_webhook_url').value.trim();
 
         config.marketplace_webhook_url =
             document.getElementById('marketplace_webhook_url').value.trim();
@@ -711,6 +724,9 @@
 
         config.illegal_marketplace_webhook_url =
             document.getElementById('illegal_marketplace_webhook_url').value.trim();
+
+        config.illegal_marketplace_secondary_webhook_url =
+            document.getElementById('illegal_marketplace_secondary_webhook_url').value.trim();
 
         config.family_role_id =
             document.getElementById('role_3').value.trim();
@@ -762,6 +778,6 @@
     load();
   </script>
   <script src="js/discord-notifications.js"></script>
-  <script src="js/global-footer.js?v=3.2.8"></script>
+  <script src="js/global-footer.js?v=3.2.9"></script>
 </body>
 </html>
