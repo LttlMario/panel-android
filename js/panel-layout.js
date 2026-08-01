@@ -8,6 +8,26 @@
         style.id = 'panel-layout-styles';
         style.textContent = `
             .panel-responsive-sidebar { transition: width .2s ease; position:sticky; top:0; height:100vh; align-self:flex-start; }
+            #panel-shared-sidebar, #panel-shared-sidebar *, #panel-mobile-menu, #panel-mobile-menu * { box-sizing:border-box; }
+            #panel-shared-sidebar { display:flex !important; flex-direction:column !important; justify-content:space-between !important; overflow:visible; border-right:1px solid #1e293b !important; background:#0f172a !important; color:#e2e8f0 !important; font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif !important; text-align:left !important; }
+            #panel-shared-sidebar > div:first-child { flex:1 1 auto; min-height:0; padding:24px !important; overflow-y:auto !important; }
+            #panel-shared-sidebar > div:last-child { flex:0 0 auto; min-height:78px; padding:16px !important; display:flex !important; align-items:center !important; justify-content:space-between !important; gap:8px !important; border-top:1px solid #1e293b !important; background:#0f172a !important; }
+            #panel-shared-sidebar h1 { display:flex !important; align-items:center !important; gap:12px !important; margin:0 !important; padding:0 !important; color:#f8fafc !important; font-size:20px !important; font-weight:700 !important; line-height:1.25 !important; text-align:left !important; white-space:normal !important; }
+            #panel-shared-sidebar h1 > span { display:block; min-width:0; }
+            #panel-shared-sidebar h1 > span > span { display:block !important; margin-top:3px; color:#94a3b8 !important; font-size:12px !important; font-weight:400 !important; line-height:1.3 !important; }
+            #panel-shared-sidebar nav { display:flex !important; flex-direction:column !important; gap:6px !important; margin:24px 0 0 !important; padding:0 !important; }
+            #panel-shared-sidebar .nav-link { width:100% !important; min-height:42px; margin:0 !important; padding:10px 14px !important; display:flex; align-items:center !important; gap:12px !important; border-radius:12px !important; color:#cbd5e1 !important; font-size:14px !important; font-weight:500 !important; line-height:1.25 !important; text-align:left !important; text-decoration:none !important; white-space:normal !important; }
+            #panel-shared-sidebar .nav-link > span:first-child { width:20px; flex:0 0 20px; text-align:center; }
+            #panel-shared-sidebar .nav-link > span:last-child { min-width:0; overflow-wrap:anywhere; }
+            #panel-shared-sidebar .nav-link.bg-emerald-500\/10 { color:#6ee7b7 !important; }
+            #panel-shared-sidebar #user-avatar { width:36px !important; height:36px !important; flex:0 0 36px; margin:0 !important; padding:0 !important; border:1px solid #334155 !important; border-radius:999px !important; object-fit:cover; }
+            #panel-shared-sidebar #user-display-name, #panel-shared-sidebar #user-role { margin:0 !important; padding:0 !important; line-height:1.3 !important; }
+            #panel-shared-sidebar #user-display-name { color:#f8fafc !important; font-size:13px !important; font-weight:600 !important; }
+            #panel-shared-sidebar #user-role { margin-top:3px !important; color:#34d399 !important; font-size:11px !important; }
+            #panel-shared-sidebar button { font-family:inherit !important; }
+            #panel-shared-sidebar [data-shared-logout] { min-width:auto !important; margin:0 !important; padding:7px 9px !important; border:1px solid rgba(244,63,94,.25) !important; border-radius:9px !important; background:rgba(244,63,94,.08) !important; color:#fb7185 !important; font-size:11px !important; line-height:1 !important; cursor:pointer; }
+            #panel-mobile-menu .panel-mobile-nav { display:flex !important; flex-direction:column !important; gap:6px !important; }
+            #panel-mobile-menu .nav-link { min-height:44px; margin:0 !important; padding:11px 14px !important; display:flex; align-items:center !important; gap:12px !important; border-radius:12px !important; color:#cbd5e1 !important; font-size:14px !important; line-height:1.25 !important; text-decoration:none !important; }
             .panel-brand-logo { width:46px; height:46px; flex:none; border-radius:14px; object-fit:cover; border:1px solid #334155; box-shadow:0 8px 24px rgba(0,0,0,.32); }
             .panel-brand-heading { display:flex; align-items:center; gap:12px; }
             body.panel-shared-sidebar-page { padding-left:18rem; }
@@ -336,7 +356,7 @@
             ['admin.html', 7, '👑', 'Panou Admin']
         ];
 
-        navigation.innerHTML = links.map(([href, role, icon, label]) => {
+        navigation.innerHTML = links.filter(([href]) => href !== 'edit.html').map(([href, role, icon, label]) => {
             const active = currentPage === href;
             const stateClasses = active
                 ? 'bg-emerald-500/10 text-emerald-400 font-medium'
