@@ -9,9 +9,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js"></script>
   <script src="js/permissions.js"></script>
-  <script src="js/panel-layout.js?v=3.2.9"></script>
+  <script src="js/panel-layout.js?v=3.2.10"></script>
   <link rel="stylesheet" href="css/global-footer.css">
-  <script src="js/project-version.js?v=3.2.9"></script>
+  <script src="js/project-version.js?v=3.2.10"></script>
   <style>
 *{box-sizing:border-box}
 
@@ -402,8 +402,8 @@
         <section class="setup-card"><h3>Webhook-uri</h3><p>Valorile sunt păstrate în tabela privată și sunt accesibile numai funcțiilor administrative.</p><div class="fields">
           <div class="field"><label>Anunțuri Familie / Birouri</label><input id="family_webhook_url" type="password" placeholder="Webhook pentru anunțurile familiei sau birourilor"><button class="config-action test-webhook" data-channel="family" data-label="Anunțuri Familie" type="button">Verifică Anunțuri Familie</button></div>
           <div class="field"><label>Anunțuri Angajați / Mecanici</label><input id="mechanics_webhook_url" type="password" placeholder="Webhook pentru anunțurile angajaților"><button class="config-action test-webhook" data-channel="mechanics" data-label="Anunțuri Mecanici" type="button">Verifică Anunțuri Mecanici</button></div>
-          <div class="field"><label>Pontaj / Loguri — webhook 1</label><input id="pontaj_webhook_url" type="password" placeholder="Destinația principală pentru pontaj"><button class="config-action test-webhook" data-channel="pontaj" data-label="destinațiile Pontaj" type="button">Verifică destinațiile Pontaj</button></div>
-          <div class="field"><label>Pontaj / Loguri — webhook 2 (opțional)</label><input id="pontaj_secondary_webhook_url" type="password" placeholder="A doua destinație pentru același pontaj"></div>
+          <div class="field"><label>Pontaj — intrare</label><input id="pontaj_webhook_url" type="password" placeholder="Webhook pentru pornire, pauză și reluare"><button class="config-action test-webhook" data-channel="pontaj_start" data-label="Pontaj — intrare" type="button">Verifică intrarea</button></div>
+          <div class="field"><label>Pontaj — ieșire</label><input id="pontaj_secondary_webhook_url" type="password" placeholder="Webhook pentru încheiere și timpul total"><button class="config-action test-webhook" data-channel="pontaj_end" data-label="Pontaj — ieșire" type="button">Verifică ieșirea</button></div>
           <div class="field"><label>Concedii / Învoiri — Familie</label><input id="requests_webhook_url" type="password" placeholder="Canalul familiei pentru concedii și învoiri"><button class="config-action test-webhook" data-channel="requests" data-label="destinațiile Concedii / Învoiri" type="button">Verifică ambele canale</button></div>
           <div class="field"><label>Concedii / Învoiri — Mecanici (opțional)</label><input id="requests_secondary_webhook_url" type="password" placeholder="Canalul mecanicilor pentru concedii și învoiri"></div>
           <div class="field"><label>Contracte — webhook 1</label><input id="contracts_webhook_url" type="password" placeholder="Destinația principală pentru contracte"><button class="config-action test-webhook" data-channel="contracts" data-label="destinațiile Contracte" type="button">Verifică destinațiile Contracte</button></div>
@@ -778,6 +778,6 @@
     load();
   </script>
   <script src="js/discord-notifications.js"></script>
-  <script src="js/global-footer.js?v=3.2.9"></script>
+  <script src="js/global-footer.js?v=3.2.10"></script>
 </body>
 </html>

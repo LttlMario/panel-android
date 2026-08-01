@@ -26,9 +26,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/permissions.js"></script>
-    <script src="js/panel-layout.js?v=3.2.9"></script>
+    <script src="js/panel-layout.js?v=3.2.10"></script>
     <link rel="stylesheet" href="css/global-footer.css">
-    <script src="js/project-version.js?v=3.2.9"></script>
+    <script src="js/project-version.js?v=3.2.10"></script>
     <link rel="icon" href="img/favicon.ico">
     <link rel="apple-touch-icon" href="img/logo-180.png">
 </head>
@@ -478,7 +478,7 @@
             };
 
             try {
-                await sendPanelDiscord('pontaj', payload);
+                await sendPanelDiscord('pontaj_start', payload);
             } catch (err) {
                 console.error('Erore trimitere webhook acțiune pontaj:', err);
                 alert(`Pontajul a fost salvat, dar mesajul Discord nu a fost trimis: ${err.message || 'eroare necunoscută'}`);
@@ -501,7 +501,7 @@
             };
 
             try {
-                await sendPanelDiscord('pontaj', payload);
+                await sendPanelDiscord('pontaj_end', payload);
             } catch (err) {
                 console.error('Erore trimitere webhook loguri oprire pontaj:', err);
             }
@@ -944,7 +944,7 @@
             ], timestamp: new Date().toISOString() }] };
             let lastError;
             for (let attempt = 1; attempt <= 2; attempt += 1) {
-                try { await sendPanelDiscord('pontaj', payload); return true; }
+                try { await sendPanelDiscord('pontaj_end', payload); return true; }
                 catch (error) {
                     lastError = error;
                     console.error(`Eroare webhook oprire (încercarea ${attempt}):`, error);
@@ -984,6 +984,6 @@
         }
     </style>
     <script src="js/discord-notifications.js"></script>
-    <script src="js/global-footer.js?v=3.2.9"></script>
+    <script src="js/global-footer.js?v=3.2.10"></script>
 </body>
 </html>

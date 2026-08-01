@@ -26,7 +26,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/permissions.js"></script>
-    <script src="js/panel-layout.js?v=3.2.9"></script>
+    <script src="js/panel-layout.js?v=3.2.10"></script>
     <style>
         .paste-zone {
             position: relative;
@@ -93,7 +93,7 @@
         }
     </style>
     <link rel="stylesheet" href="css/global-footer.css">
-    <script src="js/project-version.js?v=3.2.9"></script>
+    <script src="js/project-version.js?v=3.2.10"></script>
     <link rel="icon" href="img/favicon.ico">
     <link rel="apple-touch-icon" href="img/logo-180.png">
 </head>
@@ -200,7 +200,7 @@
                         <p class="rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-3 text-xs text-indigo-200">Câmpurile sunt cerute numai dacă apar în șablonul contractului organizației.</p>
                         <div class="space-y-1.5">
                             <label class="text-xs font-medium text-slate-400">Companie</label>
-                            <input type="text" id="company" value="S.C. Familia Es Todo S.R.L." class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-indigo-500">
+                            <input type="text" id="company" value="Familia Es Todo SRL" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-indigo-500">
                         </div>
 
                         <div class="space-y-1.5">
@@ -426,12 +426,14 @@ Semnătură:`;
             try {
                 const organization = window.getActiveOrganization?.();
                 const db = window.createPanelSupabaseClient?.();
-                if (organization?.name) document.getElementById('company').value = organization.name;
+                document.getElementById('company').value = 'Familia Es Todo SRL';
                 if (db) {
-                    const { data } = await db.from('app_settings').select('value').eq('key', 'contract_template').maybeSingle();
-                    const custom = data?.value;
-                    if (custom?.template) contractTemplate = String(custom.template);
-                    if (custom?.title) {
+                    const { data } = await db.from('app_settings').select('key,value').in('key', ['contract_template','contract_mode']);
+                    const settings = Object.fromEntries((data || []).map(item => [item.key, item.value]));
+                    const custom = settings.contract_template;
+                    const useStandardContract = settings.contract_mode === 'standard';
+                    if (!useStandardContract && custom?.template) contractTemplate = String(custom.template);
+                    if (!useStandardContract && custom?.title) {
                         document.getElementById('contractSystemTitle').textContent = `${custom.title} — ${organization?.name || ''}`;
                         document.getElementById('contractFormTitle').textContent = custom.title;
                         document.getElementById('contractPreviewTitle').textContent = `Previzualizare: ${custom.title}`;
@@ -588,7 +590,7 @@ Semnătură:`;
 
         function resetForm() {
             document.getElementById('contractForm').reset();
-            document.getElementById('company').value = 'S.C. Familia Es Todo S.R.L.';
+            document.getElementById('company').value = 'Familia Es Todo SRL';
             document.getElementById('salary').value = '100 lei/lună';
             document.getElementById('schedule').value = '20:00-23:00';
             const displayNameToRender = currentUser.display_name || currentUser.username || '';
@@ -772,6 +774,6 @@ Semnătură:`;
         }
     </script>
     <script src="js/discord-notifications.js"></script>
-    <script src="js/global-footer.js?v=3.2.9"></script>
+    <script src="js/global-footer.js?v=3.2.10"></script>
 </body>
 </html>
