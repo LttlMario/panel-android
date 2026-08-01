@@ -87,7 +87,7 @@
   fill:#ffffff;
   color:#ffffff;
 }
-#panel-global-footer .pgf-center { grid-column:4; grid-row:1; justify-self:center; }
+#panel-global-footer .pgf-center { grid-column:4; grid-row:1; justify-self:start; }
 #panel-global-footer .pgf-support-block{
     grid-column:3;
     grid-row:1;
@@ -277,6 +277,12 @@
   #panel-global-footer .pgf-support-block { grid-column:1;grid-row:auto; }
 
   #panel-global-footer :is(.pgf-android-badge, .pgf-ios-badge, .pgf-center, .pgf-support-block) { justify-self:center; }
+
+  #panel-global-footer .pgf-center {
+    justify-self: start;
+    padding-right: 84px;
+    text-align: left;
+  }
 
   #panel-support-dialog .psd-actions {
     flex-direction: column-reverse;
