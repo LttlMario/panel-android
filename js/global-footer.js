@@ -10,7 +10,7 @@
   });
 
   function getReleaseVersion() {
-    return window.PANEL_RELEASE?.version || "3.2.7";
+    return window.PANEL_RELEASE?.version || "3.2.8";
   }
 
   function removeLegacySupportElements() {

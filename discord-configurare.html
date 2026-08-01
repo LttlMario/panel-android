@@ -9,9 +9,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js"></script>
   <script src="js/permissions.js"></script>
-  <script src="js/panel-layout.js"></script>
+  <script src="js/panel-layout.js?v=3.2.8"></script>
   <link rel="stylesheet" href="css/global-footer.css">
-  <script src="js/project-version.js"></script>
+  <script src="js/project-version.js?v=3.2.8"></script>
   <style>
 *{box-sizing:border-box}
 
@@ -405,7 +405,8 @@
           <div class="field"><label>Pontaj / Loguri</label><input id="pontaj_webhook_url" type="password" placeholder="Webhook pentru pornire, pauză și oprire pontaj"><button class="config-action test-webhook" data-channel="pontaj" data-label="Pontaj" type="button">Verifică Pontaj</button></div>
           <div class="field"><label>Cereri / Absențe</label><input id="requests_webhook_url" type="password" placeholder="Webhook pentru învoiri, cereri și absențe"><button class="config-action test-webhook" data-channel="requests" data-label="Cereri / Absențe" type="button">Verifică Cereri</button></div>
           <div class="field"><label>Contracte</label><input id="contracts_webhook_url" type="password" placeholder="Webhook pentru contractele generate"><button class="config-action test-webhook" data-channel="contracts" data-label="Contracte" type="button">Verifică Contracte</button></div>
-          <div class="field"><label>Marketplace</label><input id="marketplace_webhook_url" type="password" placeholder="Webhook pentru anunțurile Marketplace"><button class="config-action test-webhook" data-channel="marketplace" data-label="Marketplace" type="button">Verifică Marketplace</button></div>
+          <div class="field"><label>Marketplace legal — webhook 1</label><input id="marketplace_webhook_url" type="password" placeholder="Webhook principal pentru anunțurile Marketplace"><button class="config-action test-webhook" data-channel="marketplace" data-label="ambele webhook-uri Marketplace legal" type="button">Verifică destinațiile Marketplace</button></div>
+          <div class="field"><label>Marketplace legal — webhook 2 (opțional)</label><input id="marketplace_secondary_webhook_url" type="password" placeholder="Al doilea webhook pentru aceleași anunțuri Marketplace"></div>
           <div class="field"><label>Black Market</label><input id="illegal_marketplace_webhook_url" type="password" placeholder="Webhook pentru anunțurile Black Market"><button class="config-action test-webhook" data-channel="illegal_marketplace" data-label="Black Market" type="button">Verifică Black Market</button></div>
         </div></section>
         <section class="setup-card"><h3>Ce mai trebuie făcut la mutarea Supabase</h3><p>Interfața poate pregăti datele publice, însă un site GitHub Pages nu poate instala singur baza sau funcțiile fără cheia secretă de administrator.</p><ul class="migration-list"><li>1️⃣ <span><b>Rulează schema completă:</b> <code>supabase/setup-complet-baza-de-date.sql</code>, apoi migrarea de reparare a pontajelor.</span></li><li>2️⃣ <span><b>Publică cele 5 Edge Functions:</b> sync-discord-role, manage-discord-config, manage-community-posts, send-discord-notification și close-expired-shifts.</span></li><li>3️⃣ <span><b>Configurează secretele Edge Functions:</b> SUPABASE_SERVICE_ROLE_KEY (sau secret key), DISCORD_GUILD_ID și CRON_SECRET.</span></li><li>4️⃣ <span><b>Încarcă pe GitHub</b> fișierul <code>js/supabase-config.js</code> descărcat mai sus.</span></li><li>5️⃣ <span><b>Deschide din nou configuratorul</b> pe noul panel și salvează rolurile, webhook-urile, Guild ID-ul și Client ID-ul.</span></li><li>6️⃣ <span><b>Discord Developer Portal:</b> adaugă URL-ul OAuth Redirect afișat mai sus.</span></li></ul></section>
@@ -705,6 +706,9 @@
         config.marketplace_webhook_url =
             document.getElementById('marketplace_webhook_url').value.trim();
 
+        config.marketplace_secondary_webhook_url =
+            document.getElementById('marketplace_secondary_webhook_url').value.trim();
+
         config.illegal_marketplace_webhook_url =
             document.getElementById('illegal_marketplace_webhook_url').value.trim();
 
@@ -758,6 +762,6 @@
     load();
   </script>
   <script src="js/discord-notifications.js"></script>
-  <script src="js/global-footer.js"></script>
+  <script src="js/global-footer.js?v=3.2.8"></script>
 </body>
 </html>
