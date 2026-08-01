@@ -108,9 +108,13 @@
 }
 
 #panel-global-footer .pgf-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   color: var(--panel-footer-strong);
   font-weight: 700;
 }
+#panel-global-footer .pgf-brand img { width:24px; height:24px; border-radius:7px; object-fit:cover; vertical-align:middle; }
 
 #panel-global-footer .pgf-version {
   color: var(--panel-footer-accent);

@@ -8,6 +8,8 @@
         style.id = 'panel-layout-styles';
         style.textContent = `
             .panel-responsive-sidebar { transition: width .2s ease; position:sticky; top:0; height:100vh; align-self:flex-start; }
+            .panel-brand-logo { width:46px; height:46px; flex:none; border-radius:14px; object-fit:cover; border:1px solid #334155; box-shadow:0 8px 24px rgba(0,0,0,.32); }
+            .panel-brand-heading { display:flex; align-items:center; gap:12px; }
             body.panel-shared-sidebar-page { padding-left:18rem; }
             body.panel-shared-sidebar-page > #panel-shared-sidebar { position:fixed; inset:0 auto 0 0; z-index:60; width:18rem; }
             .panel-responsive-sidebar.fixed { position:fixed; }
@@ -109,12 +111,14 @@
     function setup() {
         const currentPage = window.location.pathname.split('/').pop() || 'index.html';
         addStyles();
+        ensureBrandAssets();
         ensureGlobalFooter();
         setupAssistantWidget(currentPage);
         const shared = ensureSharedSidebar();
         const navigation = shared.navigation;
         const sidebar = navigation?.closest('aside');
         if (!navigation || !sidebar) return;
+        ensureBrandLogo(sidebar);
 
         ensureCommunityLink(navigation, currentPage);
         normalizeNavigation(navigation, currentPage);
@@ -212,6 +216,19 @@
     function ensureGlobalFooter() {
         if (!document.querySelector('link[href="css/global-footer.css"]')) { const link=document.createElement('link');link.rel='stylesheet';link.href='css/global-footer.css';document.head.appendChild(link); }
         if (!document.querySelector('script[src="js/global-footer.js"]')) { const script=document.createElement('script');script.src='js/global-footer.js';script.defer=true;document.head.appendChild(script); }
+    }
+
+    function ensureBrandAssets() {
+        if (!document.querySelector('link[rel~="icon"]')) { const icon=document.createElement('link');icon.rel='icon';icon.href='img/favicon.ico';document.head.appendChild(icon); }
+        if (!document.querySelector('link[rel="apple-touch-icon"]')) { const touch=document.createElement('link');touch.rel='apple-touch-icon';touch.href='img/logo-180.png';document.head.appendChild(touch); }
+    }
+
+    function ensureBrandLogo(sidebar) {
+        const heading=sidebar.querySelector('h1');
+        if(!heading||heading.querySelector('.panel-brand-logo'))return;
+        heading.classList.add('panel-brand-heading');
+        const content=document.createElement('span');content.className='min-w-0';while(heading.firstChild)content.appendChild(heading.firstChild);
+        const logo=document.createElement('img');logo.className='panel-brand-logo';logo.src='img/logo-192.png';logo.alt='Logo Panel';heading.append(logo,content);
     }
 
     function ensureSharedSidebar() {

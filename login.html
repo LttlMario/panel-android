@@ -69,6 +69,8 @@
     <script src="js/project-version.js"></script>
     <script src="js/discord-config.js"></script>
     <script src="js/supabase-config.js"></script>
+    <link rel="icon" href="img/favicon.ico">
+    <link rel="apple-touch-icon" href="img/logo-180.png">
 </head>
 <body class="min-h-screen overflow-x-hidden bg-slate-950 text-slate-100 font-sans antialiased relative flex flex-col">
     <!-- Fundal -->
@@ -89,9 +91,7 @@
 
     <div class="inline-flex flex-col items-center gap-3">
 
-        <div class="flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-indigo-500/20 to-cyan-500/20 border border-indigo-400/30 text-4xl shadow-lg shadow-indigo-500/20">
-            🔐
-        </div>
+        <img src="img/logo-192.png" alt="Logo Panel" class="w-24 h-24 rounded-3xl border border-indigo-400/30 object-cover shadow-lg shadow-indigo-500/20">
 
         <span class="rounded-full border border-indigo-400/20 bg-indigo-500/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-indigo-300">
             Secure Access
@@ -291,6 +291,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const expectedState = sessionStorage.getItem('discord_oauth_state');
 
         if(accessToken){
+            if (returnedState === 'panel_android') {
+                window.location.replace(`discord-1531023771211792384:/authorize/callback#${params.toString()}`);
+                return;
+            }
             window.history.replaceState({}, document.title, window.location.pathname);
             sessionStorage.removeItem('discord_oauth_state');
 

@@ -90,7 +90,7 @@
         <div class="pgf-center">
             <p class="pgf-meta">
                 © 2026
-                <span class="pgf-brand">Panel by Little Mario</span>
+                <span class="pgf-brand"><img src="img/logo-32.png" alt="" aria-hidden="true">Panel by Little Mario</span>
                 <span aria-hidden="true"> • </span>
                 <a class="pgf-version"
                   href="${CONFIG.changelogUrl}"
