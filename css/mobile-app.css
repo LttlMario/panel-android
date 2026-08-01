@@ -41,6 +41,36 @@ html.native-android select {
   touch-action: manipulation;
 }
 
+#panel-android-update[hidden] { display: none !important; }
+#panel-android-update {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(2, 6, 23, .82);
+  backdrop-filter: blur(7px);
+}
+#panel-android-update .pau-dialog {
+  width: min(100%, 430px);
+  overflow: hidden;
+  border: 1px solid #334155;
+  border-radius: 22px;
+  background: #0f172a;
+  color: #e2e8f0;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, .58);
+}
+#panel-android-update .pau-body { padding: 22px; }
+#panel-android-update .pau-icon { width: 54px; height: 54px; display: grid; place-items: center; border-radius: 16px; background: rgba(16,185,129,.14); font-size: 27px; }
+#panel-android-update h2 { margin: 16px 0 7px; color: #f8fafc; font-size: 20px; }
+#panel-android-update p { margin: 0; color: #94a3b8; font-size: 13px; line-height: 1.65; }
+#panel-android-update .pau-version { margin-top: 13px; color: #6ee7b7; font-size: 12px; font-weight: 800; }
+#panel-android-update .pau-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 16px 22px 22px; }
+#panel-android-update button { min-height: 44px; border-radius: 12px; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
+#panel-android-update .pau-later { border: 1px solid #475569; background: #1e293b; color: #e2e8f0; }
+#panel-android-update .pau-install { border: 1px solid #10b981; background: #059669; color: #fff; }
+
 @media (max-width: 767px) {
   html.native-android header {
     height: auto !important;

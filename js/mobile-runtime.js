@@ -16,7 +16,61 @@
   const secureKeyPrefix = 'capacitor-storage_';
   const consumedCallbackKey = 'panel_consumed_oauth_callback';
   const pendingOAuthTokenKey = 'panel_pending_discord_oauth_token';
+  const currentAppVersion = '0.3.1-beta';
+  const updateCheckKey = 'panel_android_update_last_check';
+  const updateLaterKey = 'panel_android_update_later';
   let secureReady = false;
+
+  const versionParts = (value) => String(value || '').replace(/^v/i, '').split(/[^0-9]+/).filter(Boolean).slice(0, 3).map(Number);
+  const isNewerVersion = (candidate, current) => {
+    const next = versionParts(candidate), installed = versionParts(current);
+    for (let index = 0; index < 3; index += 1) {
+      const difference = (next[index] || 0) - (installed[index] || 0);
+      if (difference) return difference > 0;
+    }
+    return false;
+  };
+
+  function showUpdateNotice(release, apk) {
+    document.getElementById('panel-android-update')?.remove();
+    const overlay = document.createElement('section');
+    overlay.id = 'panel-android-update';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.innerHTML = `<div class="pau-dialog"><div class="pau-body"><div class="pau-icon">⬆️</div><h2>Actualizare nouă disponibilă</h2><p>Este disponibilă o versiune nouă a aplicației Panel. Poți instala acum sau poți amâna notificarea pentru 24 de ore.</p><div class="pau-version">Instalată: ${currentAppVersion} · Nouă: ${String(release.tag_name).replace(/^v/i, '')}</div></div><div class="pau-actions"><button type="button" class="pau-later">Mai târziu</button><button type="button" class="pau-install">Instalează acum</button></div></div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector('.pau-later').addEventListener('click', () => {
+      localStorage.setItem(updateLaterKey, JSON.stringify({ tag: release.tag_name, until: Date.now() + 24 * 60 * 60 * 1000 }));
+      overlay.remove();
+    });
+    overlay.querySelector('.pau-install').addEventListener('click', async () => {
+      localStorage.setItem(updateLaterKey, JSON.stringify({ tag: release.tag_name, until: Date.now() + 60 * 60 * 1000 }));
+      overlay.remove();
+      if (browser?.open) await browser.open({ url: apk.browser_download_url });
+      else window.location.href = apk.browser_download_url;
+    });
+  }
+
+  async function checkForAppUpdate(force = false) {
+    if (!document.body) return;
+    const lastCheck = Number(localStorage.getItem(updateCheckKey) || 0);
+    if (!force && Date.now() - lastCheck < 6 * 60 * 60 * 1000) return;
+    localStorage.setItem(updateCheckKey, String(Date.now()));
+    try {
+      const response = await fetch('https://api.github.com/repos/LttlMario/panel-android/releases?per_page=10', { cache: 'no-store' });
+      if (!response.ok) return;
+      const releases = await response.json();
+      const release = releases.find((item) => !item.draft && item.assets?.some((asset) => asset.name.toLowerCase().endsWith('.apk')));
+      const apk = release?.assets?.find((asset) => asset.name.toLowerCase().endsWith('.apk'));
+      if (!release || !apk || !isNewerVersion(release.tag_name, currentAppVersion)) return;
+      let postponed = null;
+      try { postponed = JSON.parse(localStorage.getItem(updateLaterKey) || 'null'); } catch (_) {}
+      if (postponed?.tag === release.tag_name && Number(postponed.until) > Date.now()) return;
+      showUpdateNotice(release, apk);
+    } catch (error) {
+      console.warn('Actualizările Android nu au putut fi verificate.', error);
+    }
+  }
 
   const secureStore = securePreferences ? {
     async getItem(key) {
@@ -132,6 +186,7 @@
     if (canGoBack && history.length > 1) history.back();
     else app.exitApp();
   });
+  app?.addListener?.('appStateChange', ({ isActive }) => { if (isActive) checkForAppUpdate(); });
 
   document.addEventListener('click', (event) => {
     const link = event.target.closest?.('a[href]');
@@ -144,4 +199,6 @@
   }, true);
 
   restoreSecureToken();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => checkForAppUpdate(true), { once: true });
+  else checkForAppUpdate(true);
 })();
