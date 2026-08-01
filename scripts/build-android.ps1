@@ -5,8 +5,17 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$jdkRoot = Get-ChildItem -LiteralPath (Join-Path $projectRoot '.tools\jdk21') -Directory |
-    Select-Object -First 1 -ExpandProperty FullName
+$bundledJdk = Join-Path $projectRoot '.tools\jdk21'
+$jdkRoot = if (Test-Path -LiteralPath $bundledJdk) {
+    Get-ChildItem -LiteralPath $bundledJdk -Directory |
+        Select-Object -First 1 -ExpandProperty FullName
+} elseif ($env:JAVA_HOME -and (Test-Path -LiteralPath $env:JAVA_HOME)) {
+    $env:JAVA_HOME
+} else {
+    Get-ChildItem -LiteralPath 'C:\Program Files\Microsoft' -Directory -Filter 'jdk-21*' -ErrorAction SilentlyContinue |
+        Sort-Object Name -Descending |
+        Select-Object -First 1 -ExpandProperty FullName
+}
 
 if (-not $jdkRoot) {
     throw 'JDK 21 lipsește din .tools\jdk21. Instalează JDK 21 sau setează JAVA_HOME.'

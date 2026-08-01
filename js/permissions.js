@@ -43,7 +43,7 @@ const PagePermissions = {
 };
 const AdministrativePages = new Set(['admin.html','logs.html','diagnostic.html','discord-configurare.html','organizatii.html','developer.html']);
 
-function isPlatformAdmin() { const user=getUser();return user?.platform_admin===true||Number(user?.permission_level)===Roles.ADMIN; }
+function isPlatformAdmin() { return getUser()?.platform_admin === true; }
 function isLeaderRole() { const role=String(getUser()?.role||getUser()?.default_role||'').trim().toLocaleLowerCase('ro-RO');return role==='lider'||role==='leader'; }
 function canAccessPage(page) {
     if (AdministrativePages.has(page)) return isPlatformAdmin();

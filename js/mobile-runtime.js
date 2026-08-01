@@ -16,7 +16,7 @@
   const secureKeyPrefix = 'capacitor-storage_';
   const consumedCallbackKey = 'panel_consumed_oauth_callback';
   const pendingOAuthTokenKey = 'panel_pending_discord_oauth_token';
-  const currentAppVersion = '0.3.3-beta';
+  const currentAppVersion = '1.0.0';
   const updateCheckKey = 'panel_android_update_last_check';
   const updateLaterKey = 'panel_android_update_later';
   let secureReady = false;
