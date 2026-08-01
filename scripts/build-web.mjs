@@ -9,7 +9,7 @@ const sourceFiles = [
   '403.html', 'admin.html', 'anunturi.html', 'asistent.html',
   'calculatorilegal.html', 'cereri.html', 'changelog.html', 'contracte.html',
   'craftmecanics.html', 'developer.html', 'diagnostic.html',
-  'discord-configurare.html', 'edit.html', 'index.html', 'organizatii.html',
+  'discord-configurare.html', 'index.html', 'organizatii.html',
   'locatiiilegale.html', 'login.html', 'logs.html', 'marketplace-ilegal.html',
   'marketplace.html', 'pontaj.html', 'rapoarte.html', 'thank-you.html'
 ];

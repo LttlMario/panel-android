@@ -37,12 +37,11 @@ const PagePermissions = {
     // Nivel 7: numai Coordonator, Admin și Owner
     'logs.html': 7,
     'admin.html': 7,
-    'edit.html': 7,
     'diagnostic.html': 7,
     'discord-configurare.html': 7,
     'organizatii.html': 7
 };
-const AdministrativePages = new Set(['admin.html','logs.html','edit.html','diagnostic.html','discord-configurare.html','organizatii.html','developer.html']);
+const AdministrativePages = new Set(['admin.html','logs.html','diagnostic.html','discord-configurare.html','organizatii.html','developer.html']);
 
 function isPlatformAdmin() { const user=getUser();return user?.platform_admin===true||Number(user?.permission_level)===Roles.ADMIN; }
 function isLeaderRole() { const role=String(getUser()?.role||getUser()?.default_role||'').trim().toLocaleLowerCase('ro-RO');return role==='lider'||role==='leader'; }

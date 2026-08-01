@@ -315,7 +315,6 @@
             ['diagnostic.html', 7, '🩺', 'Verificare sistem'],
             ['discord-configurare.html', 7, '⚙️', 'Configurare Discord'],
             ['organizatii.html', 7, '🏢', 'Organizații platformă'],
-            ['edit.html', 7, '🧩', 'Editor administrativ'],
             ['developer.html', 7, '🛠️', 'Developer'],
             ['admin.html', 7, '👑', 'Panou Admin']
         ];
