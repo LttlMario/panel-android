@@ -87,11 +87,11 @@
   fill:#ffffff;
   color:#ffffff;
 }
-#panel-global-footer .pgf-center { grid-column:4; grid-row:1; justify-self:start; }
+#panel-global-footer .pgf-center { grid-column:3; grid-row:1; justify-self:center; }
 #panel-global-footer .pgf-support-block{
-    grid-column:3;
+    grid-column:4;
     grid-row:1;
-    justify-self:center;
+    justify-self:end;
     width:auto;
     display:flex;
     flex-direction:column;
@@ -114,6 +114,8 @@
   color: var(--panel-footer-strong);
   font-weight: 700;
 }
+
+#panel-global-footer.pgf-ios-installed .pgf-ios-badge { display:none; }
 #panel-global-footer .pgf-brand img { width:24px; height:24px; border-radius:7px; object-fit:cover; vertical-align:middle; }
 
 #panel-global-footer .pgf-version {
@@ -277,12 +279,6 @@
   #panel-global-footer .pgf-support-block { grid-column:1;grid-row:auto; }
 
   #panel-global-footer :is(.pgf-android-badge, .pgf-ios-badge, .pgf-center, .pgf-support-block) { justify-self:center; }
-
-  #panel-global-footer .pgf-center {
-    justify-self: start;
-    padding-right: 84px;
-    text-align: left;
-  }
 
   #panel-support-dialog .psd-actions {
     flex-direction: column-reverse;

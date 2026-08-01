@@ -10,7 +10,7 @@
   });
 
   function getReleaseVersion() {
-    return window.PANEL_RELEASE?.version || "3.2.0";
+    return window.PANEL_RELEASE?.version || "3.2.1";
   }
 
   function removeLegacySupportElements() {
@@ -118,7 +118,30 @@
     </div>
     `;
 
+    const standalone = window.matchMedia?.('(display-mode: standalone)')?.matches || navigator.standalone === true;
+    const iosDevice = /iPad|iPhone|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (standalone && iosDevice) footer.classList.add('pgf-ios-installed');
+
     findFooterHost().appendChild(footer);
+    watchFooterVisibility(footer);
+  }
+
+  function watchFooterVisibility(footer) {
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const rect = footer.getBoundingClientRect();
+      const visibleHeight = Math.max(0, Math.min(rect.height, window.innerHeight - rect.top));
+      document.documentElement.style.setProperty('--panel-footer-visible-height', `${Math.ceil(visibleHeight)}px`);
+      document.body.classList.toggle('panel-footer-visible', visibleHeight > 0);
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule, { passive: true });
+    if ('ResizeObserver' in window) new ResizeObserver(schedule).observe(footer);
   }
 
   function createDialog() {

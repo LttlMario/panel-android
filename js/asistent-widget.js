@@ -38,7 +38,8 @@
         style.id = 'panel-assistant-widget-styles';
         style.textContent = `
             #panel-assistant-widget, #panel-assistant-widget * { box-sizing:border-box; }
-            #panel-assistant-widget { position:fixed; right:max(18px, env(safe-area-inset-right)); bottom:max(18px, env(safe-area-inset-bottom)); z-index:35; width:64px; height:64px; color:#e2e8f0; color-scheme:dark; font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; pointer-events:none; }
+            #panel-assistant-widget { position:fixed; right:max(18px, env(safe-area-inset-right)); bottom:max(18px, env(safe-area-inset-bottom)); z-index:35; width:64px; height:64px; color:#e2e8f0; color-scheme:dark; font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; pointer-events:none; transition:bottom .2s ease; }
+            body.panel-footer-visible #panel-assistant-widget { bottom:calc(var(--panel-footer-visible-height, 0px) + max(18px, env(safe-area-inset-bottom))); }
             #panel-assistant-widget.paw-map-page { z-index:1200; }
             #panel-assistant-widget.paw-map-details { right:420px; }
             #panel-assistant-widget button, #panel-assistant-widget textarea, #panel-assistant-widget a { font:inherit; }
