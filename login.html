@@ -6,6 +6,47 @@
     <title>Autentificare - Workforce Management</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+
+    @keyframes fadeUp {
+
+        from {
+            opacity: 0;
+            transform: translateY(40px) scale(.98);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+    }
+
+    .login-card{
+        animation:fadeUp .8s cubic-bezier(.2,.8,.2,1);
+        will-change: transform, opacity;
+    }
+    @keyframes floatBlob{
+
+    0%{
+    transform:translate(0,0);
+    }
+
+    50%{
+    transform:translate(10px,-12px);
+    }
+
+    100%{
+    transform:translate(0,0);
+    }
+
+    }
+
+    .bgblob{
+    animation:floatBlob 18s ease-in-out infinite;
+    }
+
+    </style>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -29,32 +70,122 @@
     <script src="js/discord-config.js"></script>
     <script src="js/supabase-config.js"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex items-center justify-center p-4 text-sm">
+<body class="min-h-screen overflow-x-hidden bg-slate-950 text-slate-100 font-sans antialiased relative flex flex-col">
+    <!-- Fundal -->
+    <div class="absolute inset-0 overflow-hidden -z-10">
 
-    <!-- Card de Autentificare -->
-    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-8 text-center space-y-6">
-        <div>
-            <h1 class="text-2xl font-bold tracking-tight text-slate-100">Workforce Panel</h1>
-            <p class="text-xs text-slate-400 mt-1">Autentifică-te folosind contul tău de Discord pentru a continua.</p>
-        </div>
+        <div class="bgblob absolute -top-40 -left-40 w-96 h-96 rounded-full bg-indigo-600/20 blur-3xl"></div>
 
-        <div class="py-4 flex justify-center">
-            <div class="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-3xl">
-                🔐
-            </div>
-        </div>
+        <div class="bgblob absolute top-1/2 -right-32 w-[30rem] h-[30rem] rounded-full bg-cyan-500/10 blur-3xl"></div>
 
-        <!-- Butonul de Login Discord -->
-        <button id="discord-login-btn" class="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white font-semibold py-3 px-4 rounded-xl transition shadow-lg flex items-center justify-center space-x-2 cursor-pointer text-sm">
-            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.927 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
-            </svg>
-            <span>Conectare cu Discord</span>
-        </button>
+        <div class="bgblob absolute bottom-0 left-1/3 w-[28rem] h-[28rem] rounded-full bg-violet-500/10 blur-3xl"></div>
 
-        <p id="status-msg" class="text-xs text-slate-400"></p>
     </div>
 
+    <div class="relative min-h-[calc(100vh-96px)] flex items-center justify-center p-6 flex-1">
+    <!-- Card de Autentificare -->
+    <div class="login-card w-full max-w-lg rounded-3xl border border-slate-700/60 bg-slate-900/70 backdrop-blur-xl shadow-[0_0_60px_rgba(59,130,246,0.15)] p-10 text-center space-y-8">
+    <div class="space-y-3">
+
+    <div class="inline-flex flex-col items-center gap-3">
+
+        <div class="flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-indigo-500/20 to-cyan-500/20 border border-indigo-400/30 text-4xl shadow-lg shadow-indigo-500/20">
+            🔐
+        </div>
+
+        <span class="rounded-full border border-indigo-400/20 bg-indigo-500/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-indigo-300">
+            Secure Access
+        </span>
+
+    </div>
+
+        <h1 class="text-4xl font-black tracking-tight bg-gradient-to-r from-white via-indigo-200 to-cyan-300 bg-clip-text text-transparent">
+            Platformă organizații
+        </h1>
+
+        <p class="text-sm uppercase tracking-[0.35em] text-slate-500">
+            Multi-Discord Management
+        </p>
+
+        <p class="text-slate-400 leading-relaxed max-w-sm mx-auto">
+            Un singur cont Discord. Organizația, rolul și paginile permise sunt detectate automat la autentificare.
+        </p>
+
+    </div>
+
+        <!-- Butonul de Login Discord -->
+        <button
+            id="discord-login-btn"
+            class="group w-full rounded-2xl border border-indigo-400/20 bg-gradient-to-r from-[#5865F2] to-[#4752C4] px-6 py-5 transition-all duration-500 hover:-translate-y-1 hover:scale-[1.015] hover:shadow-[0_12px_40px_rgba(88,101,242,0.45)] active:translate-y-0 active:scale-[0.985]">
+
+            <div class="flex items-center justify-between">
+
+                <div class="flex items-center gap-4">
+
+                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10">
+                        <svg class="w-6 h-6 fill-current text-white" viewBox="0 0 24 24">
+                            <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.927 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028z"/>
+                        </svg>
+                    </div>
+
+                    <div class="text-left">
+                        <div class="text-lg font-bold text-white">
+                            Discord
+                        </div>
+
+                        <div class="text-sm text-indigo-100">
+                            Conectare securizată OAuth2
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="text-2xl text-white transition-all duration-500 group-hover:translate-x-2 group-hover:scale-110">
+                    →
+                </div>
+
+            </div>
+
+        </button>
+
+    <div class="space-y-5">
+
+        <div class="rounded-2xl border border-slate-700/40 bg-slate-800/40 p-4">
+
+            <div class="flex flex-wrap items-center justify-center gap-4 text-sm">
+
+                <div class="flex items-center gap-2 text-emerald-400">
+                    <span>✓</span>
+                    <span class="text-slate-300">OAuth2</span>
+                </div>
+
+                <div class="w-px h-4 bg-slate-700"></div>
+
+                <div class="flex items-center gap-2 text-cyan-400">
+                    <span>🛡️</span>
+                    <span class="text-slate-300">Rol sincronizat</span>
+                </div>
+
+                <div class="w-px h-4 bg-slate-700"></div>
+
+                <div class="flex items-center gap-2 text-violet-400">
+                    <span>⚡</span>
+                    <span class="text-slate-300">Permisiuni live</span>
+                </div>
+
+            </div>
+
+        </div>
+
+        <p
+            id="status-msg"
+            class="min-h-[24px] text-sm font-medium text-indigo-300 transition-all duration-300">
+        </p>
+
+    </div>
+    </div>
+    </div>
+    <div data-panel-footer-host class="relative z-10 w-full"></div>
     <!-- Script de Autentificare și Sincronizare Supabase -->
     <script>
         const SUPABASE_URL = window.PANEL_SUPABASE_CONFIG.url;
@@ -64,18 +195,74 @@
         let CLIENT_ID = window.PANEL_DISCORD_CONFIG.clientId;
         const DISCORD_SCOPES = window.PANEL_DISCORD_CONFIG.scopes.join(' ');
         const REDIRECT_URI = window.PANEL_MOBILE_REDIRECT_URI || (window.location.origin + window.location.pathname);
+        function getLoginDestination(user) {
+            const permissionLevel = Number(user?.permission_level);
+
+            if (Number.isInteger(permissionLevel) && permissionLevel === 0) {
+                return 'guest.html';
+            }
+
+            return 'index.html';
+        }
+
+        function getSafeReturnDestination(user) {
+            const fallback = getLoginDestination(user);
+            const savedDestination = sessionStorage.getItem('panel_return_after_login');
+            sessionStorage.removeItem('panel_return_after_login');
+            if (!savedDestination) return fallback;
+
+            const pagePermissions = {
+                'index.html': 1,
+                'asistent.html': 1,
+                'pontaj.html': 1,
+                'cereri.html': 1,
+                'craftmecanics.html': 1,
+                'marketplace.html': 1,
+                'anunturi.html': 1,
+                'calculatorilegal.html': 3,
+                'locatiiilegale.html': 3,
+                'marketplace-ilegal.html': 3,
+                'rapoarte.html': 4,
+                'contracte.html': 4,
+                'logs.html': 7,
+                'admin.html': 7,
+                'edit.html': 7
+            };
+
+            try {
+                const destination = new URL(savedDestination, window.location.href);
+                if (destination.origin !== window.location.origin) return fallback;
+                const page = destination.pathname.split('/').pop() || 'index.html';
+                const requiredLevel = pagePermissions[page];
+                const userLevel = Number(user?.permission_level) || 0;
+                if (requiredLevel === undefined || userLevel < requiredLevel) return fallback;
+                return `${page}${destination.search}${destination.hash}`;
+            } catch (_) {
+                return fallback;
+            }
+        }
 
         document.getElementById('discord-login-btn').addEventListener('click', async () => {
             try {
                 const { data } = await supabaseClient.rpc('get_discord_oauth_config');
-                if (data?.[0]?.discord_client_id) CLIENT_ID = data[0].discord_client_id;
+                // Client ID-ul local este sursa sigura pentru autentificare.
+                // O valoare veche dintr-o migrare nu poate suprascrie aplicatia activa.
+                void data;
             } catch (_) {
                 // Configurația locală rămâne fallback pentru prima instalare.
             }
-            const mobileState = window.PANEL_MOBILE_OAUTH_STATE
-                ? `&state=${encodeURIComponent(window.PANEL_MOBILE_OAUTH_STATE)}`
-                : '';
-            const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=${encodeURIComponent(DISCORD_SCOPES)}${mobileState}`;
+            const oauthState = window.PANEL_MOBILE_OAUTH_STATE || crypto.randomUUID();
+            sessionStorage.setItem('discord_oauth_state', oauthState);
+
+            const authParams = new URLSearchParams({
+                client_id: CLIENT_ID,
+                redirect_uri: REDIRECT_URI,
+                response_type: 'token',
+                scope: DISCORD_SCOPES,
+                state: oauthState
+            });
+
+            const discordAuthUrl = `https://discord.com/oauth2/authorize?${authParams.toString()}`;
             if (window.Capacitor?.isNativePlatform?.() && window.Capacitor?.Plugins?.Browser) {
                 await window.Capacitor.Plugins.Browser.open({ url: discordAuthUrl });
             } else {
@@ -83,50 +270,97 @@
             }
         });
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            const pendingMobileTokenKey = 'panel_pending_discord_oauth_token';
-            const pendingMobileToken = sessionStorage.getItem(pendingMobileTokenKey);
+document.addEventListener('DOMContentLoaded', async () => {
 
-            // Aplicația Android păstrează temporar tokenul în memoria WebView-ului,
-            // apoi reîncarcă această pagină pentru a continua autentificarea sigur.
-            if (pendingMobileToken) {
-                sessionStorage.removeItem(pendingMobileTokenKey);
-                window.history.replaceState({}, document.title, 'login.html');
-                document.getElementById('status-msg').textContent = "Se procesează datele de autentificare...";
-                await processDiscordLogin(pendingMobileToken);
+    const pendingMobileTokenKey = 'panel_pending_discord_oauth_token';
+    const pendingMobileToken = sessionStorage.getItem(pendingMobileTokenKey);
+    if (pendingMobileToken) {
+        sessionStorage.removeItem(pendingMobileTokenKey);
+        window.history.replaceState({}, document.title, 'login.html');
+        setLoginStatus("🔄 Se finalizează autentificarea Android...");
+        await processDiscordLogin(pendingMobileToken);
+        return;
+    }
+
+    const hash = window.location.hash;
+    // Discord OAuth Implicit Flow returneaza tokenul in fragmentul URL.
+    if (hash && hash.includes('access_token')) {
+
+        const params = new URLSearchParams(hash.substring(1));
+        const accessToken = params.get('access_token');
+        const returnedState = params.get('state');
+        const expectedState = sessionStorage.getItem('discord_oauth_state');
+
+        if(accessToken){
+            window.history.replaceState({}, document.title, window.location.pathname);
+            sessionStorage.removeItem('discord_oauth_state');
+
+            if (!expectedState || returnedState !== expectedState) {
+                setLoginStatus("Eroare autentificare: raspuns OAuth invalid.");
                 return;
             }
+            setLoginStatus("🔄 Se inițiază autentificarea...");
+            await processDiscordLogin(accessToken);
+            return;
+        }
 
-            const hash = window.location.hash;
-            
-            // Dacă avem token în hash (venit de la Discord)
-            if (hash && hash.includes('access_token')) {
-                const params = new URLSearchParams(hash.substring(1));
-                const accessToken = params.get('access_token');
-                
-                if (accessToken) {
-                    // Curățăm URL-ul imediat să prevenim buclele
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                    document.getElementById('status-msg').textContent = "Se procesează datele de autentificare...";
-                    await processDiscordLogin(accessToken);
-                }
-            } else {
-                // Dacă nu suntem în timpul callback-ului, verificăm dacă utilizatorul are deja sesiune validă
-                const existingUser = localStorage.getItem('discord_user');
-                if (existingUser) {
-                    try {
-                        const parsed = JSON.parse(existingUser);
-                        if (parsed && parsed.discord_id) {
-                            window.location.href = 'index.html';
-                            return;
-                        }
-                    } catch (e) {
-                        localStorage.clear();
-                    }
-                }
+    }
+
+
+    // Varianta nouă Discord Code Flow
+    // Authorization Code Flow is intentionally not used by this static page.
+    // The configured login always requests response_type=token.
+    const code = null;
+
+    if(code){
+
+        console.log("CODE DISCORD PRIMIT:", code);
+
+        setLoginStatus("🔄 Cod Discord primit. Se verifică...");
+
+        // momentan doar verificăm că ajunge aici
+        return;
+
+    }
+
+
+    // sesiune existentă
+    const existingUser = localStorage.getItem('discord_user');
+
+    if(existingUser){
+
+        try {
+
+            const parsed = JSON.parse(existingUser);
+
+            const panelSession = localStorage.getItem('panel_session_token');
+            const expiresAt = new Date(localStorage.getItem('panel_session_expires_at') || 0).getTime();
+            if(parsed && parsed.discord_id && panelSession && expiresAt > Date.now()){
+                window.location.href = getLoginDestination(parsed);
+                return;
             }
-        });
+            localStorage.clear();
 
+        } catch(error){
+
+            console.error(error);
+            localStorage.clear();
+
+        }
+
+    }
+
+});
+        function setLoginStatus(message) {
+            const status = document.getElementById("status-msg");
+
+            status.style.opacity = 0;
+
+            setTimeout(() => {
+                status.textContent = message;
+                status.style.opacity = 1;
+            }, 150);
+        }
         async function processDiscordLogin(token) {
             try {
                 const response = await fetch('https://discord.com/api/users/@me', {
@@ -135,9 +369,12 @@
 
                 if (!response.ok) throw new Error('Eșec la preluarea profilului de pe Discord.');
                 const discordData = await response.json();
-                const discordId = discordData.id;
 
-                document.getElementById('status-msg').textContent = "Se verifică rolul tău pe serverul Discord...";
+                if (!discordData.id) {
+                    throw new Error('Profil Discord invalid.');
+                }
+
+                setLoginStatus("🛡️ Se verifică rolul pe server...");
 
                 const syncResponse = await fetch(`${SUPABASE_URL}/functions/v1/sync-discord-role`, {
                     method: 'POST',
@@ -157,78 +394,19 @@
                 localStorage.setItem('discord_user', JSON.stringify(syncedUser));
                 localStorage.setItem('user_role', syncedUser.role);
                 localStorage.setItem('discord_access_token', token);
+                localStorage.setItem('panel_session_token', syncResult.session_token);
+                localStorage.setItem('panel_session_expires_at', syncResult.expires_at);
+                localStorage.setItem('panel_active_organization', JSON.stringify(syncResult.active_organization));
+                localStorage.setItem('panel_organizations', JSON.stringify(syncResult.organizations || []));
 
-                document.getElementById('status-msg').textContent = `Autentificare reușită! Rol sincronizat: ${syncedUser.role}.`;
+                setLoginStatus(`✅ ${syncResult.active_organization?.name || 'Organizație'} · ${syncedUser.role}`);
+
                 setTimeout(() => {
-                    const returnAfterLogin = sessionStorage.getItem('panel_return_after_login');
-                    sessionStorage.removeItem('panel_return_after_login');
-                    window.location.href = returnAfterLogin || 'index.html';
+                    window.location.href = getSafeReturnDestination(syncedUser);
                 }, 400);
+
                 return;
 
-                // Căutare în tabelul `users` după discord_id
-                let { data: dbUser, error } = await supabaseClient
-                    .from('users')
-                    .select('*')
-                    .eq('discord_id', discordId)
-                    .maybeSingle();
-
-                const avatarVal = discordData.avatar 
-                    ? `https://cdn.discordapp.com/avatars/${discordId}/${discordData.avatar}.png`
-                    : `https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f468-200d-1f4bb.png`;
-
-                let finalUserData = {};
-
-                if (!dbUser) {
-                    // Dacă nu există în tabel, îl creăm cu datele de bază
-                    finalUserData = {
-                        discord_id: discordId,
-                        username: discordData.username,
-                        display_name: discordData.global_name || discordData.username,
-                        email: discordData.email || null,
-                        avatar: avatarVal,
-                        role: 'Mecanic',
-                        service: 'Atelier',
-                        created_at: new Date().toISOString(),
-                        maintenance_mode: false,
-                        discord_logs_active: true,
-                        threshold_value: 0,
-                        max_shift_hours: 8,
-                        default_role: 'Mecanic'
-                    };
-
-                    await supabaseClient.from('users').upsert([finalUserData], { onConflict: 'discord_id' });
-                } else {
-                    // Dacă există, preluăm datele reale din baza ta de date
-                    finalUserData = {
-                        discord_id: dbUser.discord_id,
-                        username: dbUser.username,
-                        display_name: dbUser.display_name || dbUser.username,
-                        email: dbUser.email,
-                        avatar: dbUser.avatar || avatarVal,
-                        role: dbUser.role || dbUser.default_role || 'Mecanic',
-                        service: dbUser.service || 'Atelier',
-                        created_at: dbUser.created_at,
-                        maintenance_mode: dbUser.maintenance_mode || false,
-                        discord_logs_active: dbUser.discord_logs_active !== null ? dbUser.discord_logs_active : true,
-                        threshold_value: dbUser.threshold_value || 0,
-                        max_shift_hours: dbUser.max_shift_hours || 8,
-                        default_role: dbUser.default_role || 'Mecanic'
-                    };
-                }
-
-                // Salvăm sesiunea completă în localStorage
-                localStorage.setItem('discord_user', JSON.stringify(finalUserData));
-                localStorage.setItem('user_role', finalUserData.role);
-                localStorage.setItem('discord_access_token', token);
-                localStorage.setItem('panel_session_issued_at', String(Date.now()));
-
-                document.getElementById('status-msg').textContent = "Autentificare reușită! Se redirecționează...";
-                setTimeout(() => {
-                    const returnAfterLogin = sessionStorage.getItem('panel_return_after_login');
-                    sessionStorage.removeItem('panel_return_after_login');
-                    window.location.href = returnAfterLogin || 'index.html';
-                }, 400);
 
             } catch (err) {
                 console.error('Erore login:', err);

@@ -1,7 +1,7 @@
 (() => {
   const config = window.PANEL_SUPABASE_CONFIG;
   const user = typeof getUser === 'function' ? getUser() : null;
-  if (!user || typeof getRole !== 'function' || getRole() !== 7) { location.href = '403.html'; return; }
+  if (!user || typeof isPlatformAdmin !== 'function' || !isPlatformAdmin()) { location.href = '403.html'; return; }
 
   const $ = (selector) => document.querySelector(selector);
   const escapeHtml = (value) => String(value ?? '').replace(/[&<>'"]/g, (character) => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' })[character]);

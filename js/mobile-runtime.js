@@ -5,7 +5,7 @@
 
   document.documentElement.classList.add('native-app', 'native-android');
   const discordRedirect = 'discord-1531023771211792384:/authorize/callback';
-  window.PANEL_MOBILE_REDIRECT_URI = 'https://lttlmario.github.io/panel-mafie/login.html';
+  window.PANEL_MOBILE_REDIRECT_URI = 'https://lttlmario.github.io/panel-pro/login.html';
   window.PANEL_MOBILE_OAUTH_STATE = 'panel_android';
 
   const plugins = capacitor.Plugins || {};

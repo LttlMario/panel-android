@@ -55,7 +55,7 @@
     <script>
         const SUPABASE_URL = window.PANEL_SUPABASE_CONFIG.url;
         const SUPABASE_KEY = window.PANEL_SUPABASE_CONFIG.publishableKey;
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = window.createPanelSupabaseClient();
         let events = [], usersMap = {};
         const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
         const dateText = value => value ? new Date(value).toLocaleString('ro-RO', {dateStyle:'medium',timeStyle:'medium'}) : 'Dată necunoscută';

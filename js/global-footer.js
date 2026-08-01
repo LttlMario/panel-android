@@ -3,8 +3,10 @@
 
   const CONFIG = Object.freeze({
     revolutUrl: "https://revolut.me/mariomihail",
+    androidUrl: "descarca-android.html",
     changelogUrl: "changelog.html",
-    thankYouUrl: "thank-you.html"
+    thankYouUrl: "thank-you.html",
+    iosUrl: "https://lttlmario.github.io/panel-ios/instalare-ios.html"
   });
 
   function getReleaseVersion() {
@@ -60,16 +62,60 @@
     footer.setAttribute("aria-label", "Informații proiect și donații");
     footer.innerHTML = `
       <div class="pgf-inner">
-        <p class="pgf-meta">
-          © 2026 <span class="pgf-brand">Panel by Little Mario</span>
-          <span aria-hidden="true"> • </span>
-          <a class="pgf-version" href="${CONFIG.changelogUrl}" title="Vezi noutățile și actualizările">v${getReleaseVersion()}</a>
-        </p>
-        <p class="pgf-support">❤️ Susține dezvoltarea proiectului</p>
-        <button class="pgf-donate" type="button" id="panel-donate-button">
-          💳 Donează prin Revolut
-        </button>
-      </div>
+
+          <a class="pgf-android-badge" href="${CONFIG.androidUrl}" aria-label="Descarcă aplicația Panel pentru Android și vezi instrucțiunile de instalare">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M17.6 9.48l1.43-2.48a.5.5 0 10-.87-.5l-1.46 2.53a8.2 8.2 0 00-9.4 0L5.84 6.5a.5.5 0 10-.87.5L6.4 9.48A3.98 3.98 0 003 13v6a2 2 0 002 2h1v-5h1v5h10v-5h1v5h1a2 2 0 002-2v-6a3.98 3.98 0 00-3.4-3.52ZM8.5 7.5a.75.75 0 110 1.5.75.75 0 010-1.5Zm7 0a.75.75 0 110 1.5.75.75 0 010-1.5Z"/>
+              </svg>
+
+              <span>
+                  <small>DESCARCĂ PENTRU</small>
+                  <strong>Android</strong>
+                  <em>Instalare APK</em>
+              </span>
+          </a>
+
+          <a class="pgf-ios-badge" href="${CONFIG.iosUrl}" aria-label="Descarcă aplicația Panel pentru iPhone și vezi instrucțiunile de instalare">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M16.37 12.73c.02 2.35 2.06 3.13 2.08 3.14-.02.05-.32 1.1-1.05 2.18-.64.94-1.3 1.88-2.35 1.9-1.03.02-1.36-.61-2.54-.61-1.18 0-1.55.59-2.52.63-1 .04-1.76-1-2.4-1.94-1.3-1.88-2.29-5.3-.96-7.62.66-1.15 1.84-1.88 3.13-1.9.98-.02 1.9.66 2.54.66.63 0 1.82-.82 3.07-.7.52.02 1.98.21 2.91 1.57-.08.05-1.74 1.02-1.72 3.69Zm-2.07-7.09c.53-.64.89-1.54.79-2.43-.77.03-1.69.51-2.24 1.15-.49.57-.92 1.49-.8 2.36.86.07 1.73-.43 2.25-1.08Z"/>
+              </svg>
+
+              <span>
+                  <small>DESCARCĂ PENTRU</small>
+                  <strong>iPhone</strong>
+                  <em>Instalare iOS</em>
+              </span>
+          </a>
+
+        <div class="pgf-center">
+            <p class="pgf-meta">
+                © 2026
+                <span class="pgf-brand">Panel by Little Mario</span>
+                <span aria-hidden="true"> • </span>
+                <a class="pgf-version"
+                  href="${CONFIG.changelogUrl}"
+                  title="Vezi noutățile și actualizările">
+                    v${getReleaseVersion()}
+                </a>
+            </p>
+        </div>
+
+        <div class="pgf-support-block">
+
+            <p class="pgf-support">
+                ❤️ Susține dezvoltarea proiectului
+            </p>
+
+            <button
+                class="pgf-donate"
+                type="button"
+                id="panel-donate-button">
+                💳 Donează prin Revolut
+            </button>
+
+        </div>
+
+    </div>
     `;
 
     findFooterHost().appendChild(footer);

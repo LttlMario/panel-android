@@ -529,7 +529,7 @@
         <aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col justify-between hidden md:flex">
             <div class="p-6 overflow-y-auto max-h-[calc(100vh-5rem)]">
                 <h1 class="text-xl font-bold text-slate-100 tracking-tight">Panel<span class="block text-xs font-normal text-slate-400 mt-0.5">by Little Mario</span></h1>
-                
+
                 <nav class="mt-6 space-y-1.5" id="sidebar-nav">
                     <a href="index.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
                         <span>📊</span>
@@ -830,7 +830,7 @@
     <script>
         const SUPABASE_URL = window.PANEL_SUPABASE_CONFIG.url;
         const SUPABASE_KEY = window.PANEL_SUPABASE_CONFIG.publishableKey;
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = window.createPanelSupabaseClient();
 
         document.addEventListener('DOMContentLoaded', async () => {
             const currentPage = window.location.pathname.split("/").pop() || "index.html";

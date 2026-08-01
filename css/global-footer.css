@@ -18,10 +18,86 @@
 }
 
 #panel-global-footer .pgf-inner {
-  width: min(100%, 1280px);
-  margin: 0 auto;
-  padding: 18px 20px 20px;
-  text-align: center;
+    width: 100%;
+    margin: 0;
+    padding: 18px 20px;
+    display: grid;
+    grid-template-columns: max-content max-content minmax(180px,1fr) minmax(210px,260px);
+    align-items: center;
+    column-gap: 18px;
+}
+
+#panel-global-footer .pgf-android-badge,
+#panel-global-footer .pgf-ios-badge {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 184px;
+  padding: 8px 13px 8px 10px;
+  border: 1px solid #475569;
+  border-radius: 10px;
+  background: #030712;
+  color: #f8fafc;
+  box-shadow: 0 7px 20px rgba(0, 0, 0, .28), inset 0 1px 0 rgba(255, 255, 255, .04);
+  text-align: left;
+  text-decoration: none;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+
+#panel-global-footer .pgf-android-badge:hover,
+#panel-global-footer .pgf-ios-badge:hover {
+  transform: translateY(-2px);
+  border-color: #34d399;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, .34), 0 0 0 3px rgba(52, 211, 153, .08);
+}
+
+#panel-global-footer .pgf-android-badge svg,
+#panel-global-footer .pgf-ios-badge svg {
+  width: 34px;
+  height: 34px;
+  flex: none;
+}
+
+#panel-global-footer .pgf-android-badge svg {
+  fill: #3ddc84;
+  color: #3ddc84;
+}
+
+#panel-global-footer .pgf-ios-badge svg {
+  fill: #ffffff;
+  color: #ffffff;
+}
+
+#panel-global-footer .pgf-android-badge span,
+#panel-global-footer .pgf-ios-badge span { display:flex; flex-direction:column; line-height:1; }
+#panel-global-footer .pgf-android-badge small,
+#panel-global-footer .pgf-ios-badge small { color:#cbd5e1; font-size:8px; font-weight:800; letter-spacing:.12em; }
+#panel-global-footer .pgf-android-badge strong,
+#panel-global-footer .pgf-ios-badge strong { margin-top:4px; font-size:17px; font-weight:800; letter-spacing:-.02em; }
+#panel-global-footer .pgf-android-badge em { color:#86efac; font-size:10px; font-style:normal; letter-spacing:.02em; }
+#panel-global-footer .pgf-ios-badge em { color:#d1d5db; font-size:10px; font-style:normal; letter-spacing:.02em; }
+
+#panel-global-footer .pgf-android-badge svg{
+  fill:#3ddc84;
+  color:#3ddc84;
+}
+
+#panel-global-footer .pgf-ios-badge svg{
+  fill:#ffffff;
+  color:#ffffff;
+}
+#panel-global-footer .pgf-center { grid-column:4; grid-row:1; justify-self:center; }
+#panel-global-footer .pgf-support-block{
+    grid-column:3;
+    grid-row:1;
+    justify-self:center;
+    width:auto;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    padding-right:0;
 }
 
 #panel-global-footer .pgf-meta {
@@ -47,7 +123,7 @@
 }
 
 #panel-global-footer .pgf-support {
-  margin: 10px 0 0;
+  margin: 0;
   color: var(--panel-footer-strong);
   font-size: 12px;
   font-weight: 700;
@@ -58,7 +134,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 0;
   min-height: 40px;
   padding: 9px 18px;
   border: 1px solid rgba(52, 211, 153, 0.35);
@@ -178,10 +254,25 @@
   color: #e2e8f0;
 }
 
+@media (max-width: 1050px) {
+  #panel-global-footer .pgf-inner { grid-template-columns: repeat(2,minmax(0,1fr)); row-gap:16px; }
+  #panel-global-footer :is(.pgf-android-badge,.pgf-ios-badge,.pgf-center,.pgf-support-block) { justify-self:center; }
+  #panel-global-footer .pgf-center { grid-column:1;grid-row:2; }
+  #panel-global-footer .pgf-support-block { grid-column:2;grid-row:2; }
+  #panel-global-footer .pgf-center,#panel-global-footer .pgf-support-block { width:100%;text-align:center;align-items:center; }
+}
+
 @media (max-width: 520px) {
   #panel-global-footer .pgf-inner {
     padding: 16px 14px 18px;
+    grid-template-columns: 1fr;
+    gap: 14px;
   }
+
+  #panel-global-footer .pgf-center,
+  #panel-global-footer .pgf-support-block { grid-column:1;grid-row:auto; }
+
+  #panel-global-footer :is(.pgf-android-badge, .pgf-ios-badge, .pgf-center, .pgf-support-block) { justify-self:center; }
 
   #panel-support-dialog .psd-actions {
     flex-direction: column-reverse;

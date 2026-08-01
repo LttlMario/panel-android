@@ -13,15 +13,17 @@
     const response=await fetch(`${SUPABASE_URL}/functions/v1/manage-admin-center`,{method:'POST',headers:{'Content-Type':'application/json',apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`},body:JSON.stringify({action,access_token:accessToken,...payload})});
     const data=await response.json().catch(()=>({})); if(!response.ok) throw new Error(data.error||`HTTP ${response.status}`); return data;
   }
+  window.panelAdminInvoke = invoke;
 
   function enforceSession() {
     if (!user || location.pathname.endsWith('/login.html')) return;
-    const now = Date.now();
-    const issued = Number(localStorage.getItem('panel_session_issued_at')) || now;
-    localStorage.setItem('panel_session_issued_at', String(issued));
-    if (now - issued <= SESSION_MAX_AGE) return;
+    const expiresAt = new Date(localStorage.getItem('panel_session_expires_at') || 0).getTime();
+    if (localStorage.getItem('panel_session_token') && expiresAt > Date.now()) return;
     localStorage.removeItem('discord_user');
-    localStorage.removeItem('panel_session_issued_at');
+    localStorage.removeItem('panel_session_token');
+    localStorage.removeItem('panel_session_expires_at');
+    localStorage.removeItem('panel_active_organization');
+    localStorage.removeItem('panel_organizations');
     alert('Sesiunea a expirat. Autentifică-te din nou pentru siguranță.');
     location.replace('login.html');
   }

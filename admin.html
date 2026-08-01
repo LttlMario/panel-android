@@ -34,12 +34,12 @@
 
     <!-- Containerul Principal -->
     <div class="flex h-screen w-full overflow-hidden">
-        
+
         <!-- Sidebar / Meniu Lateral -->
         <aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col justify-between hidden md:flex">
             <div class="p-6 overflow-y-auto max-h-[calc(100vh-5rem)]">
                 <h1 class="text-xl font-bold text-slate-100 tracking-tight">Panel<span class="block text-xs font-normal text-slate-400 mt-0.5">by Little Mario</span></h1>
-                
+
                 <nav class="mt-6 space-y-1.5" id="sidebar-nav">
                     <a href="index.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
                         <span>📊</span>
@@ -133,7 +133,7 @@
                     </div>
                     <a href="discord-configurare.html" class="shrink-0 inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-400/40 bg-indigo-500/15 px-5 py-3 text-xs font-black text-indigo-200 hover:bg-indigo-500/25 transition">⚙️ Deschide configuratorul</a>
                 </div>
-                
+
                 <!-- Secțiunea 1: Gestionare Utilizatori, Roluri, Kick & Acțiuni Admin -->
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-lg overflow-hidden flex flex-col">
                     <div class="p-6 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -161,6 +161,7 @@
                         <div>
                             <select id="filter-role" onchange="renderUsersTable()" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-500 cursor-pointer">
                                 <option value="">Toate Rolurile</option>
+                                <option value="vizitator">Vizitator</option>
                                 <option value="el mecanico">El Mecanico</option>
                                 <option value="sef mecanic">Șef Mecanic</option>
                                 <option value="familia">La Familia</option>
@@ -329,9 +330,21 @@
     <script>
         const SUPABASE_URL = window.PANEL_SUPABASE_CONFIG.url;
         const SUPABASE_KEY = window.PANEL_SUPABASE_CONFIG.publishableKey;
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = window.createPanelSupabaseClient();
 
         let allUsersData = [];
+        const RolePermissions = {
+            "vizitator": 0,
+            "el mecanico": 1,
+            "mecanic": 1,
+            "sef mecanic": 2,
+            "familia": 3,
+            "la familia": 3,
+            "manager": 4,
+            "colider": 5,
+            "lider": 6,
+            "coordonator": 7
+        };
 
         document.addEventListener('DOMContentLoaded', async () => {
             // Evidențiere link activ în sidebar
@@ -403,9 +416,8 @@
 
         async function fetchUsers() {
             try {
-                let { data, error } = await supabaseClient
-                    .from('users')
-                    .select('*');
+                const result = await window.panelAdminInvoke('members');
+                let data = result.members, error = null;
 
                 if (error || !data || data.length === 0) {
                     allUsersData = [
@@ -430,7 +442,7 @@
 
         function renderUsersTable() {
             const tbody = document.getElementById('admin-users-table-body');
-            
+
             const searchName = document.getElementById('search-name').value.toLowerCase().trim();
             const searchId = document.getElementById('search-id').value.toLowerCase().trim();
             const filterRole = document.getElementById('filter-role').value.toLowerCase().trim();
@@ -456,9 +468,9 @@
 
             let html = '';
             filteredUsers.forEach((u) => {
-                const currentRole = (u.role || 'mecanic').toLowerCase();
+                const currentRole = (u.role || 'vizitator').toLowerCase();
                 const uId = u.discord_id || u.id;
-                
+
                 html += `
                     <tr class="hover:bg-slate-800/40 transition">
                         <td class="p-4 font-mono text-slate-400">${uId || 'N/A'}</td>
@@ -470,6 +482,7 @@
                         </td>
                         <td class="p-4">
                             <select id="role-select-${uId}" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer">
+                                <option value="vizitator" ${currentRole === 'vizitator' ? 'selected' : ''}>Vizitator</option>
                                 <option value="el mecanico" ${currentRole === 'el mecanico' || currentRole === 'mecanic' ? 'selected' : ''}>El Mecanico</option>
                                 <option value="sef mecanic" ${currentRole === 'sef mecanic' ? 'selected' : ''}>Șef Mecanic</option>
                                 <option value="familia" ${currentRole === 'familia' || currentRole === 'la familia' ? 'selected' : ''}>La Familia</option>
@@ -498,15 +511,14 @@
             const selectEl = document.getElementById(`role-select-${discordId}`);
             if (!selectEl) return;
             const newRole = selectEl.value;
-            
+
             const userObj = allUsersData.find(u => String(u.discord_id || u.id) === String(discordId));
             if (userObj) userObj.role = newRole;
 
             try {
-                let { error } = await supabaseClient
-                    .from('users')
-                    .update({ role: newRole })
-                    .eq('discord_id', discordId);
+                const permissionLevel = Number(RolePermissions[newRole] || ({vizitator:0,'el mecanico':1,'sef mecanic':2,familia:3,manager:4,colider:5,lider:6,coordonator:7})[newRole] || 0);
+                await window.panelAdminInvoke('member_role', { discord_id:discordId, role:newRole, permission_level:permissionLevel });
+                let error = null;
 
                 if (error) {
                     console.warn('Actualizare directă Supabase eșuată, salvat local.');
@@ -526,10 +538,8 @@
             }
 
             try {
-                let { error } = await supabaseClient
-                    .from('users')
-                    .delete()
-                    .eq('discord_id', discordId);
+                await window.panelAdminInvoke('member_kick', { discord_id:discordId });
+                let error = null;
 
                 if (error) {
                     console.log('Notă: Ștergerea din Supabase a fost ignorată sau indisponibilă, se aplică ștergerea locală.');
@@ -610,7 +620,7 @@
 
             localStorage.setItem('workforce_admin_settings', JSON.stringify(settings));
             try {
-                const { error } = await supabaseClient.from('app_settings').upsert({ key: 'pontaj_config', value: settings.pontajConfig, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+                const { error } = await supabaseClient.from('app_settings').upsert({ organization_id:window.getActiveOrganizationId(), key:'pontaj_config', value:settings.pontajConfig, updated_at:new Date().toISOString() }, { onConflict:'organization_id,key' });
                 if (error) throw error;
                 await window.panelAudit?.('pontaj_config_update', 'app_settings', 'pontaj_config', settings.pontajConfig);
                 alert('Setările globale de pontaj au fost publicate pentru toți utilizatorii.');

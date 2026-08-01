@@ -34,12 +34,12 @@
 
     <!-- Containerul Principal -->
     <div class="flex h-screen w-full overflow-hidden">
-        
+
         <!-- Sidebar / Meniu Lateral -->
         <aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col justify-between hidden md:flex">
             <div class="p-6 overflow-y-auto max-h-[calc(100vh-5rem)]">
                 <h1 class="text-xl font-bold text-slate-100 tracking-tight">Panel<span class="block text-xs font-normal text-slate-400 mt-0.5">by Little Mario</span></h1>
-                
+
                 <nav class="mt-6 space-y-1.5" id="sidebar-nav">
                     <a href="index.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
                         <span>📊</span>
@@ -118,7 +118,7 @@
             </header>
 
             <div class="p-8 space-y-6 max-w-6xl mx-auto w-full">
-                
+
                 <!-- Alerta pentru regulile de ore -->
                 <div id="alert-box" class="hidden p-4 rounded-xl border text-sm transition-all duration-300"></div>
 
@@ -166,14 +166,14 @@
 
                 <!-- Secțiunea de Istoric Detaliat și Totaluri -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    
+
                     <!-- Istoric Ture -->
                     <div class="lg:col-span-2 bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-lg flex flex-col">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-base font-bold text-slate-100">Istoric Detaliat Ture (Supabase)</h3>
                             <span class="text-xs text-slate-400">Ultimele înregistrări</span>
                         </div>
-                        
+
                         <div class="max-h-72 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
                             <div id="shifts-history-container" class="space-y-3">
                                 <p class="text-xs text-slate-500 text-center py-6">Se încarcă istoricul turelor...</p>
@@ -199,7 +199,7 @@
     <script>
         const SUPABASE_URL = window.PANEL_SUPABASE_CONFIG.url;
         const SUPABASE_KEY = window.PANEL_SUPABASE_CONFIG.publishableKey;
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = window.createPanelSupabaseClient();
 
         const ROMANIA_TIME_ZONE = 'Europe/Bucharest';
 
@@ -630,7 +630,7 @@
         async function fetchShiftsHistory() {
             const historyContainer = document.getElementById('shifts-history-container');
             const summaryContainer = document.getElementById('daily-summary-container');
-            
+
             try {
                 let query = supabaseClient.from('shifts').select('*');
                 let { data: shifts, error } = await query.order('created_at', { ascending: false });
@@ -650,7 +650,7 @@
 
                 shifts.forEach(shift => {
                     const typeColor = shift.shift_type === 'zi' ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' : 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20';
-                    
+
                     historyHtml += `
                         <div class="bg-slate-950/50 border border-slate-800 p-3.5 rounded-xl flex items-center justify-between text-xs">
                             <div class="space-y-1">
@@ -668,7 +668,7 @@
 
                     const ms = shift.duration_ms || 0;
                     totalAccumulatedMs += ms;
-                    
+
                     const shiftDate = shift.date || 'Necunoscută';
                     if (!dailyTotals[shiftDate]) {
                         dailyTotals[shiftDate] = { hours: 0, count: 0 };

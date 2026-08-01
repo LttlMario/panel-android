@@ -34,12 +34,12 @@
 
     <!-- Containerul Principal -->
     <div class="flex h-screen w-full overflow-hidden">
-        
+
         <!-- Sidebar / Meniu Lateral preluat direct din layout-ul standard al proiectului -->
         <aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col justify-between hidden md:flex">
             <div class="p-6 overflow-y-auto max-h-[calc(100vh-5rem)]">
                 <h1 class="text-xl font-bold text-slate-100 tracking-tight">Panel<span class="block text-xs font-normal text-slate-400 mt-0.5">by Little Mario</span></h1>
-                
+
                 <nav class="mt-6 space-y-1.5" id="sidebar-nav">
                     <a href="index.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
                         <span>📊</span>
@@ -123,11 +123,11 @@
 
             <div class="p-8 space-y-6 max-w-7xl mx-auto w-full">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    
+
                     <!-- COLOANA STANGA: Adăugare Anunț Nou -->
                     <div class="lg:col-span-1 bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-lg space-y-4">
                         <h3 class="text-base font-bold text-slate-100 pb-2 border-b border-slate-800">Adaugă Anunț Ilegal</h3>
-                        
+
                         <form id="marketForm" class="space-y-4">
                             <div>
                                 <label class="block text-xs font-medium text-slate-400 mb-1">Nume:</label>
@@ -273,7 +273,7 @@
     <script>
         const SUPABASE_URL = window.PANEL_SUPABASE_CONFIG.url;
         const SUPABASE_KEY = window.PANEL_SUPABASE_CONFIG.publishableKey;
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = window.createPanelSupabaseClient();
 
         let currentUser = {
             discord_id: '',
@@ -284,9 +284,9 @@
 
         const listeArmeMunitie = {
             "Arme": [
-                "Navy Pistol", "Combat MG", "Assault SMG", "Gadget Pistol", 
-                "Shotgun", "Heavy Revolver", "MG", "Assault Rifle MK2", 
-                "Pistol", "Tec-9", "Pistol Mk2", "Micro SMG", "Mini Ak", 
+                "Navy Pistol", "Combat MG", "Assault SMG", "Gadget Pistol",
+                "Shotgun", "Heavy Revolver", "MG", "Assault Rifle MK2",
+                "Pistol", "Tec-9", "Pistol Mk2", "Micro SMG", "Mini Ak",
                 "Vintage Pistol", "SMG Mk2", "Tommy Gun", "DB"
             ],
             "Muniție": [
@@ -389,7 +389,7 @@
             if (tipAcțiune === 'Servicii') {
                 containerCategorie.style.display = 'none';
                 selectCategorie.required = false;
-                selectCategorie.value = ''; 
+                selectCategorie.value = '';
             } else {
                 containerCategorie.style.display = 'block';
                 selectCategorie.required = true;
@@ -409,7 +409,7 @@
                 containerSub.classList.remove('hidden');
                 selectSub.required = true;
                 labelSub.innerText = categorie === 'Arme' ? 'Selectează Arma:' : 'Selectează Muniția:';
-                
+
                 selectSub.innerHTML = '<option value="" disabled selected>-- Selectează --</option>';
                 listeArmeMunitie[categorie].forEach(item => {
                     const opt = document.createElement('option');
@@ -559,7 +559,7 @@
 
                 let tipBadge = item.tip_actiune || 'Vânzare';
                 let badgeClass = tipBadge === 'Cumpărare' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : (tipBadge === 'Servicii' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20');
-                
+
                 let catBadge = item.categorie || '';
                 let subBadge = item.subcategorie ? ` / ${item.subcategorie}` : '';
                 let textCurat = item.produse || '';
@@ -567,7 +567,7 @@
 
                 let imaginiHtml = '';
                 let listaImaginiFinala = [];
-                
+
                 if (item.imagine_url && item.imagine_url.trim() !== '') {
                     listaImaginiFinala.push(item.imagine_url.trim());
                 }
@@ -697,7 +697,7 @@
 
             try {
                 const response = await sendPanelDiscord('illegal_marketplace', formData);
-                
+
                 if (!response.ok) {
                     const errText = await response.text();
                     console.error('Erore Discord Webhook API:', response.status, errText);
@@ -737,7 +737,7 @@
 
             const categorieSelectata = tipSelectat === 'Servicii' ? null : document.getElementById('categorie').value;
             const subcategorieSelectata = document.getElementById('containerSubcategorie').classList.contains('hidden') ? null : document.getElementById('subcategorie').value;
-            
+
             const textProdus = document.getElementById('produse').value;
             const imaginiJsonValoare = document.getElementById('imagini_json').value;
             const imagineUrlDirectValoare = document.getElementById('imagine_url_direct').value.trim();
@@ -767,7 +767,7 @@
                 alert('Anunț publicat cu succes!');
                 document.getElementById('marketForm').reset();
                 document.getElementById('nume').value = currentUser.display_name || currentUser.username || '';
-                
+
                 imaginiCurente = [];
                 actualizeazaPrevizualizariImagini();
 

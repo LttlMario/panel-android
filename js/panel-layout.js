@@ -8,6 +8,8 @@
         style.id = 'panel-layout-styles';
         style.textContent = `
             .panel-responsive-sidebar { transition: width .2s ease; position:sticky; top:0; height:100vh; align-self:flex-start; }
+            body.panel-shared-sidebar-page { padding-left:18rem; }
+            body.panel-shared-sidebar-page > #panel-shared-sidebar { position:fixed; inset:0 auto 0 0; z-index:60; width:18rem; }
             .panel-responsive-sidebar.fixed { position:fixed; }
             #panel-theme-toggle { width:38px; height:38px; flex:none; display:grid; place-items:center; border:1px solid #334155; border-radius:11px; background:#0b1220; color:#cbd5e1; cursor:pointer; box-shadow:0 5px 16px rgba(0,0,0,.18); }
             #panel-theme-toggle:hover { border-color:#10b981; color:#6ee7b7; }
@@ -57,15 +59,6 @@
             #panel-mobile-menu.is-open { transform:translateX(0); }
             #panel-mobile-menu .panel-mobile-top { height:64px; padding:0 18px; border-bottom:1px solid #1e293b; display:flex; align-items:center; justify-content:space-between; }
             #panel-mobile-menu .panel-mobile-nav { padding:16px; }
-            html.native-app :is(#panel-mobile-menu,#mobile-menu) { display:flex; flex-direction:column; overflow:hidden; padding-bottom:env(safe-area-inset-bottom); }
-            html.native-app :is(#panel-mobile-menu,#mobile-menu) nav { flex:1; min-height:0; height:auto !important; overflow-y:auto; }
-            .panel-mobile-account { flex:none; display:flex; align-items:center; gap:10px; padding:14px; border-top:1px solid #1e293b; background:rgba(15,23,42,.98); }
-            .panel-mobile-account img { width:40px; height:40px; flex:none; border-radius:999px; border:1px solid #334155; object-fit:cover; }
-            .panel-mobile-account-copy { flex:1; min-width:0; }
-            .panel-mobile-account-name { overflow:hidden; color:#e2e8f0; font-size:13px; font-weight:700; text-overflow:ellipsis; white-space:nowrap; }
-            .panel-mobile-account-role { overflow:hidden; margin-top:2px; color:#34d399; font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
-            .panel-mobile-logout { flex:none; min-height:38px; padding:0 11px; border:1px solid rgba(244,63,94,.3); border-radius:11px; background:rgba(244,63,94,.1); color:#fb7185; font-size:11px; font-weight:700; cursor:pointer; }
-            .panel-mobile-logout:active { background:rgba(244,63,94,.22); }
             .panel-mobile-toggle { display:none; position:relative; z-index:40; width:40px; height:40px; flex:none; align-items:center; justify-content:center; border:1px solid #334155; border-radius:12px; background:#020617; color:#e2e8f0; font-size:18px; cursor:pointer; }
             .panel-action-bar { display:flex; align-items:center; justify-content:flex-end; gap:12px; flex-wrap:wrap; padding:12px max(16px, calc((100vw - 1280px) / 2)); border-bottom:1px solid #1e293b; background:rgba(15,23,42,.72); }
             .panel-action-bar > div { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
@@ -77,6 +70,7 @@
             main :is(.modal,.dialog,[role="dialog"]) { max-width:100vw; }
             @media (max-width:767px) {
                 body { min-height:100dvh; }
+                body.panel-shared-sidebar-page { padding-left:0; }
                 .panel-responsive-sidebar { display:none !important; }
                 .panel-sidebar-toggle { display:none !important; }
                 .panel-mobile-toggle { display:flex; }
@@ -114,8 +108,11 @@
 
     function setup() {
         const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+        addStyles();
+        ensureGlobalFooter();
         setupAssistantWidget(currentPage);
-        const navigation = document.getElementById('sidebar-nav') || document.querySelector('aside nav');
+        const shared = ensureSharedSidebar();
+        const navigation = shared.navigation;
         const sidebar = navigation?.closest('aside');
         if (!navigation || !sidebar) return;
 
@@ -127,9 +124,7 @@
         ensureSidebarLogout(sidebar);
         ensureThemeToggle(sidebar);
 
-        addStyles();
         normalizePageHeader(currentPage);
-        navigation.querySelectorAll('a[href="asistent.html"]').forEach((link) => link.remove());
         sidebar.classList.add('panel-responsive-sidebar');
         relocateHeaderActions(currentPage);
         setupAdminSaveArea();
@@ -176,11 +171,7 @@
         });
 
         // Dashboard are deja propriul meniu mobil, păstrat pentru compatibilitate.
-        const existingMobileMenu = document.getElementById('mobile-menu');
-        if (existingMobileMenu) {
-            ensureAndroidMobileAccount(existingMobileMenu, sidebar);
-            return;
-        }
+        if (document.getElementById('mobile-menu')) return;
 
         const backdrop = document.createElement('div');
         backdrop.id = 'panel-mobile-backdrop';
@@ -188,7 +179,6 @@
         mobileMenu.id = 'panel-mobile-menu';
         mobileMenu.innerHTML = `<div class="panel-mobile-top"><div><strong class="text-slate-100">Panel</strong><p class="text-[10px] text-slate-400">Meniu navigare</p></div><button type="button" class="w-9 h-9 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-lg" aria-label="Închide meniul">×</button></div><nav class="panel-mobile-nav space-y-1.5"></nav>`;
         document.body.append(backdrop, mobileMenu);
-        ensureAndroidMobileAccount(mobileMenu, sidebar);
 
         const mobileNav = mobileMenu.querySelector('.panel-mobile-nav');
         mobileNav.innerHTML = navigation.innerHTML;
@@ -219,73 +209,21 @@
         }
     }
 
-    function ensureAndroidMobileAccount(mobileMenu, desktopSidebar) {
-        if (!window.Capacitor?.isNativePlatform?.() || !mobileMenu || mobileMenu.querySelector('.panel-mobile-account')) return;
+    function ensureGlobalFooter() {
+        if (!document.querySelector('link[href="css/global-footer.css"]')) { const link=document.createElement('link');link.rel='stylesheet';link.href='css/global-footer.css';document.head.appendChild(link); }
+        if (!document.querySelector('script[src="js/global-footer.js"]')) { const script=document.createElement('script');script.src='js/global-footer.js';script.defer=true;document.head.appendChild(script); }
+    }
 
-        let cachedUser = {};
-        try {
-            cachedUser = JSON.parse(localStorage.getItem('discord_user') || '{}') || {};
-        } catch (_) {}
-
-        const fallbackAvatar = 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f468-200d-1f4bb.png';
-        const account = document.createElement('div');
-        account.className = 'panel-mobile-account';
-
-        const avatar = document.createElement('img');
-        avatar.alt = 'Avatar utilizator';
-        avatar.src = cachedUser.avatar || desktopSidebar?.querySelector('#user-avatar')?.src || fallbackAvatar;
-
-        const copy = document.createElement('div');
-        copy.className = 'panel-mobile-account-copy';
-        const name = document.createElement('p');
-        name.className = 'panel-mobile-account-name';
-        name.textContent = cachedUser.display_name || cachedUser.username || 'Utilizator';
-        const role = document.createElement('p');
-        role.className = 'panel-mobile-account-role';
-        role.textContent = cachedUser.role || cachedUser.default_role || 'Membru';
-        copy.append(name, role);
-
-        const logoutButton = document.createElement('button');
-        logoutButton.type = 'button';
-        logoutButton.className = 'panel-mobile-logout';
-        logoutButton.textContent = 'Deconectare';
-        logoutButton.addEventListener('click', () => {
-            if (typeof logout === 'function') logout();
-            else {
-                localStorage.clear();
-                location.href = 'login.html';
-            }
-        });
-
-        account.append(avatar, copy, logoutButton);
-        mobileMenu.appendChild(account);
-
-        const desktopName = desktopSidebar?.querySelector('#user-display-name');
-        const desktopRole = desktopSidebar?.querySelector('#user-role');
-        const desktopAvatar = desktopSidebar?.querySelector('#user-avatar');
-        const syncProfile = () => {
-            const updatedName = desktopName?.textContent?.trim();
-            const updatedRole = desktopRole?.textContent?.trim();
-            if (updatedName && !updatedName.toLocaleLowerCase('ro-RO').includes('se încarcă')) name.textContent = updatedName;
-            if (updatedRole) role.textContent = updatedRole;
-            if (desktopAvatar?.src) avatar.src = desktopAvatar.src;
-        };
-        syncProfile();
-        if (desktopName || desktopRole || desktopAvatar) {
-            new MutationObserver(syncProfile).observe(desktopSidebar, {
-                attributes: true,
-                attributeFilter: ['src'],
-                childList: true,
-                characterData: true,
-                subtree: true
-            });
-        }
+    function ensureSharedSidebar() {
+        let navigation=document.getElementById('sidebar-nav')||document.querySelector('aside nav');
+        if (navigation) return {navigation};
+        const user=typeof getUser==='function'?getUser():null,sidebar=document.createElement('aside');sidebar.id='panel-shared-sidebar';sidebar.className='panel-responsive-sidebar bg-slate-900 border-r border-slate-800 flex flex-col justify-between';sidebar.innerHTML=`<div class="p-6 overflow-y-auto"><h1 class="text-xl font-bold">${window.getActiveOrganization?.()?.name||'Panel'}<span class="block text-xs font-normal text-slate-400">Platformă multi-organizație</span></h1><nav id="sidebar-nav" class="mt-6 space-y-1.5"></nav></div><div class="p-4 border-t border-slate-800 flex items-center justify-between gap-2"><div class="flex items-center gap-3 min-w-0"><img id="user-avatar" class="w-9 h-9 rounded-full border border-slate-700 object-cover" src="${user?.avatar||user?.avatar_url||''}" alt=""><div class="min-w-0"><p id="user-display-name" class="font-semibold truncate">${user?.display_name||user?.username||'Utilizator'}</p><p id="user-role" class="text-xs text-emerald-400 truncate">${user?.role||'Rol Discord'}</p></div></div><button type="button" data-shared-logout class="text-xs text-rose-400">Logout</button></div>`;document.body.prepend(sidebar);document.body.classList.add('panel-shared-sidebar-page');navigation=sidebar.querySelector('nav');return {navigation};
     }
 
     function normalizePageHeader(currentPage) {
         const main = document.querySelector('main');
         if (!main) return;
-        let header = main.querySelector(':scope > header');
+        let header = main.querySelector(':scope > header') || document.querySelector('body > header');
 
         if (currentPage === 'anunturi.html') {
             if (!header) {
@@ -316,7 +254,12 @@
             return;
         }
 
-        if (header) header.classList.add('panel-global-header');
+        if (header) {
+            header.classList.add('panel-global-header');
+            const titleBlock=[...header.children].find(child=>child.querySelector?.('h1,h2')||child.matches?.('h1,h2'));
+            const extras=[...header.children].filter(child=>child!==titleBlock&&!child.classList.contains('panel-header-tools')&&!child.querySelector?.('input[type="search"]'));
+            if(extras.length){let bar=main.querySelector(':scope > .panel-page-details');if(!bar){bar=document.createElement('section');bar.className='panel-page-details panel-action-bar';if(header.parentElement===main)header.after(bar);else main.prepend(bar)}extras.forEach(extra=>bar.appendChild(extra));}
+        }
     }
 
     function loadAssistantScript(id, source, ready) {
@@ -370,6 +313,10 @@
             ['rapoarte.html', 4, '📈', 'Rapoarte'],
             ['logs.html', 7, '🧾', 'Loguri'],
             ['diagnostic.html', 7, '🩺', 'Verificare sistem'],
+            ['discord-configurare.html', 7, '⚙️', 'Configurare Discord'],
+            ['organizatii.html', 7, '🏢', 'Organizații platformă'],
+            ['edit.html', 7, '🧩', 'Editor administrativ'],
+            ['developer.html', 7, '🛠️', 'Developer'],
             ['admin.html', 7, '👑', 'Panou Admin']
         ];
 
@@ -381,6 +328,10 @@
             return `<a href="${href}" data-role="${role}" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl transition text-sm ${stateClasses}"><span>${icon}</span><span>${label}</span></a>`;
         }).join('');
 
+        if (typeof isPlatformAdmin === 'function' && isPlatformAdmin()) {
+            navigation.querySelectorAll('a.nav-link').forEach((link) => { link.style.display = ''; });
+        }
+
         const existingMobileNavigation = document.querySelector('#mobile-menu nav');
         if (existingMobileNavigation) existingMobileNavigation.innerHTML = navigation.innerHTML;
     }
@@ -391,9 +342,12 @@
             return action.includes('logout') || action.includes('ieșire') || action.includes('iesire');
         });
         if (existingLogout) {
-            const label = existingLogout.querySelector('span:last-child');
-            if (label) label.textContent = 'Logout';
-            else existingLogout.textContent = 'Logout';
+            const cleanButton = existingLogout.cloneNode(true);
+            cleanButton.removeAttribute('onclick');
+            const label = cleanButton.querySelector('span:last-child');
+            if (label) label.textContent = 'Logout'; else cleanButton.textContent = 'Logout';
+            cleanButton.addEventListener('click', (event) => { event.preventDefault(); event.stopImmediatePropagation(); if (typeof logout === 'function') logout(); else { localStorage.clear(); sessionStorage.clear(); location.replace('login.html'); } });
+            existingLogout.replaceWith(cleanButton);
             return;
         }
 
@@ -471,7 +425,7 @@
         const allowedPages = new Set([
             'index.html', 'pontaj.html', 'cereri.html', 'rapoarte.html', 'contracte.html', 'admin.html',
             'calculatorilegal.html', 'craftmecanics.html', 'locatiiilegale.html', 'marketplace.html',
-            'marketplace-ilegal.html', 'logs.html', 'diagnostic.html'
+            'marketplace-ilegal.html', 'logs.html', 'diagnostic.html', 'organizatii.html'
         ]);
         if (!allowedPages.has(currentPage) || document.getElementById('panel-assistant-widget')) return;
         try {
@@ -623,3 +577,59 @@
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setup);
     else setup();
 })();
+
+// Selector multi-organizație. Este afișat numai după o autentificare validă.
+document.addEventListener('DOMContentLoaded', () => {
+    let organizations = [];
+    try { organizations = JSON.parse(localStorage.getItem('panel_organizations') || '[]'); } catch (_) {}
+    const active = window.getActiveOrganization?.();
+    const header = document.querySelector('header');
+    if (!active || !header || header.querySelector('[data-organization-switcher]')) return;
+    document.title = `${document.title.split(' · ')[0]} · ${active.name}`;
+    const sidebarTitle = document.querySelector('aside h1');
+    if (sidebarTitle) sidebarTitle.innerHTML = `${String(active.name).replace(/[&<>"']/g, '')}<span class="block text-xs font-normal text-slate-400">Platformă multi-organizație</span>`;
+    const wrapper = document.createElement('div');
+    wrapper.dataset.organizationSwitcher = 'true';
+    wrapper.style.cssText = 'margin-left:auto;display:flex;align-items:center;gap:8px;padding-left:12px';
+    if (organizations.length > 1) {
+        const select = document.createElement('select');
+        select.setAttribute('aria-label', 'Organizația activă');
+        select.style.cssText = 'max-width:220px;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:700';
+        organizations.forEach((organization) => {
+            const option = document.createElement('option');
+            option.value = organization.id;
+            option.textContent = `${organization.name} · ${organization.panel_role}`;
+            option.selected = organization.id === active.id;
+            select.appendChild(option);
+        });
+        select.addEventListener('change', async () => {
+            select.disabled = true;
+            try {
+                const config = window.PANEL_SUPABASE_CONFIG;
+                const response = await fetch(`${config.url}/functions/v1/sync-discord-role`, {
+                    method:'POST', headers:{'Content-Type':'application/json',apikey:config.publishableKey,Authorization:`Bearer ${config.publishableKey}`},
+                    body:JSON.stringify({access_token:localStorage.getItem('discord_access_token'),organization_id:select.value})
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Organizația nu poate fi activată.');
+                localStorage.setItem('discord_user', JSON.stringify(result.user));
+                localStorage.setItem('user_role', result.user.role);
+                localStorage.setItem('panel_session_token', result.session_token);
+                localStorage.setItem('panel_session_expires_at', result.expires_at);
+                localStorage.setItem('panel_active_organization', JSON.stringify(result.active_organization));
+                localStorage.setItem('panel_organizations', JSON.stringify(result.organizations || []));
+                location.reload();
+            } catch (error) {
+                alert(error instanceof Error ? error.message : 'Schimbarea organizației a eșuat.');
+                select.disabled = false; select.value = active.id;
+            }
+        });
+        wrapper.appendChild(select);
+    } else {
+        const badge = document.createElement('span');
+        badge.textContent = active.name;
+        badge.style.cssText = 'color:#a7f3d0;border:1px solid #065f46;background:#064e3b55;border-radius:999px;padding:6px 10px;font-size:11px;font-weight:800';
+        wrapper.appendChild(badge);
+    }
+    header.appendChild(wrapper);
+});

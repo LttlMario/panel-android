@@ -435,7 +435,7 @@
                         <option value="suppliers">Achiziții & Altele</option>
                     </select>
                 </div>
-                
+
                 <div style="display: flex; gap: 10px;">
                     <div class="form-group" style="flex: 1;">
                         <label>Coordonata X (%)</label>
@@ -513,7 +513,7 @@
         // --- VERIFICARE ROL ADMIN ---
         function checkAdminAccess() {
             const storedUser = getUser();
-            const isUserAdmin = Boolean(storedUser && getRole() >= Roles.ADMIN);
+            const isUserAdmin = Boolean(storedUser && isPlatformAdmin());
 
             if (!isUserAdmin) {
                 window.location.href = '403.html';
@@ -563,10 +563,10 @@
 
         function updateTransform() {
             mapContainer.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
-            
+
             const baseScale = 0.35;
             const dynamicPinScale = Math.max(0.3, Math.min(2.5, baseScale / scale));
-            
+
             document.querySelectorAll('.map-pin').forEach(p => {
                 p.style.setProperty('--pin-scale', dynamicPinScale);
             });
@@ -586,9 +586,9 @@
             const mapSelect = document.getElementById('edit-map').value;
             pins[activePinIndex].map = mapSelect;
             if (mapSelect === 'cayo') {
-                mapImg.src = 'cayo.jpg';
+                mapImg.src = 'img/cayo.jpg';
             } else {
-                mapImg.src = 'gtav.jpg';
+                mapImg.src = 'img/gtav.jpg';
             }
             mapImg.onload = () => {
                 resetView();
@@ -641,10 +641,10 @@
                 }
             }
 
-            if (p.map === 'cayo' && mapImg.src !== 'cayo.jpg') {
-                mapImg.src = 'cayo.jpg';
-            } else if (p.map !== 'cayo' && mapImg.src !== 'gtav.jpg') {
-                mapImg.src = 'gtav.jpg';
+            if (p.map === 'cayo' && !mapImg.src.endsWith('/img/cayo.jpg')) {
+                mapImg.src = 'img/cayo.jpg';
+            } else if (p.map !== 'cayo' && !mapImg.src.endsWith('/img/gtav.jpg')) {
+                mapImg.src = 'img/gtav.jpg';
             }
 
             renderPins();
@@ -747,7 +747,7 @@
             const imgHeight = 2560;
             const px = (p.x / 100) * imgWidth;
             const py = ((100 - p.y) / 100) * imgHeight;
-            const radiusInPixels = p.radius * (imgWidth / 8500); 
+            const radiusInPixels = p.radius * (imgWidth / 8500);
 
             radiusCircle.style.display = 'block';
             radiusCircle.style.left = `${px}px`;
@@ -818,7 +818,7 @@
             const p = pins[activePinIndex];
             p.x = Math.max(0, Math.min(100, (clickX / 2560) * 100));
             p.y = Math.max(0, Math.min(100, ((2560 - clickY) / 2560) * 100));
-            
+
             document.getElementById('edit-x').value = p.x.toFixed(1);
             document.getElementById('edit-y').value = p.y.toFixed(1);
             renderPins();
@@ -984,7 +984,7 @@
                 radius: p.radius,
                 lastUpdated: p.lastUpdated
             }));
-            
+
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cleanArray, null, 4));
             const downloadAnchor = document.createElement('a');
             downloadAnchor.setAttribute("href", dataStr);
@@ -1018,7 +1018,7 @@
             syncFormToActivePin();
             renderPins();
         });
-        
+
         window.addEventListener('resize', () => {
             resetView();
         });

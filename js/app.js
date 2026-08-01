@@ -2,7 +2,7 @@
 const SUPABASE_URL = window.PANEL_SUPABASE_CONFIG.url;
 const SUPABASE_KEY = window.PANEL_SUPABASE_CONFIG.publishableKey;
 
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabaseClient = window.createPanelSupabaseClient();
 
 document.addEventListener('DOMContentLoaded', async () => {
     const loginScreen = document.getElementById('login-screen');

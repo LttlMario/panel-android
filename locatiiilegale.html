@@ -1190,8 +1190,6 @@
         <div id="locations-footer-host" data-panel-footer-host></div>
     </div>
 
-    <div class="modal" id="imageModal" onclick="closeModal()"> 
-
     <div class="modal" id="imageModal" onclick="closeModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
             <button class="close-modal" onclick="closeModal()">&times;</button>
@@ -1207,7 +1205,7 @@
         // Configurare Supabase - aceeași sesiune ca în dashboard
         const SUPABASE_URL = window.PANEL_SUPABASE_CONFIG.url;
         const SUPABASE_KEY = window.PANEL_SUPABASE_CONFIG.publishableKey;
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = window.createPanelSupabaseClient();
 
         async function fetchUserData() {
             const cachedUser = localStorage.getItem('discord_user');
@@ -1692,7 +1690,7 @@
             if (!currentSelectedLocation || !isAdminLoggedIn) return;
             isCreatingNewLocation = false;
             document.getElementById('left-panel-mode-title').textContent = "Editează Locația";
-            
+
             const loc = currentSelectedLocation;
             document.getElementById('l-inp-title').value = loc.title;
             document.getElementById('l-inp-map').value = loc.map;
@@ -1948,10 +1946,10 @@
 
             const galleryContainer = document.getElementById('sb-gallery-container');
             const images = (loc.images && loc.images.length > 0) ? loc.images : ['image_6d67a5.jpg'];
-            
+
             let galleryHTML = '';
             images.forEach((img, idx) => {
-                galleryHTML += `<img src="img/${img}" class="gallery-slide ${idx === 0 ? 'active' : ''}" alt="Imagine locație">`;
+                galleryHTML += `<img src="${resolveLocationImage(img)}" class="gallery-slide ${idx === 0 ? 'active' : ''}" alt="Imagine locație" onerror="this.classList.add('image-load-error'); this.alt='Imagine indisponibilă';">`;
             });
 
             if (images.length > 1) {
@@ -1987,6 +1985,14 @@
             document.getElementById('sidebar').classList.add('open');
         }
 
+        function resolveLocationImage(value) {
+            const source = String(value || '').trim().replace(/\\/g, '/');
+            if (!source) return 'img/image_6d67a5.jpg';
+            if (/^(?:https?:|data:|blob:)/i.test(source)) return source;
+            if (source.startsWith('/')) return source;
+            return source.startsWith('img/') ? source : `img/${source}`;
+        }
+
         function changeSlide(direction) {
             if (!currentSelectedLocation || !currentSelectedLocation.images) return;
             const images = currentSelectedLocation.images;
@@ -2008,7 +2014,7 @@
             const currentImgSrc = images[activeGalleryIndex] || images[0];
             const modal = document.getElementById('imageModal');
             const modalImg = document.getElementById('modalImg');
-            modalImg.src = currentImgSrc;
+            modalImg.src = resolveLocationImage(currentImgSrc);
             modal.classList.add('active');
         }
 

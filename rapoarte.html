@@ -34,12 +34,12 @@
 
     <!-- Containerul Principal -->
     <div id="app-container" class="flex h-screen w-full overflow-hidden">
-        
+
         <!-- Sidebar / Meniu Lateral -->
         <aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col justify-between hidden md:flex">
             <div class="p-6 overflow-y-auto max-h-[calc(100vh-5rem)]">
                 <h1 class="text-xl font-bold text-slate-100 tracking-tight">Panel<span class="block text-xs font-normal text-slate-400 mt-0.5">by Little Mario</span></h1>
-                
+
                 <nav class="mt-6 space-y-1.5" id="sidebar-nav">
                     <a href="index.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
                         <span>📊</span>
@@ -125,7 +125,7 @@
             </header>
 
             <div class="p-8 space-y-6 max-w-7xl mx-auto w-full">
-                
+
                 <!-- SECȚIUNE NOUĂ: Pontaj Activ & Control Ture -->
                 <div id="personal-shift-panel" class="hidden bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-lg space-y-6">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -173,7 +173,7 @@
                 <!-- Panou de Filtrare Rapidă -->
                 <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-lg space-y-4">
                     <h3 class="text-base font-bold text-slate-100">Filtrare Rapidă</h3>
-                    
+
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                         <div class="space-y-1.5">
                             <label class="text-xs font-medium text-slate-400">Perioadă Raport</label>
@@ -264,7 +264,7 @@
 
                 <!-- Grid Principal -->
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                    
+
                     <!-- Clasamente -->
                     <div class="lg:col-span-5 space-y-6">
                         <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-lg overflow-hidden flex flex-col">
@@ -367,7 +367,7 @@
     <script>
         const SUPABASE_URL = window.PANEL_SUPABASE_CONFIG.url;
         const SUPABASE_KEY = window.PANEL_SUPABASE_CONFIG.publishableKey;
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = window.createPanelSupabaseClient();
 
         const ROMANIA_TIME_ZONE = 'Europe/Bucharest';
 
@@ -546,7 +546,7 @@
             }, 1000);
 
             await sendGeneralDiscordWebhook("▶️ Pontaj Start", `Mecanicul **${currentUser.display_name}** a pornit tura de **${selectedShiftType.toUpperCase()}**.`, 3066993);
-            
+
             setTimeout(() => { isActionProcessing = false; }, 2000);
         }
 
@@ -1154,7 +1154,7 @@
             let uniqueMechanics = new Set(dataList.map(s => s.discord_id)).size;
 
             let sampleRows = dataList.slice(0, 10).map(s => `• **${s.mechanic_name}** (${(s.shift_type || 'std').toUpperCase()}) - ${s.date} [**${s.duration}**]`).join('\n');
-            
+
             if (dataList.length > 10) {
                 sampleRows += `\n...și încă ${dataList.length - 10} înregistrări.`;
             }
@@ -1188,7 +1188,7 @@
                 const options = { timeZone: 'Europe/Bucharest', weekday: 'short', hour: 'numeric', minute: 'numeric', hour12: false };
                 const formatter = new Intl.DateTimeFormat('en-US', options);
                 const parts = formatter.formatToParts(now);
-                
+
                 let weekday = '';
                 let hour = 0;
                 let minute = 0;

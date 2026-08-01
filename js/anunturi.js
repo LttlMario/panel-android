@@ -1,7 +1,7 @@
 (() => {
   const URL=window.PANEL_SUPABASE_CONFIG.url;
   const KEY=window.PANEL_SUPABASE_CONFIG.publishableKey;
-  const db=supabase.createClient(URL,KEY), user=getUser(), level=getRole();
+  const db=window.createPanelSupabaseClient(), user=getUser(), level=getRole();
   let posts=[], filter='all', editing=null, draft=null;
   const $=s=>document.querySelector(s), esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const invoke=async(body)=>{const token=localStorage.getItem('discord_access_token');if(!token){requestFreshLogin();throw new Error('Sesiunea Discord lipsește. Se redeschide autentificarea.')}const res=await fetch(`${URL}/functions/v1/manage-community-posts`,{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY,Authorization:`Bearer ${KEY}`},body:JSON.stringify({...body,access_token:token})});let json={};try{json=await res.json()}catch{json={}}if(res.status===401){requestFreshLogin();throw new Error('Sesiunea Discord a expirat. Se redeschide autentificarea.')}if(!res.ok)throw new Error(json.error||json.message||`Operația a eșuat. Cod HTTP: ${res.status}`);return json};

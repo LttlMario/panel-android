@@ -34,12 +34,12 @@
 
     <!-- Containerul Principal -->
     <div class="flex h-screen w-full overflow-hidden">
-        
+
         <!-- Sidebar / Meniu Lateral -->
         <aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col justify-between hidden md:flex">
             <div class="p-6 overflow-y-auto max-h-[calc(100vh-5rem)]">
                 <h1 class="text-xl font-bold text-slate-100 tracking-tight">Panel<span class="block text-xs font-normal text-slate-400 mt-0.5">by Little Mario</span></h1>
-                
+
                 <nav class="mt-6 space-y-1.5" id="sidebar-nav">
                     <a href="index.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
                         <span>📊</span>
@@ -112,12 +112,12 @@
             </header>
 
             <div class="p-8 space-y-6 max-w-5xl mx-auto w-full">
-                
+
                 <!-- Formular Creare Înștiințare -->
                 <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-lg">
                     <h3 class="text-base font-bold text-slate-100 mb-1">Trimite o Înștiințare Nouă</h3>
                     <p class="text-xs text-slate-400 mb-6">Înregistrează o înștiințare pentru atelier. Aceasta este informativă și nu necesită aprobare.</p>
-                    
+
                     <form id="absence-form" class="space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
@@ -197,7 +197,7 @@
         <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-2xl max-w-lg w-full">
             <h3 class="text-base font-bold text-slate-100 mb-1">Modifică Înștiințarea</h3>
             <p class="text-xs text-slate-400 mb-4">Modifică detaliile înștiințării alese.</p>
-            
+
             <form id="edit-absence-form" class="space-y-4">
                 <input type="hidden" id="edit-id">
                 <div>
@@ -240,7 +240,7 @@
     <script>
         const SUPABASE_URL = window.PANEL_SUPABASE_CONFIG.url;
         const SUPABASE_KEY = window.PANEL_SUPABASE_CONFIG.publishableKey;
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = window.createPanelSupabaseClient();
 
         let currentUser = {
             discord_id: '',
@@ -309,15 +309,15 @@
                 let activeUser = dbUser || localData;
 
                 currentUser = { ...currentUser, ...activeUser };
-                
+
                 const displayNameToRender = currentUser.display_name || currentUser.username || 'Mecanic';
                 document.getElementById('user-display-name').textContent = displayNameToRender;
                 const activeRole = currentUser.role || currentUser.default_role || 'Mecanic';
                 document.getElementById('user-role').textContent = activeRole;
 
                 if (currentUser.avatar) {
-                    const avatarUrl = currentUser.avatar.startsWith('http') 
-                        ? currentUser.avatar 
+                    const avatarUrl = currentUser.avatar.startsWith('http')
+                        ? currentUser.avatar
                         : `https://cdn.discordapp.com/avatars/${currentUser.discord_id}/${currentUser.avatar}.png`;
                     document.getElementById('user-avatar').src = avatarUrl;
                 }
@@ -424,7 +424,7 @@
                 }
 
                 let html = '';
-                
+
                 absences.forEach(item => {
                     const createdAtFormatted = new Date(item.created_at).toLocaleString('ro-RO', { dateStyle: 'short', timeStyle: 'short' });
                     const startFormatted = item.start_at ? new Date(item.start_at).toLocaleString('ro-RO', { dateStyle: 'short', timeStyle: 'short' }) : item.start_date;
@@ -480,7 +480,7 @@
             document.getElementById('edit-notice-start-at').value = toDateTimeLocal(item.start_at || `${item.start_date}T00:00:00`);
             document.getElementById('edit-notice-end-at').value = toDateTimeLocal(item.end_at || `${item.start_date}T23:59:00`);
             document.getElementById('edit-notice-proof-url').value = item.proof_url || '';
-            
+
             document.getElementById('edit-modal').classList.remove('hidden');
         }
 
