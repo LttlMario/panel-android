@@ -1,6 +1,6 @@
 {
   "name": "panel-android",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "private": true,
   "description": "Aplicatia Android separata pentru Panel",
   "scripts": {

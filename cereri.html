@@ -26,9 +26,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/permissions.js"></script>
-    <script src="js/panel-layout.js"></script>
+    <script src="js/panel-layout.js?v=3.2.5"></script>
     <link rel="stylesheet" href="css/global-footer.css">
-    <script src="js/project-version.js"></script>
+    <script src="js/project-version.js?v=3.2.5"></script>
     <link rel="icon" href="img/favicon.ico">
     <link rel="apple-touch-icon" href="img/logo-180.png">
 </head>
@@ -356,8 +356,13 @@
             fetchAbsences();
         });
 
+        let absenceSubmissionInProgress = false;
         document.getElementById('absence-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (absenceSubmissionInProgress) return;
+            absenceSubmissionInProgress = true;
+            const submitButton = e.currentTarget.querySelector('button[type="submit"]');
+            if (submitButton) { submitButton.disabled = true; submitButton.dataset.originalText = submitButton.innerHTML; submitButton.textContent = 'Se trimite…'; }
 
             const noticeType = document.getElementById('notice-type').value;
             const reason = document.getElementById('absence-reason').value;
@@ -394,9 +399,9 @@
                 let { error } = await supabaseClient.from('absences').insert([newAbsence]);
                 if (error) throw error;
 
-                await sendDiscordWebhook(newAbsence, activeRole, 'Înștiințare Nouă');
+                const discordSent = await sendDiscordWebhook(newAbsence, activeRole, 'Înștiințare Nouă');
 
-                alert('Înștiințarea a fost înregistrată și trimisă pe Discord cu succes!');
+                alert(discordSent ? 'Înștiințarea a fost înregistrată și trimisă pe Discord cu succes!' : 'Înștiințarea a fost înregistrată o singură dată, dar notificarea Discord nu a putut fi confirmată.');
                 document.getElementById('absence-form').reset();
                 const currentLocalDateTime = getCurrentLocalDateTime();
                 document.getElementById('notice-start-at').value = currentLocalDateTime;
@@ -406,6 +411,9 @@
             } catch (err) {
                 console.error('Erore la salvarea înștiințării:', err);
                 alert('A apărut o eroare la salvarea înștiințării.');
+            } finally {
+                absenceSubmissionInProgress = false;
+                if (submitButton) { submitButton.disabled = false; submitButton.innerHTML = submitButton.dataset.originalText || 'Trimite Înștiințarea'; }
             }
         });
 
@@ -551,12 +559,14 @@
 
             try {
                 await sendPanelDiscord('requests', payload);
+                return true;
             } catch (err) {
                 console.error('Erore trimitere webhook Discord:', err);
+                return false;
             }
         }
     </script>
     <script src="js/discord-notifications.js"></script>
-    <script src="js/global-footer.js"></script>
+    <script src="js/global-footer.js?v=3.2.5"></script>
 </body>
 </html>

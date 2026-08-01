@@ -26,9 +26,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/permissions.js"></script>
-    <script src="js/panel-layout.js"></script>
+    <script src="js/panel-layout.js?v=3.2.5"></script>
     <link rel="stylesheet" href="css/global-footer.css">
-    <script src="js/project-version.js"></script>
+    <script src="js/project-version.js?v=3.2.5"></script>
     <link rel="icon" href="img/favicon.ico">
     <link rel="apple-touch-icon" href="img/logo-180.png">
 </head>
@@ -237,7 +237,19 @@
         let runningSince = null;
         let activeShiftId = null;
         let isActionProcessing = false;
-        const ACTIVE_SHIFT_STORAGE_KEY = 'workforce_active_shift';
+        const LEGACY_ACTIVE_SHIFT_STORAGE_KEY = 'workforce_active_shift';
+
+        function getActiveShiftStorageKey() {
+            const organizationId = window.getActiveOrganizationId?.();
+            return organizationId ? `${LEGACY_ACTIVE_SHIFT_STORAGE_KEY}:${organizationId}` : null;
+        }
+
+        function clearActiveShiftStorage() {
+            const storageKey = getActiveShiftStorageKey();
+            if (storageKey) localStorage.removeItem(storageKey);
+            // Starea veche, nespecifică unei organizații, nu mai este sigură de restaurat.
+            localStorage.removeItem(LEGACY_ACTIVE_SHIFT_STORAGE_KEY);
+        }
 
         document.addEventListener('DOMContentLoaded', async () => {
             // 1. Evidențiere automată a paginii active în meniu
@@ -497,7 +509,7 @@
 
         function legacyResetTimerState() {
             clearInterval(timerInterval);
-            localStorage.removeItem(ACTIVE_SHIFT_STORAGE_KEY);
+            clearActiveShiftStorage();
             secondsElapsed = 0;
             isPaused = false;
             shiftStartTime = null;
@@ -535,7 +547,11 @@
 
         function saveActiveShift() {
             if (!selectedShiftType || !shiftStartTime) return;
-            localStorage.setItem(ACTIVE_SHIFT_STORAGE_KEY, JSON.stringify({
+            const organizationId = window.getActiveOrganizationId?.();
+            const storageKey = getActiveShiftStorageKey();
+            if (!organizationId || !storageKey) return;
+            localStorage.setItem(storageKey, JSON.stringify({
+                organizationId,
                 userId: currentUser.discord_id,
                 shiftType: selectedShiftType,
                 secondsElapsed,
@@ -570,20 +586,26 @@
         }
 
         async function legacyRestoreActiveShift() {
+            const organizationId = window.getActiveOrganizationId?.();
+            const storageKey = getActiveShiftStorageKey();
+            if (!organizationId || !storageKey) return;
             let savedShift;
             try {
-                savedShift = JSON.parse(localStorage.getItem(ACTIVE_SHIFT_STORAGE_KEY));
+                savedShift = JSON.parse(localStorage.getItem(storageKey));
             } catch (err) {
-                localStorage.removeItem(ACTIVE_SHIFT_STORAGE_KEY);
+                localStorage.removeItem(storageKey);
                 return;
             }
 
-            if (!savedShift || savedShift.userId !== currentUser.discord_id || !savedShift.shiftType) return;
+            if (!savedShift || savedShift.organizationId !== organizationId || savedShift.userId !== currentUser.discord_id || !savedShift.shiftType) {
+                localStorage.removeItem(storageKey);
+                return;
+            }
 
             shiftStartTime = new Date(savedShift.shiftStartTime);
             runningSince = savedShift.runningSince ? new Date(savedShift.runningSince) : null;
             if (Number.isNaN(shiftStartTime.getTime()) || (!savedShift.isPaused && (!runningSince || Number.isNaN(runningSince.getTime())))) {
-                localStorage.removeItem(ACTIVE_SHIFT_STORAGE_KEY);
+                localStorage.removeItem(storageKey);
                 return;
             }
 
@@ -634,7 +656,9 @@
             const summaryContainer = document.getElementById('daily-summary-container');
 
             try {
-                let query = supabaseClient.from('shifts').select('*');
+                const organizationId = window.getActiveOrganizationId?.();
+                if (!organizationId) throw new Error('Organizația activă lipsește din sesiune.');
+                let query = supabaseClient.from('shifts').select('*').eq('organization_id', organizationId);
                 let { data: shifts, error } = await query.order('created_at', { ascending: false });
 
                 if (error) throw error;
@@ -788,8 +812,10 @@
         }
 
         async function findActiveShift() {
+            const organizationId = window.getActiveOrganizationId?.();
+            if (!organizationId) throw new Error('Organizația activă lipsește din sesiune.');
             const { data, error } = await supabaseClient.from('shifts').select('*')
-                .eq('discord_id', currentUser.discord_id).in('status', ['active', 'paused']).is('end_time', null)
+                .eq('organization_id', organizationId).eq('discord_id', currentUser.discord_id).in('status', ['active', 'paused']).is('end_time', null)
                 .order('started_at', { ascending: false }).limit(1).maybeSingle();
             if (error) throw error;
             return data;
@@ -821,6 +847,7 @@
                 const now = getRomanianNowDateTime();
                 const autoStopAt = getShiftDeadline(selectedShiftType, now);
                 const newShift = {
+                    organization_id: window.getActiveOrganizationId?.(),
                     discord_id: currentUser.discord_id, colleague_name: currentUser.display_name || currentUser.username || 'Mecanic', date: getRomanianDate(now), start_time: getRomanianTime(now), end_time: null,
                     duration: '00:00:00', duration_ms: 0, shift_type: selectedShiftType, created_at: now.toISOString(),
                     started_at: now.toISOString(), auto_stop_at: autoStopAt.toISOString(), status: 'active', paused_seconds: 0, paused_at: null, stop_reason: null
@@ -891,7 +918,10 @@
                 }
                 const finished = data[0];
                 if (automatic) await notifyAutomaticShiftDiscord(finished, reason);
-                else await sendStopShiftDiscordWebhook({ ...finished, colleague_name: currentUser.display_name, reason });
+                else {
+                    const discordSent = await sendStopShiftDiscordWebhook({ ...finished, colleague_name: currentUser.display_name, reason });
+                    if (!discordSent) alert('Pontajul a fost încheiat și calculat, dar mesajul de final nu a putut fi trimis pe Discord. Verifică webhook-ul Pontaj în Panoul Admin.');
+                }
                 activeShiftRecord = null; activeShiftId = null; resetTimerState(); fetchShiftsHistory();
                 if (automatic) alert('Tura a fost încheiată automat: programul maxim a fost atins.');
             } catch (error) { console.error('Eroare închidere pontaj:', error); alert('Tura nu a putut fi închisă corect.'); }
@@ -900,19 +930,29 @@
 
         function resetTimerState() {
             clearInterval(timerInterval); activeShiftRecord = null; activeShiftId = null; secondsElapsed = 0; isPaused = false; shiftStartTime = null;
-            localStorage.removeItem(ACTIVE_SHIFT_STORAGE_KEY);
+            clearActiveShiftStorage();
             document.getElementById('timer-display').textContent = '00:00:00'; document.getElementById('current-shift-status').textContent = 'Tură neselectată / Oprită';
             document.getElementById('btn-start').disabled = false; document.getElementById('btn-pause').disabled = true; document.getElementById('btn-stop').disabled = true; document.getElementById('pause-btn-text').textContent = 'Pauză'; selectedShiftType = null; resetUIPlaceholder();
         }
 
         async function sendStopShiftDiscordWebhook(data) {
-            const payload = { embeds: [{ title: `⏹️ Pontaj Încheiat - Tură de ${data.shift_type.toUpperCase()}`, color: data.shift_type === 'zi' ? 16766720 : 65535, fields: [
-                { name: '👤 Mecanic', value: data.colleague_name, inline: true }, { name: '📅 Data', value: data.date, inline: true },
-                { name: '⏰ Interval', value: `${data.start_time} - ${data.end_time}`, inline: false }, { name: '⏳ Timp Total Lucrat', value: `**${data.duration}**`, inline: true },
-                { name: '📝 Motiv', value: data.reason || data.stop_reason || 'Încheiere manuală', inline: false }
+            const shiftType = String(data.shift_type || 'standard');
+            const payload = { embeds: [{ title: `⏹️ Pontaj Încheiat - Tură de ${shiftType.toUpperCase()}`, color: shiftType === 'zi' ? 16766720 : 65535, fields: [
+                { name: '👤 Mecanic', value: String(data.colleague_name || currentUser.display_name || 'Mecanic'), inline: true }, { name: '📅 Data', value: String(data.date || getRomanianDate(new Date())), inline: true },
+                { name: '⏰ Interval', value: `${String(data.start_time || '--:--')} - ${String(data.end_time || '--:--')}`, inline: false }, { name: '⏳ Timp Total Lucrat', value: `**${String(data.duration || '00:00:00')}**`, inline: true },
+                { name: '📝 Motiv', value: String(data.reason || data.stop_reason || 'Încheiere manuală'), inline: false }
             ], timestamp: new Date().toISOString() }] };
-            try { await sendPanelDiscord('pontaj', payload); return true; }
-            catch (error) { console.error('Eroare webhook oprire:', error); return false; }
+            let lastError;
+            for (let attempt = 1; attempt <= 2; attempt += 1) {
+                try { await sendPanelDiscord('pontaj', payload); return true; }
+                catch (error) {
+                    lastError = error;
+                    console.error(`Eroare webhook oprire (încercarea ${attempt}):`, error);
+                    if (attempt === 1) await new Promise(resolve => setTimeout(resolve, 700));
+                }
+            }
+            try { await supabaseClient.from('shifts').update({ discord_close_notification_error: String(lastError?.message || 'Eroare Discord') }).eq('id', data.id); } catch (_) {}
+            return false;
         }
 
         async function notifyAutomaticShiftDiscord(shift, reason) {
@@ -944,6 +984,6 @@
         }
     </style>
     <script src="js/discord-notifications.js"></script>
-    <script src="js/global-footer.js"></script>
+    <script src="js/global-footer.js?v=3.2.5"></script>
 </body>
 </html>

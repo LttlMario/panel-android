@@ -26,9 +26,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/permissions.js"></script>
-    <script src="js/panel-layout.js"></script>
+    <script src="js/panel-layout.js?v=3.2.5"></script>
     <link rel="stylesheet" href="css/global-footer.css">
-    <script src="js/project-version.js"></script>
+    <script src="js/project-version.js?v=3.2.5"></script>
     <link rel="icon" href="img/favicon.ico">
     <link rel="apple-touch-icon" href="img/logo-180.png">
 </head>
@@ -212,6 +212,39 @@
         let dashboardTimer = null;
         let completedTodaySeconds = 0;
         let dashboardAllShifts = [];
+        const desktopLaunchers = {
+            fivem: { name: 'FiveM', protocol: 'fivem://', download: 'https://fivem.net/' },
+            ragemp: { name: 'RAGE:MP', protocol: 'rage://', download: 'https://rage.mp/' }
+        };
+
+        function removeDesktopLaunchersOnMobile() {
+            const mobileUserAgent = navigator.userAgentData?.mobile === true || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+            const nativeMobileApp = Boolean(window.Capacitor?.isNativePlatform?.());
+            if (mobileUserAgent || nativeMobileApp) document.getElementById('desktop-game-launchers')?.remove();
+        }
+        removeDesktopLaunchersOnMobile();
+
+        function launchDesktopGame(type) {
+            const app = desktopLaunchers[type];
+            const status = document.getElementById('game-launch-status');
+            if (!app || !status) return;
+            let pageWasHidden = false;
+            const visibilityHandler = () => { if (document.hidden) pageWasHidden = true; };
+            document.addEventListener('visibilitychange', visibilityHandler);
+            status.className = 'mt-4 rounded-xl border border-cyan-400/20 bg-cyan-400/5 px-4 py-3 text-xs text-cyan-200';
+            status.textContent = `Se încearcă deschiderea ${app.name}… Confirmă fereastra afișată de browser.`;
+            window.location.href = app.protocol;
+            window.setTimeout(() => {
+                document.removeEventListener('visibilitychange', visibilityHandler);
+                if (pageWasHidden) {
+                    status.className = 'mt-4 rounded-xl border border-emerald-400/20 bg-emerald-400/5 px-4 py-3 text-xs text-emerald-200';
+                    status.textContent = `${app.name} a primit comanda de deschidere.`;
+                    return;
+                }
+                status.className = 'mt-4 rounded-xl border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-xs text-amber-100';
+                status.innerHTML = `${app.name} nu s-a deschis? Aplicația poate să nu fie instalată sau browserul a blocat protocolul. <a class="font-bold underline" href="${app.download}" target="_blank" rel="noopener noreferrer">Descarcă de pe site-ul oficial</a>.`;
+            }, 1800);
+        }
         let globalSearchEntries = [
             { title: 'Pontaj', detail: 'Pornește, oprește sau pune pauză turei.', href: 'pontaj.html', role: 1, type: 'Pagină' },
             { title: 'Cereri și învoiri', detail: 'Trimite și urmărește o învoire.', href: 'cereri.html', role: 1, type: 'Pagină' },
@@ -499,6 +532,6 @@
             }
         }
     </script>
-    <script src="js/global-footer.js"></script>
+    <script src="js/global-footer.js?v=3.2.5"></script>
 </body>
 </html>

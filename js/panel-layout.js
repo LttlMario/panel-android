@@ -12,7 +12,7 @@
             #panel-shared-sidebar { display:flex !important; flex-direction:column !important; justify-content:space-between !important; overflow:visible; border-right:1px solid #1e293b !important; background:#0f172a !important; color:#e2e8f0 !important; font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif !important; text-align:left !important; }
             #panel-shared-sidebar > div:first-child { flex:1 1 auto; min-height:0; padding:24px !important; overflow-y:auto !important; }
             #panel-shared-sidebar > div:last-child { flex:0 0 auto; min-height:78px; padding:16px !important; display:flex !important; align-items:center !important; justify-content:space-between !important; gap:8px !important; border-top:1px solid #1e293b !important; background:#0f172a !important; }
-            #panel-shared-sidebar h1 { display:flex !important; align-items:center !important; gap:12px !important; margin:0 !important; padding:0 !important; color:#f8fafc !important; font-size:20px !important; font-weight:700 !important; line-height:1.25 !important; text-align:left !important; white-space:normal !important; }
+            #panel-shared-sidebar h1 { display:flex !important; align-items:center !important; justify-content:center !important; margin:0 !important; padding:0 !important; text-align:center !important; }
             #panel-shared-sidebar h1 > span { display:block; min-width:0; }
             #panel-shared-sidebar h1 > span > span { display:block !important; margin-top:3px; color:#94a3b8 !important; font-size:12px !important; font-weight:400 !important; line-height:1.3 !important; }
             #panel-shared-sidebar nav { display:flex !important; flex-direction:column !important; gap:6px !important; margin:24px 0 0 !important; padding:0 !important; }
@@ -28,8 +28,8 @@
             #panel-shared-sidebar [data-shared-logout] { min-width:auto !important; margin:0 !important; padding:7px 9px !important; border:1px solid rgba(244,63,94,.25) !important; border-radius:9px !important; background:rgba(244,63,94,.08) !important; color:#fb7185 !important; font-size:11px !important; line-height:1 !important; cursor:pointer; }
             #panel-mobile-menu .panel-mobile-nav { display:flex !important; flex-direction:column !important; gap:6px !important; }
             #panel-mobile-menu .nav-link { min-height:44px; margin:0 !important; padding:11px 14px !important; display:flex; align-items:center !important; gap:12px !important; border-radius:12px !important; color:#cbd5e1 !important; font-size:14px !important; line-height:1.25 !important; text-decoration:none !important; }
-            .panel-brand-logo { width:46px; height:46px; flex:none; border-radius:14px; object-fit:cover; border:1px solid #334155; box-shadow:0 8px 24px rgba(0,0,0,.32); }
-            .panel-brand-heading { display:flex; align-items:center; gap:12px; }
+            .panel-brand-logo { width:64px; height:64px; flex:none; border-radius:18px; object-fit:cover; border:1px solid #334155; box-shadow:0 8px 24px rgba(0,0,0,.32); }
+            .panel-brand-heading { display:flex; align-items:center; justify-content:center; }
             body.panel-shared-sidebar-page { padding-left:18rem; }
             body.panel-shared-sidebar-page > #panel-shared-sidebar { position:fixed; inset:0 auto 0 0; z-index:60; width:18rem; }
             .panel-responsive-sidebar.fixed { position:fixed; }
@@ -201,7 +201,7 @@
         backdrop.id = 'panel-mobile-backdrop';
         const mobileMenu = document.createElement('aside');
         mobileMenu.id = 'panel-mobile-menu';
-        mobileMenu.innerHTML = `<div class="panel-mobile-top"><div><strong class="text-slate-100">Panel</strong><p class="text-[10px] text-slate-400">Meniu navigare</p></div><button type="button" class="w-9 h-9 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-lg" aria-label="Închide meniul">×</button></div><nav class="panel-mobile-nav space-y-1.5"></nav>`;
+        mobileMenu.innerHTML = `<div class="panel-mobile-top"><img src="img/logo-192.png" alt="Logo Panel" class="panel-brand-logo"><button type="button" class="w-9 h-9 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-lg" aria-label="Închide meniul">×</button></div><nav class="panel-mobile-nav space-y-1.5"></nav>`;
         document.body.append(backdrop, mobileMenu);
 
         const mobileNav = mobileMenu.querySelector('.panel-mobile-nav');
@@ -245,16 +245,16 @@
 
     function ensureBrandLogo(sidebar) {
         const heading=sidebar.querySelector('h1');
-        if(!heading||heading.querySelector('.panel-brand-logo'))return;
+        if(!heading)return;
         heading.classList.add('panel-brand-heading');
-        const content=document.createElement('span');content.className='min-w-0';while(heading.firstChild)content.appendChild(heading.firstChild);
-        const logo=document.createElement('img');logo.className='panel-brand-logo';logo.src='img/logo-192.png';logo.alt='Logo Panel';heading.append(logo,content);
+        heading.replaceChildren();
+        const logo=document.createElement('img');logo.className='panel-brand-logo';logo.src='img/logo-192.png';logo.alt='Logo Panel';heading.append(logo);
     }
 
     function ensureSharedSidebar() {
         let navigation=document.getElementById('sidebar-nav')||document.querySelector('aside nav');
         if (navigation) return {navigation};
-        const user=typeof getUser==='function'?getUser():null,sidebar=document.createElement('aside');sidebar.id='panel-shared-sidebar';sidebar.className='panel-responsive-sidebar bg-slate-900 border-r border-slate-800 flex flex-col justify-between';sidebar.innerHTML=`<div class="p-6 overflow-y-auto"><h1 class="text-xl font-bold">${window.getActiveOrganization?.()?.name||'Panel'}<span class="block text-xs font-normal text-slate-400">Platformă multi-organizație</span></h1><nav id="sidebar-nav" class="mt-6 space-y-1.5"></nav></div><div class="p-4 border-t border-slate-800 flex items-center justify-between gap-2"><div class="flex items-center gap-3 min-w-0"><img id="user-avatar" class="w-9 h-9 rounded-full border border-slate-700 object-cover" src="${user?.avatar||user?.avatar_url||''}" alt=""><div class="min-w-0"><p id="user-display-name" class="font-semibold truncate">${user?.display_name||user?.username||'Utilizator'}</p><p id="user-role" class="text-xs text-emerald-400 truncate">${user?.role||'Rol Discord'}</p></div></div><button type="button" data-shared-logout class="text-xs text-rose-400">Logout</button></div>`;document.body.prepend(sidebar);document.body.classList.add('panel-shared-sidebar-page');navigation=sidebar.querySelector('nav');return {navigation};
+        const user=typeof getUser==='function'?getUser():null,sidebar=document.createElement('aside');sidebar.id='panel-shared-sidebar';sidebar.className='panel-responsive-sidebar bg-slate-900 border-r border-slate-800 flex flex-col justify-between';sidebar.innerHTML=`<div class="p-6 overflow-y-auto"><h1 class="text-xl font-bold"><img src="img/logo-192.png" alt="Logo Panel" class="panel-brand-logo"></h1><nav id="sidebar-nav" class="mt-6 space-y-1.5"></nav></div><div class="p-4 border-t border-slate-800 flex items-center justify-between gap-2"><div class="flex items-center gap-3 min-w-0"><img id="user-avatar" class="w-9 h-9 rounded-full border border-slate-700 object-cover" src="${user?.avatar||user?.avatar_url||''}" alt=""><div class="min-w-0"><p id="user-display-name" class="font-semibold truncate">${user?.display_name||user?.username||'Utilizator'}</p><p id="user-role" class="text-xs text-emerald-400 truncate">${user?.role||'Rol Discord'}</p></div></div><button type="button" data-shared-logout class="text-xs text-rose-400">Logout</button></div>`;document.body.prepend(sidebar);document.body.classList.add('panel-shared-sidebar-page');navigation=sidebar.querySelector('nav');return {navigation};
     }
 
     function normalizePageHeader(currentPage) {
@@ -622,8 +622,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const header = document.querySelector('header');
     if (!active || !header || header.querySelector('[data-organization-switcher]')) return;
     document.title = `${document.title.split(' · ')[0]} · ${active.name}`;
-    const sidebarTitle = document.querySelector('aside h1');
-    if (sidebarTitle) sidebarTitle.innerHTML = `${String(active.name).replace(/[&<>"']/g, '')}<span class="block text-xs font-normal text-slate-400">Platformă multi-organizație</span>`;
     const wrapper = document.createElement('div');
     wrapper.dataset.organizationSwitcher = 'true';
     wrapper.style.cssText = 'margin-left:auto;display:flex;align-items:center;gap:8px;padding-left:12px';
