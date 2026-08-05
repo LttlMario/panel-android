@@ -51,7 +51,8 @@ Deno.serve(async (req) => {
       if (error) throw error;
     }
     if (body.webhook_routes) {
-      const { error } = await db.from('organization_settings').upsert({ organization_id: id, webhook_routes: body.webhook_routes }, { onConflict: 'organization_id' });
+      const { data: currentSettings } = await db.from('organization_settings').select('discord_client_id,panel_public_url').eq('organization_id', id).maybeSingle();
+      const { error } = await db.from('organization_settings').upsert({ organization_id: id, discord_client_id: String(body.discord_client_id || currentSettings?.discord_client_id || ''), panel_public_url: String(body.panel_public_url || currentSettings?.panel_public_url || ''), webhook_routes: body.webhook_routes, updated_at: new Date().toISOString() }, { onConflict: 'organization_id' });
       if (error) throw error;
     }
     if (body.page_permissions) {
