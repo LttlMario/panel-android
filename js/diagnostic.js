@@ -11,10 +11,11 @@
 
   async function invokeDiagnostics() {
     const token = localStorage.getItem('discord_access_token');
+    const sessionToken = await window.ensurePanelSession();
     if (!token) throw new Error('Sesiunea Discord lipsește. Autentifică-te din nou.');
     const response = await fetch(`${config.url}/functions/v1/manage-discord-config`, {
       method: 'POST',
-      headers: { 'Content-Type':'application/json', apikey:config.publishableKey, Authorization:`Bearer ${config.publishableKey}` },
+      headers: { 'Content-Type':'application/json', apikey:config.publishableKey, Authorization:`Bearer ${config.publishableKey}`, 'x-panel-session':sessionToken },
       body: JSON.stringify({ action:'diagnose', access_token:token }),
     });
     let result = {};
@@ -24,7 +25,14 @@
       setTimeout(() => { location.href = 'login.html'; }, 900);
     }
     if (!response.ok) throw new Error(result.error || `Verificarea a eșuat (HTTP ${response.status}).`);
-    return result;
+    const localChecks = [];
+    const level = Number(user.permission_level || 0);
+    const selectedPages = Array.isArray(user.allowed_pages) ? user.allowed_pages : [];
+    localChecks.push({ category:'Acces local', label:'Rol numeric', status:level > 0 || selectedPages.length ? 'ok' : 'warning', message:`Nivel ${level || 0}; ${selectedPages.length} pagini selectate.`, duration_ms:0 });
+    const expiresAt = Number(localStorage.getItem('panel_session_expires_at') || 0);
+    localChecks.push({ category:'Sesiune', label:'Sesiune panel', status:expiresAt > Date.now() ? 'ok' : 'warning', message:expiresAt > Date.now() ? `Expiră la ${new Date(expiresAt).toLocaleString('ro-RO')}.` : 'Sesiunea lipsește sau a expirat.', duration_ms:0 });
+    localChecks.push({ category:'Conectivitate', label:'Browser online', status:navigator.onLine ? 'ok' : 'error', message:navigator.onLine ? 'Conexiunea browserului este activă.' : 'Browserul raportează lipsă de conexiune.', duration_ms:0 });
+    return { ...result, results:[...(Array.isArray(result.results) ? result.results : []), ...localChecks] };
   }
 
   function render(data) {

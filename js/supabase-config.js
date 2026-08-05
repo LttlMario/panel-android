@@ -23,6 +23,23 @@ window.getActiveOrganizationId = function getActiveOrganizationId() {
     return window.getActiveOrganization()?.id || JSON.parse(localStorage.getItem('discord_user') || 'null')?.organization_id || null;
 };
 
+window.ensurePanelSession = async function ensurePanelSession() {
+    const current = localStorage.getItem('panel_session_token');
+    const expires = Number(localStorage.getItem('panel_session_expires_at') || 0);
+    if (current && expires > Date.now() + 30_000) return current;
+    const discordToken = localStorage.getItem('discord_access_token');
+    if (!discordToken) throw new Error('Sesiunea Discord lipsește. Autentifică-te din nou.');
+    const response = await fetch(`${window.PANEL_SUPABASE_CONFIG.url}/functions/v1/sync-discord-role`, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: window.PANEL_SUPABASE_CONFIG.publishableKey, Authorization: `Bearer ${window.PANEL_SUPABASE_CONFIG.publishableKey}` }, body: JSON.stringify({ access_token: discordToken, organization_id: window.getActiveOrganizationId?.() }) });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || 'Sesiunea panel nu a putut fi reînnoită.');
+    localStorage.setItem('discord_user', JSON.stringify(result.user));
+    localStorage.setItem('panel_session_token', result.session_token);
+    localStorage.setItem('panel_session_expires_at', result.expires_at);
+    localStorage.setItem('panel_active_organization', JSON.stringify(result.active_organization));
+    localStorage.setItem('panel_organizations', JSON.stringify(result.organizations || []));
+    return result.session_token;
+};
+
 // Atașează sesiunea numai apelurilor Edge Functions ale proiectului curent.
 const panelNativeFetch = window.fetch.bind(window);
 window.fetch = function panelAuthenticatedFetch(input, init = {}) {

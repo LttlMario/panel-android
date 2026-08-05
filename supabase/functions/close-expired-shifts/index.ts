@@ -51,6 +51,9 @@ Deno.serve(async (request) => {
 
   const supabase = createClient(Deno.env.get('SUPABASE_URL')!, getSecretKey());
   const now = new Date();
+  const { data: accessRows } = await supabase.from('app_settings').select('organization_id,value').eq('key', 'organization_access');
+  const expiredOrganizationIds = (accessRows || []).filter((row: any) => row.value?.expires_at && Date.parse(String(row.value.expires_at)) <= now.getTime()).map((row: any) => row.organization_id);
+  if (expiredOrganizationIds.length) await supabase.from('organizations').update({ active: false, updated_at: now.toISOString() }).in('id', expiredOrganizationIds);
   // Preluăm atât turele care trebuie închise, cât și turele închise automat
   // pentru care confirmarea Discord nu a fost încă livrată.
   const { data: expired, error } = await supabase.from('shifts').select('*')
@@ -60,9 +63,9 @@ Deno.serve(async (request) => {
 
   if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders });
 
-  const { data: panelConfig } = await supabase.from('discord_panel_config').select('pontaj_webhook_url').eq('id', 1).maybeSingle();
-  const webhookUrl = panelConfig?.pontaj_webhook_url || Deno.env.get('DISCORD_PONTAJ_WEBHOOK_URL');
   const results = await Promise.all((expired ?? []).map(async (shift) => {
+    const { data: panelConfig } = await supabase.from('organization_settings').select('webhook_routes,pontaj_webhook_url').eq('organization_id', shift.organization_id).maybeSingle();
+    const webhookUrl = panelConfig?.webhook_routes?.pontaj?.url || panelConfig?.pontaj_webhook_url || Deno.env.get('DISCORD_PONTAJ_WEBHOOK_URL');
     const alreadyClosed = shift.status === 'auto_completed';
     const finishedAt = alreadyClosed && shift.ended_at ? new Date(String(shift.ended_at)) : now;
     const seconds = alreadyClosed && Number(shift.duration_ms) >= 0
@@ -126,4 +129,3 @@ Deno.serve(async (request) => {
     pending_notifications: results.filter((item) => item.closed && !item.notified).length,
   }), { headers: corsHeaders });
 });
-

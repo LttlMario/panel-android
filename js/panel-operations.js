@@ -10,7 +10,8 @@
   async function invoke(action, payload = {}) {
     const accessToken=localStorage.getItem('discord_access_token');
     if(!accessToken) throw new Error('Sesiunea Discord lipsește. Autentifică-te din nou.');
-    const response=await fetch(`${SUPABASE_URL}/functions/v1/manage-admin-center`,{method:'POST',headers:{'Content-Type':'application/json',apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`},body:JSON.stringify({action,access_token:accessToken,...payload})});
+    const sessionToken=await window.ensurePanelSession();
+    const response=await fetch(`${SUPABASE_URL}/functions/v1/manage-admin-center`,{method:'POST',headers:{'Content-Type':'application/json',apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'x-panel-session':sessionToken||''},body:JSON.stringify({action,access_token:accessToken,...payload})});
     const data=await response.json().catch(()=>({})); if(!response.ok) throw new Error(data.error||`HTTP ${response.status}`); return data;
   }
   window.panelAdminInvoke = invoke;

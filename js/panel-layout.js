@@ -1,5 +1,14 @@
 // Navigare comună pentru panel: meniu mobil și sidebar pliabil pe desktop.
+if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetchFixed) { window.__organizationFetchFixed = true; const _fetch = window.fetch; window.fetch = (url, options = {}) => { if (String(url).includes('/functions/v1/manage-organizations')) options.headers = { ...(options.headers || {}), 'x-panel-session': localStorage.getItem('panel_session_token') || '' }; return _fetch(url, options); }; }
 (() => {
+    if (window.location.pathname.endsWith('vouchere.html')) {
+        const script = document.createElement('script'); script.src = 'js/voucher-admin-controls.js?v=3.3.1'; document.head.appendChild(script);
+        const listScript = document.createElement('script'); listScript.src = 'js/voucher-list-controls.js?v=3.3.1'; document.head.appendChild(listScript);
+        const enhancementScript = document.createElement('script'); enhancementScript.src = 'js/voucher-enhancements.js?v=4.0.0'; document.head.appendChild(enhancementScript);
+    }
+    if (window.location.pathname.endsWith('administrare-organizatie.html')) { const script=document.createElement('script');script.src='js/organization-status.js';document.head.appendChild(script); }
+    if (window.location.pathname.endsWith('organizatii.html')) { const requestScript=document.createElement('script');requestScript.src='js/organization-request-fix.js';document.head.appendChild(requestScript); const script=document.createElement('script');script.src='js/package-limits.js';document.head.appendChild(script); }
+    if (window.location.pathname.endsWith('admin.html')) { const script=document.createElement('script');script.src='js/admin-organization-center.js';document.head.appendChild(script); }
     const COLLAPSE_KEY = 'panel_sidebar_collapsed';
 
     function addStyles() {
@@ -11,8 +20,10 @@
             #panel-shared-sidebar, #panel-shared-sidebar *, #panel-mobile-menu, #panel-mobile-menu * { box-sizing:border-box; }
             #panel-shared-sidebar { display:flex !important; flex-direction:column !important; justify-content:space-between !important; overflow:visible; border-right:1px solid #1e293b !important; background:#0f172a !important; color:#e2e8f0 !important; font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif !important; text-align:left !important; }
             #panel-shared-sidebar > div:first-child { flex:1 1 auto; min-height:0; padding:24px !important; overflow-y:auto !important; }
-            #panel-shared-sidebar > div:last-child { flex:0 0 auto; min-height:78px; padding:16px !important; display:flex !important; align-items:center !important; justify-content:space-between !important; gap:8px !important; border-top:1px solid #1e293b !important; background:#0f172a !important; }
-            #panel-shared-sidebar h1 { display:flex !important; align-items:center !important; justify-content:center !important; margin:0 !important; padding:0 !important; text-align:center !important; }
+            #panel-shared-sidebar > div:first-child > img { display:none !important; }
+            [data-voucher-extra-fields] label:has(#draft-banner), #draft-config-banner { display:none !important; }
+            #panel-shared-sidebar > div:last-child { display:none !important; }
+            #panel-shared-sidebar h1 { display:flex !important; align-items:center !important; justify-content:flex-start !important; gap:10px !important; margin:0 !important; padding:0 !important; text-align:left !important; }
             #panel-shared-sidebar h1 > span { display:block; min-width:0; }
             #panel-shared-sidebar h1 > span > span { display:block !important; margin-top:3px; color:#94a3b8 !important; font-size:12px !important; font-weight:400 !important; line-height:1.3 !important; }
             #panel-shared-sidebar nav { display:flex !important; flex-direction:column !important; gap:6px !important; margin:24px 0 0 !important; padding:0 !important; }
@@ -30,6 +41,13 @@
             #panel-mobile-menu .nav-link { min-height:44px; margin:0 !important; padding:11px 14px !important; display:flex; align-items:center !important; gap:12px !important; border-radius:12px !important; color:#cbd5e1 !important; font-size:14px !important; line-height:1.25 !important; text-decoration:none !important; }
             .panel-brand-logo { width:64px; height:64px; flex:none; border-radius:18px; object-fit:cover; border:1px solid #334155; box-shadow:0 8px 24px rgba(0,0,0,.32); }
             .panel-brand-heading { display:flex; align-items:center; justify-content:center; }
+            .panel-org-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#f8fafc; font-size:14px; font-weight:700; }
+            .panel-sidebar-profile { display:flex; align-items:center; gap:9px; margin:14px 0 4px; padding:10px; border:1px solid #263952; border-radius:12px; background:#111d31; }
+            .panel-sidebar-profile > img { width:34px; height:34px; flex:0 0 34px; border-radius:999px; object-fit:cover; border:1px solid #334155; }
+            .panel-sidebar-profile strong,.panel-sidebar-profile small { display:block; max-width:125px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+            .panel-sidebar-profile strong { color:#f8fafc; font-size:12px; }
+            .panel-sidebar-profile small { color:#34d399; font-size:10px; margin-top:2px; }
+            .panel-sidebar-profile button { margin-left:auto; padding:6px 7px; border:1px solid rgba(244,63,94,.3); border-radius:7px; color:#fb7185; background:rgba(244,63,94,.08); font-size:10px; }
             body.panel-shared-sidebar-page { padding-left:18rem; }
             body.panel-shared-sidebar-page > #panel-shared-sidebar { position:fixed; inset:0 auto 0 0; z-index:60; width:18rem; }
             .panel-responsive-sidebar.fixed { position:fixed; }
@@ -131,6 +149,7 @@
     function setup() {
         const currentPage = window.location.pathname.split('/').pop() || 'index.html';
         addStyles();
+        document.querySelector('#banner')?.closest('label')?.style.setProperty('display','none');
         ensureBrandAssets();
         ensureGlobalFooter();
         setupAssistantWidget(currentPage);
@@ -139,6 +158,7 @@
         const sidebar = navigation?.closest('aside');
         if (!navigation || !sidebar) return;
         ensureBrandLogo(sidebar);
+        sidebar.querySelector(':scope > div:last-child')?.remove();
 
         ensureCommunityLink(navigation, currentPage);
         normalizeNavigation(navigation, currentPage);
@@ -211,11 +231,15 @@
         const closeMobileMenu = () => {
             mobileMenu.classList.remove('is-open');
             backdrop.style.display = 'none';
+            document.body.classList.remove('panel-mobile-menu-open');
+            document.body.style.overflow = '';
         };
         const openMobileMenu = () => {
             document.dispatchEvent(new CustomEvent('panel:mobile-menu-open'));
             mobileMenu.classList.add('is-open');
             backdrop.style.display = 'block';
+            document.body.classList.add('panel-mobile-menu-open');
+            document.body.style.overflow = 'hidden';
         };
         mobileMenu.querySelector('button').addEventListener('click', closeMobileMenu);
         backdrop.addEventListener('click', closeMobileMenu);
@@ -248,13 +272,15 @@
         if(!heading)return;
         heading.classList.add('panel-brand-heading');
         heading.replaceChildren();
-        const logo=document.createElement('img');logo.className='panel-brand-logo';logo.src='img/logo-192.png';logo.alt='Logo Panel';heading.append(logo);
+        const organization=typeof getActiveOrganization==='function'?getActiveOrganization():null;
+        heading.innerHTML=`<img class="panel-brand-logo" src="${organization?.logo_url||'img/logo-192.png'}" alt="${organization?.name||'Organizație'}" onerror="this.src='img/logo-192.png'"><span class="panel-org-name">${organization?.name||'Organizație'}</span>`;
+        if(!sidebar.querySelector('.panel-sidebar-profile')){const user=typeof getUser==='function'?getUser():null;const profile=document.createElement('div');profile.className='panel-sidebar-profile';profile.innerHTML=`<img id="user-avatar" src="${user?.avatar||user?.avatar_url||''}" alt=""><div><strong id="user-display-name">${user?.display_name||user?.username||'Utilizator'}</strong><small id="user-role">${user?.role||'Rol'}</small></div><button type="button" id="logout-btn" data-sidebar-logout>Logout</button>`;heading.after(profile);profile.querySelector('[data-sidebar-logout]')?.addEventListener('click',()=>typeof logout==='function'?logout():location.replace('login.html'));}
     }
 
     function ensureSharedSidebar() {
         let navigation=document.getElementById('sidebar-nav')||document.querySelector('aside nav');
         if (navigation) return {navigation};
-        const user=typeof getUser==='function'?getUser():null,sidebar=document.createElement('aside');sidebar.id='panel-shared-sidebar';sidebar.className='panel-responsive-sidebar bg-slate-900 border-r border-slate-800 flex flex-col justify-between';sidebar.innerHTML=`<div class="p-6 overflow-y-auto"><h1 class="text-xl font-bold"><img src="img/logo-192.png" alt="Logo Panel" class="panel-brand-logo"></h1><nav id="sidebar-nav" class="mt-6 space-y-1.5"></nav></div><div class="p-4 border-t border-slate-800 flex items-center justify-between gap-2"><div class="flex items-center gap-3 min-w-0"><img id="user-avatar" class="w-9 h-9 rounded-full border border-slate-700 object-cover" src="${user?.avatar||user?.avatar_url||''}" alt=""><div class="min-w-0"><p id="user-display-name" class="font-semibold truncate">${user?.display_name||user?.username||'Utilizator'}</p><p id="user-role" class="text-xs text-emerald-400 truncate">${user?.role||'Rol Discord'}</p></div></div><button type="button" data-shared-logout class="text-xs text-rose-400">Logout</button></div>`;document.body.prepend(sidebar);document.body.classList.add('panel-shared-sidebar-page');navigation=sidebar.querySelector('nav');return {navigation};
+        const user=typeof getUser==='function'?getUser():null,organization=typeof getActiveOrganization==='function'?getActiveOrganization():null,sidebar=document.createElement('aside');sidebar.id='panel-shared-sidebar';sidebar.className='panel-responsive-sidebar bg-slate-900 border-r border-slate-800 flex flex-col justify-between';sidebar.innerHTML=`<div class="p-6 overflow-y-auto"><h1 class="text-xl font-bold"><img src="${organization?.logo_url||'img/logo-192.png'}" alt="${organization?.name||'Logo Panel'}" class="panel-brand-logo" onerror="this.src='img/logo-192.png'"></h1>${organization?.banner_url?`<img src="${organization.banner_url}" alt="" class="mt-3 h-16 w-full rounded-lg object-cover" onerror="this.remove()">`:''}<nav id="sidebar-nav" class="mt-6 space-y-1.5"></nav></div><div class="p-4 border-t border-slate-800 flex items-center justify-between gap-2"><div class="flex items-center gap-3 min-w-0"><img id="user-avatar" class="w-9 h-9 rounded-full border border-slate-700 object-cover" src="${user?.avatar||user?.avatar_url||''}" alt=""><div class="min-w-0"><p id="user-display-name" class="font-semibold truncate">${user?.display_name||user?.username||'Utilizator'}</p><p id="user-role" class="text-xs text-emerald-400 truncate">${user?.role||'Rol Discord'}</p></div></div><button type="button" data-shared-logout class="text-xs text-rose-400">Logout</button></div>`;document.body.prepend(sidebar);document.body.classList.add('panel-shared-sidebar-page');navigation=sidebar.querySelector('nav');return {navigation};
     }
 
     function normalizePageHeader(currentPage) {
@@ -288,6 +314,17 @@
             if (!header) return;
             header.className = 'panel-global-header';
             header.innerHTML = '<div class="panel-global-title"><h2>🔨 Craft Mechanics</h2><p>Galerie capturi, rețete și echipamente.</p></div>';
+            return;
+        }
+        if (currentPage === 'bucatarie.html') {
+            if (!header) return;
+            header.className = 'panel-global-header';
+            header.innerHTML = `
+                <div class="panel-global-title">
+                    <h2>🍳 Bucătărie</h2>
+                    <p>Galerie capturi, rețete și echipamente pentru bucătărie.</p>
+                </div>
+            `;
             return;
         }
 
@@ -337,6 +374,7 @@
 
     function normalizeNavigation(navigation, currentPage) {
         const links = [
+            ['calculator.html', 1, '🧮', 'Calculator'],
             ['index.html', 1, '📊', 'Dashboard'],
             ['anunturi.html', 1, '📣', 'Anunțuri & Sondaje'],
             ['pontaj.html', 1, '⏱️', 'Pontaj'],
@@ -344,6 +382,7 @@
             ['contracte.html', 4, '📜', 'Contracte'],
             ['calculatorilegal.html', 3, '🧮', 'Calculator Ilegal'],
             ['craftmecanics.html', 1, '🔨', 'Craft Mecanics'],
+            ['bucatarie.html', 1, '🍳', 'Bucătărie'],
             ['locatiiilegale.html', 3, '🗺️', 'Locații Ilegale'],
             ['marketplace.html', 1, '🛒', 'Marketplace'],
             ['marketplace-ilegal.html', 3, '🚨', 'Black Market'],
@@ -356,6 +395,12 @@
             ['admin.html', 7, '👑', 'Panou Admin']
         ];
 
+        const calculatorIndex = links.findIndex(([href]) => href === 'calculator.html');
+        if (calculatorIndex >= 0) {
+            const [calculatorLink] = links.splice(calculatorIndex, 1);
+            const kitchenIndex = links.findIndex(([href]) => href === 'bucatarie.html');
+            links.splice(kitchenIndex >= 0 ? kitchenIndex + 1 : links.length, 0, calculatorLink);
+        }
         navigation.innerHTML = links.filter(([href]) => href !== 'edit.html').map(([href, role, icon, label]) => {
             const active = currentPage === href;
             const stateClasses = active
@@ -364,6 +409,9 @@
             return `<a href="${href}" data-role="${role}" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl transition text-sm ${stateClasses}"><span>${icon}</span><span>${label}</span></a>`;
         }).join('');
 
+        if (typeof isPlatformAdmin === 'function' && isPlatformAdmin() && !navigation.querySelector('a[href="vouchere.html"]')) {
+            const voucher = document.createElement('a'); voucher.href='vouchere.html'; voucher.dataset.role='99'; voucher.className='nav-link flex items-center space-x-3 px-4 py-3 rounded-xl transition text-sm text-slate-300 hover:bg-slate-800'; voucher.innerHTML='<span>🎟️</span><span>Vouchere</span>'; navigation.appendChild(voucher);
+        }
         if (typeof isPlatformAdmin === 'function' && isPlatformAdmin()) {
             navigation.querySelectorAll('a.nav-link').forEach((link) => { link.style.display = ''; });
         }
@@ -459,8 +507,9 @@
 
     async function setupAssistantWidget(currentPage) {
         const allowedPages = new Set([
+            'calculator.html',
             'index.html', 'pontaj.html', 'cereri.html', 'rapoarte.html', 'contracte.html', 'admin.html',
-            'calculatorilegal.html', 'craftmecanics.html', 'locatiiilegale.html', 'marketplace.html',
+            'calculatorilegal.html', 'craftmecanics.html', 'bucatarie.html', 'locatiiilegale.html', 'marketplace.html',
             'marketplace-ilegal.html', 'logs.html', 'diagnostic.html', 'organizatii.html'
         ]);
         if (!allowedPages.has(currentPage) || document.getElementById('panel-assistant-widget')) return;
@@ -614,6 +663,28 @@
     else setup();
 })();
 
+// În pagina Anunțuri, toate citirile comunității sunt limitate la organizația activă.
+if (window.location.pathname.endsWith('anunturi.html') && window.createPanelSupabaseClient) {
+    const createClient = window.createPanelSupabaseClient;
+    window.createPanelSupabaseClient = function scopedPanelSupabaseClient() {
+        const client = createClient();
+        const originalFrom = client.from.bind(client);
+        const scopedTables = new Set(['community_posts', 'community_poll_options', 'community_reactions', 'community_poll_votes']);
+        client.from = (table) => {
+            const query = originalFrom(table);
+            if (!scopedTables.has(table)) return query;
+            const organizationId = window.getActiveOrganizationId?.() || '00000000-0000-0000-0000-000000000000';
+            const originalSelect = query.select.bind(query);
+            query.select = (...args) => originalSelect(...args).eq('organization_id', organizationId);
+            return query;
+        };
+        return client;
+    };
+}
+
+// Compatibilitate pentru pagini mai vechi care apelează explicit această funcție.
+window.initializePanelLayout = window.initializePanelLayout || (() => undefined);
+
 // Selector multi-organizație. Este afișat numai după o autentificare validă.
 document.addEventListener('DOMContentLoaded', () => {
     let organizations = [];
@@ -652,6 +723,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('panel_session_expires_at', result.expires_at);
                 localStorage.setItem('panel_active_organization', JSON.stringify(result.active_organization));
                 localStorage.setItem('panel_organizations', JSON.stringify(result.organizations || []));
+                localStorage.setItem('panel_role_synced_at', String(Date.now()));
                 location.reload();
             } catch (error) {
                 alert(error instanceof Error ? error.message : 'Schimbarea organizației a eșuat.');

@@ -1,9 +1,17 @@
-node_modules/
-www/
-android/.gradle/
-android/local.properties
-android/app/build/
-*.jks
-*.keystore
+# Secrete locale
+*.local.env
 .env
-.tools/
+.env.*
+!.env.example
+!*.example.env
+
+# Supabase local
+.supabase/
+supabase/.temp/
+node_modules/
+
+# Sistem/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

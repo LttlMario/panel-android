@@ -1,8 +1,8 @@
 # Mutarea panelului pe un proiect Supabase nou
 
 1. Creează proiectul Supabase și copiază `Project URL`, cheia `publishable/anon` și cheia secretă `service_role`.
-2. Rulează `setup-complet-baza-de-date.sql` în SQL Editor.
-3. Rulează `migrations/20260729_repair_shift_autoclose_and_names.sql`.
+2. Rulează `MASTER-MULTI-ORGANIZATIE.sql` în SQL Editor.
+3. Publică funcțiile din folderul `functions` conform `INSTALARE-MASTER-MULTI-ORGANIZATIE.md`.
 4. Instalează Supabase CLI, autentifică-te și rulează:
 
    `powershell -ExecutionPolicy Bypass -File supabase/deploy-functions.ps1 -ProjectRef ID_PROIECT`

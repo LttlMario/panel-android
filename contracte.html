@@ -5,28 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contracte - Workforce Management</title>
     <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        slate: {
-                            850: '#1e293b',
-                            900: '#0f172a',
-                            950: '#020617',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <link rel="stylesheet" href="css/tailwind.css">
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/permissions.js"></script>
-    <script src="js/panel-layout.js?v=3.2.10"></script>
+    <script src="js/panel-layout.js"></script>
     <style>
         .paste-zone {
             position: relative;
@@ -93,7 +77,7 @@
         }
     </style>
     <link rel="stylesheet" href="css/global-footer.css">
-    <script src="js/project-version.js?v=3.2.10"></script>
+    <script src="js/project-version.js"></script>
     <link rel="icon" href="img/favicon.ico">
     <link rel="apple-touch-icon" href="img/logo-180.png">
 </head>
@@ -158,7 +142,7 @@
             <!-- Profil Utilizator Dinamic -->
             <div class="p-4 border-t border-slate-800 bg-slate-900/50 flex items-center justify-between">
                 <div class="flex items-center space-x-3 overflow-hidden">
-                    <img id="user-avatar" src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f468-200d-1f4bb.png" class="w-10 h-10 rounded-full border border-slate-700 flex-shrink-0 object-cover" alt="Avatar">
+                    <img id="user-avatar" src="img/logo-192.png" class="w-10 h-10 rounded-full border border-slate-700 flex-shrink-0 object-cover" alt="Avatar">
                     <div class="truncate">
                         <p id="user-display-name" class="text-sm font-semibold text-slate-200 truncate">Se încarcă...</p>
                         <p id="user-role" class="text-xs text-emerald-400 truncate">Mecanic</p>
@@ -200,7 +184,7 @@
                         <p class="rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-3 text-xs text-indigo-200">Câmpurile sunt cerute numai dacă apar în șablonul contractului organizației.</p>
                         <div class="space-y-1.5">
                             <label class="text-xs font-medium text-slate-400">Companie</label>
-                            <input type="text" id="company" value="Familia Es Todo SRL" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-indigo-500">
+                            <input type="text" id="company" value="S.C. Familia Es Todo S.R.L." class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-indigo-500">
                         </div>
 
                         <div class="space-y-1.5">
@@ -426,14 +410,12 @@ Semnătură:`;
             try {
                 const organization = window.getActiveOrganization?.();
                 const db = window.createPanelSupabaseClient?.();
-                document.getElementById('company').value = 'Familia Es Todo SRL';
+                if (organization?.name) document.getElementById('company').value = organization.name;
                 if (db) {
-                    const { data } = await db.from('app_settings').select('key,value').in('key', ['contract_template','contract_mode']);
-                    const settings = Object.fromEntries((data || []).map(item => [item.key, item.value]));
-                    const custom = settings.contract_template;
-                    const useStandardContract = settings.contract_mode === 'standard';
-                    if (!useStandardContract && custom?.template) contractTemplate = String(custom.template);
-                    if (!useStandardContract && custom?.title) {
+                    const { data } = await db.from('app_settings').select('value').eq('key', 'contract_template').maybeSingle();
+                    const custom = data?.value;
+                    if (custom?.template) contractTemplate = String(custom.template);
+                    if (custom?.title) {
                         document.getElementById('contractSystemTitle').textContent = `${custom.title} — ${organization?.name || ''}`;
                         document.getElementById('contractFormTitle').textContent = custom.title;
                         document.getElementById('contractPreviewTitle').textContent = `Previzualizare: ${custom.title}`;
@@ -545,16 +527,14 @@ Semnătură:`;
             const schedule = document.getElementById('schedule').value.trim();
             const startDate = document.getElementById('startDate').value.trim();
 
-            const addressForContract = address || 'adresă nespecificată';
-            const optionalFields = new Set(['ADDRESS']);
             const values={COMPANY:company,ADDRESS:address,MANAGER:manager,EMPLOYEE_NAME:employeeName,CNP:cnp,PHONE:phone,POSITION:position,SALARY:salary,PROGRAM:schedule,START_DATE:startDate,CONTRACT_NUMBER:currentContractNumber};
             const labels={COMPANY:'Companie',ADDRESS:'Adresă',MANAGER:'Manager',EMPLOYEE_NAME:'Nume angajat',CNP:'CNP',PHONE:'Telefon',POSITION:'Funcție',SALARY:'Salariu',PROGRAM:'Program',START_DATE:'Data începerii',CONTRACT_NUMBER:'Număr contract'};
-            const missing=Object.entries(values).filter(([key,value])=>!optionalFields.has(key)&&contractTemplate.includes(`{{${key}}}`)&&!String(value).trim()).map(([key])=>labels[key]);if(missing.length){alert(`Completează câmpurile folosite de acest contract: ${missing.join(', ')}.`);return}
+            const missing=Object.entries(values).filter(([key,value])=>contractTemplate.includes(`{{${key}}}`)&&!String(value).trim()).map(([key])=>labels[key]);if(missing.length){alert(`Completează câmpurile folosite de acest contract: ${missing.join(', ')}.`);return}
 
             let finalContract = contractTemplate
                 .replaceAll('{{CONTRACT_NUMBER}}', currentContractNumber)
                 .replaceAll('{{COMPANY}}', company)
-                .replaceAll('{{ADDRESS}}', addressForContract)
+                .replaceAll('{{ADDRESS}}', address)
                 .replaceAll('{{MANAGER}}', manager)
                 .replaceAll('{{EMPLOYEE_NAME}}', employeeName)
                 .replaceAll('{{CNP}}', cnp)
@@ -590,7 +570,7 @@ Semnătură:`;
 
         function resetForm() {
             document.getElementById('contractForm').reset();
-            document.getElementById('company').value = 'Familia Es Todo SRL';
+            document.getElementById('company').value = 'S.C. Familia Es Todo S.R.L.';
             document.getElementById('salary').value = '100 lei/lună';
             document.getElementById('schedule').value = '20:00-23:00';
             const displayNameToRender = currentUser.display_name || currentUser.username || '';
@@ -774,6 +754,6 @@ Semnătură:`;
         }
     </script>
     <script src="js/discord-notifications.js"></script>
-    <script src="js/global-footer.js?v=3.2.10"></script>
+    <script src="js/global-footer.js"></script>
 </body>
 </html>

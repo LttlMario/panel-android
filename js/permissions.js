@@ -1,22 +1,10 @@
 // Permisiuni comune pentru toate paginile panelului.
-const Roles = {
-    GUEST: 0,
-    EL_MECANICO: 1,
-    MECANIC: 1,
-    SEF_MECANIC: 2,
-    LA_FAMILIA: 3,
-    MANAGER: 4,
-    COLIDER: 5,
-    LIDER: 6,
-    COORDONATOR: 7,
-
-    // Roluri tehnice cu acces administrativ maxim
-    ADMIN: 7,
-    OWNER: 7
-};
+const Roles = { GUEST: 0 };
 
 const PagePermissions = {
-    // Nivel 1: El Mecanico și toate rolurile superioare
+    // Paginile normale cer doar un grad numeric valid.
+    "bucatarie.html": 1,
+    "calculator.html": 1,
     'index.html': 1,
     'asistent.html': 1,
     'pontaj.html': 1,
@@ -24,30 +12,25 @@ const PagePermissions = {
     'craftmecanics.html': 1,
     'marketplace.html': 1,
     'anunturi.html': 1,
+    'calculatorilegal.html': 1,
+    'locatiiilegale.html': 1,
+    'marketplace-ilegal.html': 1,
+    'rapoarte.html': 1,
+    'contracte.html': 1
+}
+const AdministrativePages = new Set(['admin.html','logs.html','diagnostic.html','discord-configurare.html','organizatii.html','vouchere.html','developer.html','administrare-organizatie.html']);
 
-    // Nivel 3: La Familia și rolurile superioare
-    'calculatorilegal.html': 3,
-    'locatiiilegale.html': 3,
-    'marketplace-ilegal.html': 3,
-
-    // Nivel 4: Manager și rolurile superioare
-    'rapoarte.html': 4,
-    'contracte.html': 4,
-
-    // Nivel 7: numai Coordonator, Admin și Owner
-    'logs.html': 7,
-    'admin.html': 7,
-    'diagnostic.html': 7,
-    'discord-configurare.html': 7,
-    'organizatii.html': 7
-};
-const AdministrativePages = new Set(['admin.html','logs.html','diagnostic.html','discord-configurare.html','organizatii.html','developer.html']);
-
-function isPlatformAdmin() { return getUser()?.platform_admin === true; }
-function isLeaderRole() { const role=String(getUser()?.role||getUser()?.default_role||'').trim().toLocaleLowerCase('ro-RO');return role==='lider'||role==='leader'; }
+function isPlatformAdmin() {
+    const user = getUser();
+    if (!user) return false;
+    // Nivelul 99 este administrator platformă, indiferent de eticheta Discord.
+    return user.platform_admin === true || Number(user.permission_level) >= 99;
+}
 function canAccessPage(page) {
     if (AdministrativePages.has(page)) return isPlatformAdmin();
-    if (isPlatformAdmin() || isLeaderRole()) return true;
+    if (isPlatformAdmin()) return true;
+    // Gradul numeric maxim al organizației are acces la toate paginile normale.
+    if (getRole() >= 99) return true;
     const user=getUser();
     if (user?.page_permissions_configured === true) return Array.isArray(user.allowed_pages) && user.allowed_pages.includes(page);
     const required=PagePermissions[page];return required===undefined||getRole()>=required;
@@ -71,100 +54,15 @@ function getUser() {
 
 function getRole() {
     const user = getUser();
+    if (!user) return 0;
+    if (user.platform_admin === true) return 100;
+    const numericRole = Number(user.permission_level ?? user.role ?? user.default_role);
+    return Number.isInteger(numericRole) && numericRole >= 0 && numericRole <= 99 ? numericRole : 0;
+}
 
-    if (!user) {
-        return 0;
-    }
-
-    // Denumirea rolului poate fi personalizată pentru orice server.
-    // Nivelul numeric primit la autentificare rămâne sursa sigură de acces.
-    const savedPermissionLevel = Number(user.permission_level);
-    if (Number.isInteger(savedPermissionLevel) && savedPermissionLevel >= 0 && savedPermissionLevel <= 7) {
-        return savedPermissionLevel;
-    }
-
-    const roleValue = user.role || user.default_role;
-
-    // Acceptă rolurile salvate direct ca numere.
-    if (typeof roleValue === 'number') {
-        return roleValue >= 0 && roleValue <= 7
-            ? roleValue
-            : 0;
-    }
-
-    if (typeof roleValue !== 'string') {
-        return 0;
-    }
-
-    const role = roleValue
-        .trim()
-        .toLocaleLowerCase('ro-RO');
-
-    // Acceptă și nivelurile salvate ca text: "1", "2", ..., "7".
-    const numericRole = Number(role);
-
-    if (Number.isInteger(numericRole)) {
-        return numericRole >= 0 && numericRole <= 7
-            ? numericRole
-            : 0;
-    }
-
-    // Roluri tehnice cu acces administrativ maxim.
-    if (
-        role === 'admin' ||
-        role === 'administrator' ||
-        role === 'owner'
-    ) {
-        return Roles.ADMIN;
-    }
-
-    // Coordonatorul este rolul principal administrativ.
-    if (role.includes('coordonator')) {
-        return Roles.COORDONATOR;
-    }
-
-    /*
-     * Verificarea CoLider trebuie făcută înainte de Lider,
-     * deoarece textul "colider" conține și cuvântul "lider".
-     */
-    if (
-        role === 'colider' ||
-        role === 'co-lider' ||
-        role === 'co lider'
-    ) {
-        return Roles.COLIDER;
-    }
-
-    if (role === 'lider') {
-        return Roles.LIDER;
-    }
-
-    if (role.includes('manager')) {
-        return Roles.MANAGER;
-    }
-
-    if (
-        role.includes('la familia') ||
-        role === 'familia'
-    ) {
-        return Roles.LA_FAMILIA;
-    }
-
-    if (
-        role.includes('sef mecanic') ||
-        role.includes('șef mecanic')
-    ) {
-        return Roles.SEF_MECANIC;
-    }
-
-    if (
-        role.includes('el mecanico') ||
-        role.includes('mecanic')
-    ) {
-        return Roles.EL_MECANICO;
-    }
-
-    return 0;
+function hasSelectedPages() {
+    const pages = getUser()?.allowed_pages;
+    return Array.isArray(pages) && pages.length > 0;
 }
 
 function hasRole(requiredRole) {
@@ -177,9 +75,11 @@ function logout() {
     window.location.replace('login.html');
 }
 
-async function refreshLegacyPlatformAdmin() {
+async function refreshLegacyPlatformAdmin(force = false) {
     const token=localStorage.getItem('discord_access_token'),config=window.PANEL_SUPABASE_CONFIG;if(!token||!config)return false;
-    try{const response=await fetch(`${config.url}/functions/v1/sync-discord-role`,{method:'POST',headers:{'Content-Type':'application/json',apikey:config.publishableKey,Authorization:`Bearer ${config.publishableKey}`},body:JSON.stringify({access_token:token,organization_id:window.getActiveOrganizationId?.()})}),result=await response.json();if(!response.ok)throw new Error(result.error||'Resincronizarea a eșuat.');localStorage.setItem('discord_user',JSON.stringify(result.user));localStorage.setItem('user_role',result.user.role);localStorage.setItem('panel_session_token',result.session_token);localStorage.setItem('panel_session_expires_at',result.expires_at);localStorage.setItem('panel_active_organization',JSON.stringify(result.active_organization));localStorage.setItem('panel_organizations',JSON.stringify(result.organizations||[]));return result.user?.platform_admin===true}catch(error){console.error(error);return false}
+    const cachedAt=Number(localStorage.getItem('panel_role_synced_at')||0);
+    if (!force && Date.now()-cachedAt < 5*60*1000 && getUser()?.permission_level !== undefined) return isPlatformAdmin();
+    try{const response=await fetch(`${config.url}/functions/v1/sync-discord-role`,{method:'POST',headers:{'Content-Type':'application/json',apikey:config.publishableKey,Authorization:`Bearer ${config.publishableKey}`},body:JSON.stringify({access_token:token,organization_id:window.getActiveOrganizationId?.()})}),result=await response.json();if(!response.ok)throw new Error(result.error||'Resincronizarea a eșuat.');localStorage.setItem('discord_user',JSON.stringify(result.user));localStorage.setItem('user_role',result.user.role);localStorage.setItem('panel_session_token',result.session_token);localStorage.setItem('panel_session_expires_at',result.expires_at);localStorage.setItem('panel_active_organization',JSON.stringify(result.active_organization));localStorage.setItem('panel_organizations',JSON.stringify(result.organizations||[]));localStorage.setItem('panel_role_synced_at',String(Date.now()));return result.user?.platform_admin===true}catch(error){console.error(error);return false}
 }
 
 (function initSecurityMiddleware() {
@@ -202,8 +102,9 @@ async function refreshLegacyPlatformAdmin() {
             return;
         }
 
-        if (getRole() > Roles.GUEST) {
-            window.location.href = 'index.html';
+        if (getRole() > Roles.GUEST || hasSelectedPages()) {
+            const allowed = getUser()?.allowed_pages;
+            window.location.replace(Array.isArray(allowed) && allowed.length ? allowed[0] : 'index.html');
             return;
         }
 
@@ -221,8 +122,23 @@ async function refreshLegacyPlatformAdmin() {
 
     const currentRole = getRole();
 
-    // Vizitatorii merg doar pe guest.html
-    if (currentRole === Roles.GUEST && currentPage !== 'guest.html') {
+    // Dacă sesiunea locală este veche/incompletă, resincronizăm Discord înainte
+    // să trimitem utilizatorul în guest. Astfel un rol real nu rămâne blocat ca vizitator.
+    if (currentRole === Roles.GUEST && !hasSelectedPages() && currentPage !== 'guest.html') {
+        const token = localStorage.getItem('discord_access_token');
+        if (token && !sessionStorage.getItem('panel_role_sync_attempted')) {
+            sessionStorage.setItem('panel_role_sync_attempted', '1');
+            document.documentElement.style.visibility = 'hidden';
+            refreshLegacyPlatformAdmin().then(() => {
+                sessionStorage.removeItem('panel_role_sync_attempted');
+                window.location.reload();
+            }).catch(() => {
+                sessionStorage.removeItem('panel_role_sync_attempted');
+                document.documentElement.style.visibility = '';
+                window.location.href = 'guest.html';
+            });
+            return;
+        }
         window.location.href = 'guest.html';
         return;
     }
@@ -242,6 +158,16 @@ async function refreshLegacyPlatformAdmin() {
         document.addEventListener('DOMContentLoaded', () => {
             applyRoleBasedVisibility(getRole());
         });
+        // Verifică periodic schimbările de rol fără logout/login.
+        if (!window.__panelRoleWatcher) {
+            window.__panelRoleWatcher = window.setInterval(async () => {
+                if (document.visibilityState === 'hidden' || !localStorage.getItem('discord_access_token') || window.location.pathname.endsWith('organizatii.html')) return;
+                const before = localStorage.getItem(STORAGE_KEY) || '';
+                await refreshLegacyPlatformAdmin(true);
+                const after = localStorage.getItem(STORAGE_KEY) || '';
+                if (before && after && before !== after) window.location.reload();
+            }, 1800000);
+        }
     })();
 
 function applyRoleBasedVisibility(userRole) {

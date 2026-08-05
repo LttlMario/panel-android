@@ -83,10 +83,15 @@
         }
     }
 
+    function selectedPages() {
+        const pages = currentUser()?.allowed_pages;
+        return Array.isArray(pages) ? pages : [];
+    }
+
     function create(options = {}) {
         const role = currentRole();
         const user = currentUser();
-        if (!user || role < 1) return null;
+        if (!user || (role < 1 && selectedPages().length === 0)) return null;
 
         const permissions = pagePermissions();
         const entries = [];
@@ -112,7 +117,8 @@
             try {
                 const target = new URL(String(page), window.location.href);
                 if (target.origin !== window.location.origin) return false;
-                return requiredRoleForPage(target.pathname.split('/').pop()) <= role;
+            const page = target.pathname.split('/').pop();
+            return selectedPages().includes(page) || requiredRoleForPage(page) <= role;
             } catch (_error) {
                 return false;
             }

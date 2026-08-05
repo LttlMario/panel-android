@@ -13,7 +13,7 @@ Versiunea se publică numai după backup. Migrarea păstrează datele actuale ș
 
 În SQL Editor rulează, o singură dată:
 
-`supabase/migrations/20260801_multi_organization_platform.sql`
+`supabase/MASTER-MULTI-ORGANIZATIE.sql`
 
 Migrarea creează organizațiile, serverele, mapările normalizate, membrii, sesiunile securizate și politicile RLS. Datele existente primesc automat organizația inițială.
 
