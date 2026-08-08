@@ -36,6 +36,11 @@
 
         host.insertAdjacentHTML('beforeend', headerHTML);
 
+        const mobileBtn = host.querySelector('#global-header-mobile-btn');
+        if (mobileBtn && typeof window.toggleMobileMenu === 'function') {
+            mobileBtn.addEventListener('click', window.toggleMobileMenu);
+        }
+
         const searchInput = host.querySelector('#global-search');
         if (searchInput && typeof window.renderGlobalSearch === 'function') {
             searchInput.addEventListener('input', window.renderGlobalSearch);

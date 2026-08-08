@@ -1,4 +1,4 @@
-import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, rm } from 'node:fs/promises';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -11,9 +11,10 @@ const sourceFiles = [
   'cereri.html', 'changelog.html', 'contracte.html', 'craftmecanics.html',
   'creare-organizatie-voucher.html', 'descarca-android.html', 'developer.html',
   'diagnostic.html', 'discord-configurare.html', 'guest.html', 'index.html',
-  'locatiiilegale.html', 'login.html', 'logs.html', 'marketplace-ilegal.html',
+  'instalare-ios.html', 'locatiiilegale.html', 'login.html', 'logs.html', 'marketplace-ilegal.html',
   'marketplace.html', 'organizatii.html', 'pontaj.html', 'rapoarte.html',
-  'status-live.html', 'thank-you.html', 'vouchere.html',
+  'service-worker.js', 'status-live.html', 'thank-you.html', 'vouchere.html',
+  'manifest.webmanifest',
   'MIGRARE-MULTI-ORGANIZATIE.md'
 ];
 
@@ -24,22 +25,11 @@ for (const directory of sourceDirectories) {
   await cp(join(root, directory), join(output, directory), { recursive: true });
 }
 
-const mobileHead = [
-  '    <meta name="theme-color" content="#020617">',
-  '    <meta name="mobile-web-app-capable" content="yes">',
-  '    <link rel="stylesheet" href="css/mobile-app.css">',
-  '    <script src="js/mobile-runtime.js"></script>'
-].join('\n');
-
 for (const file of sourceFiles) {
   const sourcePath = join(root, file);
   const destinationPath = join(output, file);
-  let html = await readFile(sourcePath, 'utf8');
-  if (!html.includes('mobile-runtime.js')) {
-    html = html.replace('</head>', `${mobileHead}\n</head>`);
-  }
   await mkdir(dirname(destinationPath), { recursive: true });
-  await writeFile(destinationPath, html, 'utf8');
+  await cp(sourcePath, destinationPath);
 }
 
 console.log(`Aplicatia web a fost generata in ${relative(root, output)}.`);

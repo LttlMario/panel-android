@@ -46,7 +46,7 @@ if (request.method === 'OPTIONS') {
   if (request.method !== 'POST') {
     return reply(
       {
-        error: 'Metodă invalidă.'
+        error: 'MetodÄƒ invalidÄƒ.'
       },
       405
     );
@@ -262,7 +262,7 @@ if (request.method === 'OPTIONS') {
     if (!session?.organization_id) {
 
       throw new Error(
-        'OrganizaÈ›ia activă nu a fost identificată.'
+        'OrganizaÈ›ia activÄƒ nu a fost identificatÄƒ.'
       );
 
     }
@@ -282,7 +282,7 @@ if (request.method === 'OPTIONS') {
     ) {
 
       throw new Error(
-        'OrganizaÈ›ia solicitată nu corespunde organizaÈ›iei active.'
+        'OrganizaÈ›ia solicitatÄƒ nu corespunde organizaÈ›iei active.'
       );
 
     }
@@ -323,7 +323,7 @@ if (request.method === 'OPTIONS') {
       if (!organizationConfig) {
 
       throw new Error(
-        'ConfiguraÈ›ia organizaÈ›iei active nu a fost găsită.'
+        'ConfiguraÈ›ia organizaÈ›iei active nu a fost gÄƒsitÄƒ.'
       );
 
       }
@@ -416,7 +416,7 @@ if (finalChannel === 'requests_organization') {
     if (!sent.ok) {
 
       throw new Error(
-        `Discord a răspuns cu HTTP ${sent.status}.`
+        `Discord a rÄƒspuns cu HTTP ${sent.status}.`
       );
 
     }
@@ -502,7 +502,7 @@ if (finalChannel === 'requests_departments') {
     if (!sent.ok) {
 
       throw new Error(
-        `Discord a răspuns cu HTTP ${sent.status}.`
+        `Discord a rÄƒspuns cu HTTP ${sent.status}.`
       );
 
     }
@@ -529,7 +529,7 @@ if (finalChannel === 'requests_departments') {
 
 
 /*
- * Restul canalelor răm�n exact cum erau
+ * Restul canalelor rÄƒmÃ¢n exact cum erau
  */
 
 let webhooks: string[];
@@ -583,7 +583,7 @@ if (finalChannel === 'illegal_marketplace') {
   if (!webhooks.length) {
 
       throw new Error(
-        `Webhook-ul ${finalChannel} nu este configurat pentru organizaÈ›ia activă.`
+        `Webhook-ul ${finalChannel} nu este configurat pentru organizaÈ›ia activÄƒ.`
       );
 
   }
@@ -649,7 +649,7 @@ if (finalChannel === 'illegal_marketplace') {
       if (!sent.ok) {
 
         throw new Error(
-          `Discord a răspuns cu HTTP ${sent.status}.`
+          `Discord a rÄƒspuns cu HTTP ${sent.status}.`
         );
 
       }
@@ -694,7 +694,7 @@ if (finalChannel === 'illegal_marketplace') {
         error:
           error instanceof Error
             ? error.message
-            : 'Eroare necunoscută.'
+            : 'Eroare necunoscutÄƒ.'
       },
       400
     );

@@ -35,6 +35,10 @@
     if (explicit) return explicit;
 
     const main = document.querySelector("main");
+    const iosDevice = document.documentElement.classList.contains('panel-ios-device')
+      || /iPad|iPhone|iPod/i.test(navigator.userAgent)
+      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (iosDevice && main) return main;
     if (document.querySelector('#panel-shared-sidebar, #panel-header-host')) return document.body;
     if (main) {
       const style = getComputedStyle(main);
@@ -120,6 +124,7 @@
     </div>
     `;
 
+    footer.querySelector('.pgf-android-badge')?.remove();
     const standalone = window.matchMedia?.('(display-mode: standalone)')?.matches || navigator.standalone === true;
     const iosDevice = /iPad|iPhone|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     if (standalone && iosDevice) footer.classList.add('pgf-ios-installed');

@@ -1,6 +1,6 @@
 # Configurare și mutare Discord
 
-Acesta este punctul unic de verificare c�nd panelul este mutat pe alt server Discord.
+Acesta este punctul unic de verificare când panelul este mutat pe alt server Discord.
 
 ## 1. Aplicația Discord și autentificarea
 
