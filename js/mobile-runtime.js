@@ -16,10 +16,18 @@
   const secureKeyPrefix = 'capacitor-storage_';
   const consumedCallbackKey = 'panel_consumed_oauth_callback';
   const pendingOAuthTokenKey = 'panel_pending_discord_oauth_token';
-  const currentAppVersion = '1.0.10';
+  const currentAppVersion = '1.0.11';
   const updateCheckKey = 'panel_android_update_last_check';
   const updateLaterKey = 'panel_android_update_later';
   let secureReady = false;
+
+  window.openPanelDiscordOAuth = async (url) => {
+    if (browser?.open) {
+      await browser.open({ url });
+      return;
+    }
+    window.location.assign(url);
+  };
 
   const versionParts = (value) => String(value || '').replace(/^v/i, '').split(/[^0-9]+/).filter(Boolean).slice(0, 3).map(Number);
   const isNewerVersion = (candidate, current) => {
@@ -104,7 +112,7 @@
     }
   } : null;
 
-  function handleDiscordCallback(url) {
+  async function handleDiscordCallback(url) {
     if (!url || !url.startsWith(discordRedirect)) return false;
     if (sessionStorage.getItem(consumedCallbackKey) === url) return false;
     const hashIndex = url.indexOf('#');
@@ -119,7 +127,7 @@
     if (!accessToken) return false;
     sessionStorage.setItem(consumedCallbackKey, url);
     sessionStorage.setItem(pendingOAuthTokenKey, accessToken);
-    browser?.close?.().catch(() => {});
+    if (browser?.close) await browser.close().catch(() => {});
     // Tokenul rămâne doar în memoria sesiunii, nu în URL. Parametrul forțează
     // reîncărcarea paginii chiar dacă WebView-ul se află deja pe login.html.
     window.location.replace('login.html?oauth_return=1');

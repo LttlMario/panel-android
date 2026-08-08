@@ -250,7 +250,12 @@
                 state: oauthState
             });
 
-            window.location.href = `https://discord.com/oauth2/authorize?${authParams.toString()}`;
+            const authorizationUrl = `https://discord.com/oauth2/authorize?${authParams.toString()}`;
+            if (typeof window.openPanelDiscordOAuth === 'function') {
+                await window.openPanelDiscordOAuth(authorizationUrl);
+            } else {
+                window.location.href = authorizationUrl;
+            }
         });
 
 document.addEventListener('DOMContentLoaded', async () => {

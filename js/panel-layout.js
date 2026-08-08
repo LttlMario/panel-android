@@ -229,7 +229,24 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         });
 
         // Dashboard are deja propriul meniu mobil, păstrat pentru compatibilitate.
-        if (document.getElementById('mobile-menu')) return;
+        // Îl forțăm în starea închisă la fiecare deschidere/revenire în aplicație.
+        if (document.getElementById('mobile-menu')) {
+            const legacyMenu = document.getElementById('mobile-menu');
+            const legacyBackdrop = document.getElementById('mobile-menu-backdrop');
+            const closeLegacyMenu = () => {
+                legacyMenu.classList.add('-translate-x-full');
+                legacyMenu.classList.remove('is-open', 'open');
+                legacyBackdrop?.classList.add('hidden');
+                legacyBackdrop?.classList.remove('is-open', 'open');
+            };
+            closeLegacyMenu();
+            window.closePanelMobileMenu = closeLegacyMenu;
+            window.addEventListener('pageshow', closeLegacyMenu);
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') closeLegacyMenu();
+            });
+            return;
+        }
 
         const backdrop = document.createElement('div');
         backdrop.id = 'panel-mobile-backdrop';
@@ -248,6 +265,7 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             document.body.classList.remove('panel-mobile-menu-open');
             document.body.style.overflow = '';
         };
+        window.closePanelMobileMenu = closeMobileMenu;
         const openMobileMenu = () => {
             document.dispatchEvent(new CustomEvent('panel:mobile-menu-open'));
             mobileMenu.classList.add('is-open');
@@ -255,9 +273,21 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             document.body.classList.add('panel-mobile-menu-open');
             document.body.style.overflow = 'hidden';
         };
+        window.toggleMobileMenu = () => {
+            if (mobileMenu.classList.contains('is-open')) closeMobileMenu();
+            else openMobileMenu();
+        };
+        document.addEventListener('click', (event) => {
+            if (event.target.closest?.('#global-header-mobile-btn')) window.toggleMobileMenu();
+        });
         mobileMenu.querySelector('button').addEventListener('click', closeMobileMenu);
         backdrop.addEventListener('click', closeMobileMenu);
         mobileNav.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeMobileMenu));
+        closeMobileMenu();
+        window.addEventListener('pageshow', closeMobileMenu);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') closeMobileMenu();
+        });
 
         const header = document.querySelector('header');
         if (header) {
