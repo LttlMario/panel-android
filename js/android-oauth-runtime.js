@@ -4,6 +4,7 @@
 
   // Android folosește același shell mobil ca panel-ios.
   document.documentElement.classList.add('panel-ios-device');
+  document.documentElement.classList.add('panel-android-device');
 
   const app = capacitor.Plugins?.App;
   const browser = capacitor.Plugins?.Browser;
