@@ -3,6 +3,9 @@ import { requirePanelSession } from '../_shared/panel-session.ts';
 
 const headers = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization,apikey,content-type,x-panel-session', 'Content-Type': 'application/json' };
 const reply = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers });
+const randomToken = () => { const bytes = crypto.getRandomValues(new Uint8Array(32)); return btoa(String.fromCharCode(...bytes)).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', ''); };
+const sha256 = async (value: string) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)))).map((byte) => byte.toString(16).padStart(2, '0')).join('');
+const avatarUrl = (id: string, avatar?: string | null) => avatar ? `https://cdn.discordapp.com/avatars/${id}/${avatar}.png` : 'https://panel-management.netlify.app//img/logo-192.png';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers });
@@ -15,6 +18,7 @@ Deno.serve(async (req) => {
     if (!id) return reply({ error: 'Organizația este obligatorie.' }, 400);
 
     let actor = { discord_id: '', permission_level: 0 };
+    let verifiedDiscordUser: any = null;
     const sessionToken = String(req.headers.get('x-panel-session') || '').trim();
     if (sessionToken) {
       const session = await requirePanelSession(db, req, 7, true);
@@ -26,10 +30,10 @@ Deno.serve(async (req) => {
       if (!accessToken || !voucherCode) return reply({ error: 'Sesiunea securizată a panelului lipsește. Autentifică-te din nou.' }, 401);
       const userResponse = await fetch('https://discord.com/api/v10/users/@me', { headers: { Authorization: `Bearer ${accessToken}` } });
       if (!userResponse.ok) return reply({ error: 'Sesiunea Discord a expirat.' }, 401);
-      const user = await userResponse.json();
+      verifiedDiscordUser = await userResponse.json();
       const { data: voucher } = await db.from('organization_vouchers').select('redeemed_by_discord_id,redeemed_organization_id').eq('code', voucherCode).maybeSingle();
-      if (!voucher || String(voucher.redeemed_by_discord_id) !== String(user.id) || String(voucher.redeemed_organization_id) !== id) return reply({ error: 'Voucherul nu corespunde organizației Draft.' }, 403);
-      actor = { discord_id: String(user.id), permission_level: 99 };
+      if (!voucher || String(voucher.redeemed_by_discord_id) !== String(verifiedDiscordUser.id) || String(voucher.redeemed_organization_id) !== id) return reply({ error: 'Voucherul nu corespunde organizației Draft.' }, 403);
+      actor = { discord_id: String(verifiedDiscordUser.id), permission_level: 99 };
     }
 
     const { data: organization } = await db.from('organizations').select('lifecycle_status').eq('id', id).maybeSingle();
@@ -50,6 +54,21 @@ Deno.serve(async (req) => {
     const { error: statusError } = await db.from('organizations').update({ lifecycle_status: 'active', active: true, updated_at: new Date().toISOString() }).eq('id', id);
     if (statusError) throw statusError;
     await db.from('organization_lifecycle_events').insert({ organization_id: id, event_type: 'organization_finalized', actor_discord_id: actor.discord_id, details: { package: premium ? 'full' : 'standard', role_count: roles.length } });
+
+    if (verifiedDiscordUser) {
+      const { data: activeOrganization } = await db.from('organizations').select('id,name,slug,address,logo_url,banner_url,active').eq('id', id).single();
+      const displayName = String(verifiedDiscordUser.global_name || verifiedDiscordUser.username || 'Administrator');
+      const userData = { discord_id: actor.discord_id, username: String(verifiedDiscordUser.username || displayName), display_name: displayName, email: verifiedDiscordUser.email || null, avatar: avatarUrl(actor.discord_id, verifiedDiscordUser.avatar), avatar_url: avatarUrl(actor.discord_id, verifiedDiscordUser.avatar), role: 'Administrator', default_role: 'Administrator' };
+      const { data: savedUser, error: userError } = await db.from('users').upsert(userData, { onConflict: 'discord_id' }).select('*').single();
+      if (userError) throw userError;
+      const { error: memberError } = await db.from('organization_members').upsert({ organization_id: id, discord_id: actor.discord_id, panel_role: 'Administrator', permission_level: 99, active: true, last_verified_at: new Date().toISOString() }, { onConflict: 'organization_id,discord_id' });
+      if (memberError) throw memberError;
+      const sessionToken = randomToken();
+      const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString();
+      const { error: sessionError } = await db.from('panel_sessions').insert({ token_hash: await sha256(sessionToken), organization_id: id, discord_id: actor.discord_id, permission_level: 99, is_platform_admin: false, expires_at: expiresAt });
+      if (sessionError) throw sessionError;
+      return reply({ ok: true, status: 'active', role_count: roles.length, session_token: sessionToken, expires_at: expiresAt, user: { ...savedUser, role: 'Administrator', default_role: 'Administrator', permission_level: 99, platform_admin: false, organization_id: id, organization: activeOrganization }, active_organization: { ...activeOrganization, permission_level: 99, panel_role: 'Administrator', allowed_pages: [] }, organizations: [{ ...activeOrganization, permission_level: 99, panel_role: 'Administrator', allowed_pages: [] }] });
+    }
     return reply({ ok: true, status: 'active', role_count: roles.length });
   } catch (error) {
     return reply({ error: error instanceof Error ? error.message : 'Eroare internă.' }, 500);

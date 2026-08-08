@@ -21,97 +21,10 @@
     <!-- Containerul Principal -->
     <div class="flex h-screen w-full overflow-hidden">
 
-        <!-- Sidebar / Meniu Lateral -->
-        <aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col justify-between hidden md:flex">
-            <div class="p-6 overflow-y-auto max-h-[calc(100vh-5rem)]">
-                <h1 class="text-xl font-bold text-slate-100 tracking-tight">Panel<span class="block text-xs font-normal text-slate-400 mt-0.5">by Little Mario</span></h1>
-
-                <nav class="mt-6 space-y-1.5" id="sidebar-nav">
-                    <a href="index.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>📊</span>
-                        <span>Dashboard</span>
-                    </a>
-                    <a href="pontaj.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>⏱️</span>
-                        <span>Pontaj</span>
-                    </a>
-                    <a href="cereri.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>📋</span>
-                        <span>Cereri / Absențe</span>
-                    </a>
-                    <a href="rapoarte.html" data-role="4" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>📈</span>
-                        <span>Rapoarte</span>
-                    </a>
-                    <a href="contracte.html" data-role="4" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>📜</span>
-                        <span>Contracte</span>
-                    </a>
-                    <a href="admin.html" data-role="7" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>👑</span>
-                        <span>Panou Admin</span>
-                    </a>
-                    <a href="calculatorilegal.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🧮</span>
-                        <span>Calculator Ilegal</span>
-                    </a>
-                    <a href="craftmecanics.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🔨</span>
-                        <span>Craft Mecanics</span>
-                    </a>
-                    <a href="locatiiilegale.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🗺️</span>
-                        <span>Locații Ilegale</span>
-                    </a>
-                    <a href="marketplace.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🛒</span>
-                        <span>Marketplace</span>
-                    </a>
-                    <a href="marketplace-ilegal.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🚨</span>
-                        <span>Black Market</span>
-                    </a>
-                </nav>
-            </div>
-
-            <!-- Profil Utilizator Dinamic -->
-            <div class="p-4 border-t border-slate-800 bg-slate-900/50 flex items-center justify-between">
-                <div class="flex items-center space-x-3 overflow-hidden">
-                    <img id="user-avatar" src="img/logo-192.png" class="w-10 h-10 rounded-full border border-slate-700 flex-shrink-0 object-cover" alt="Avatar">
-                    <div class="truncate">
-                        <p id="user-display-name" class="text-sm font-semibold text-slate-200 truncate">Se încarcă...</p>
-                        <p id="user-role" class="text-xs text-emerald-400 truncate">Mecanic</p>
-                    </div>
-                </div>
-                <button id="logout-btn" title="Ieșire din cont" class="flex items-center space-x-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl transition cursor-pointer text-xs font-medium">
-                    <span></span>
-                    <span>Logout</span>
-                </button>
-            </div>
-        </aside>
-
-        <!-- Meniu mobil: conținutul este preluat automat din meniul desktop. -->
-        <div id="mobile-menu-backdrop" class="hidden fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-40 md:hidden" onclick="closeMobileMenu()"></div>
-        <aside id="mobile-menu" class="fixed inset-y-0 left-0 z-50 w-72 max-w-[86vw] -translate-x-full bg-slate-900 border-r border-slate-800 shadow-2xl transition-transform duration-200 md:hidden">
-            <div class="h-16 px-5 border-b border-slate-800 flex items-center justify-between">
-                <div><p class="font-bold text-slate-100">Panel</p><p class="text-[10px] text-slate-400">Meniu navigare</p></div>
-                <button type="button" onclick="closeMobileMenu()" class="w-9 h-9 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-lg" aria-label="Închide meniul">×</button>
-            </div>
-            <nav id="mobile-sidebar-nav" class="p-4 space-y-1.5 overflow-y-auto h-[calc(100vh-4rem)]"></nav>
-        </aside>
 
         <!-- Conținut Principal Dashboard -->
         <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
-            <header class="min-h-16 border-b border-slate-800 bg-slate-900/50 backdrop-blur px-4 py-3 md:px-8 flex flex-wrap items-center gap-3 sticky top-0 z-20">
-                <div class="flex items-center gap-3 shrink-0">
-                    <button type="button" onclick="toggleMobileMenu()" class="md:hidden w-10 h-10 rounded-xl border border-slate-700 bg-slate-950 text-slate-200 hover:bg-slate-800 text-lg" aria-label="Deschide meniul">☰</button>
-                    <h2 class="text-lg font-bold text-slate-100">Dashboard</h2>
-                </div>
-                <div class="relative w-full sm:ml-auto sm:w-80 md:w-full md:max-w-md">
-                    <input id="global-search" type="search" autocomplete="off" placeholder="Caută: Runflat, pontaj, învoire..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-100 outline-none focus:border-emerald-500" oninput="renderGlobalSearch()" onfocus="renderGlobalSearch()">
-                    <div id="global-search-results" class="hidden absolute right-0 mt-2 w-full max-h-80 overflow-y-auto rounded-xl border border-slate-700 bg-slate-900 shadow-2xl z-50"></div>
-                </div>
-            </header>
+
 
             <div class="p-4 md:p-8 space-y-6 max-w-7xl mx-auto w-full">
                 <div class="bg-slate-900 border border-slate-800 p-4 sm:p-6 rounded-2xl shadow-lg space-y-4">
@@ -194,52 +107,15 @@
         const supabaseClient = window.createPanelSupabaseClient();
         let dashboardActiveShift = null;
         let dashboardTimer = null;
-        let completedTodaySeconds = 0;
         let dashboardAllShifts = [];
-        let globalSearchEntries = [
-            { title: 'Pontaj', detail: 'Pornește, oprește sau pune pauză turei.', href: 'pontaj.html', role: 1, type: 'Pagină' },
-            { title: 'Cereri și învoiri', detail: 'Trimite și urmărește o învoire.', href: 'cereri.html', role: 1, type: 'Pagină' },
-            { title: 'Craft Mecanics', detail: 'Echipamente, piese și rețete de crafting.', href: 'craftmecanics.html', role: 1, type: 'Pagină' },
-            { title: 'Marketplace', detail: 'Anunțuri și servicii disponibile.', href: 'marketplace.html', role: 1, type: 'Pagină' },
-            { title: 'Calculator Ilegal', detail: 'Calcule și rețete pentru activități ilegale.', href: 'calculatorilegal.html', role: 3, type: 'Pagină' },
-            { title: 'Locații ilegale', detail: 'Hartă cu locații, resurse și puncte importante.', href: 'locatiiilegale.html', role: 3, type: 'Pagină' },
-            { title: 'Rapoarte', detail: 'Pontaje active și rapoarte pentru manageri.', href: 'rapoarte.html', role: 4, type: 'Pagină' },
-            { title: 'Contracte', detail: 'Generator de contracte.', href: 'contracte.html', role: 4, type: 'Pagină' },
-            { title: 'Loguri', detail: 'Jurnalul de activitate al proiectului.', href: 'logs.html', role: 5, type: 'Pagină' },
-            { title: 'Panou Admin', detail: 'Setări și administrarea utilizatorilor.', href: 'admin.html', role: 5, type: 'Pagină' }
-        ];
+        let dashboardRealtimeChannel = null;
+        let dashboardDiscordId = null;
+        let dashboardRefreshTimeout = null;
 
-        function toggleMobileMenu() {
-            const menu = document.getElementById('mobile-menu');
-            const backdrop = document.getElementById('mobile-menu-backdrop');
-            menu.classList.remove('-translate-x-full');
-            backdrop.classList.remove('hidden');
-        }
 
-        function closeMobileMenu() {
-            const menu = document.getElementById('mobile-menu');
-            const backdrop = document.getElementById('mobile-menu-backdrop');
-            menu.classList.add('-translate-x-full');
-            backdrop.classList.add('hidden');
-        }
 
         document.addEventListener('DOMContentLoaded', async () => {
-            const currentPage = window.location.pathname.split("/").pop() || "index.html";
-            document.querySelectorAll('.nav-link').forEach(link => {
-                const linkHref = link.getAttribute('href');
-                if (linkHref === currentPage) {
-                    link.classList.remove('text-slate-300', 'hover:bg-slate-800');
-                    link.classList.add('bg-emerald-500/10', 'text-emerald-400', 'font-medium');
-                }
-            });
 
-            const desktopNav = document.getElementById('sidebar-nav');
-            const mobileNav = document.getElementById('mobile-sidebar-nav');
-            if (desktopNav && mobileNav) {
-                mobileNav.innerHTML = desktopNav.innerHTML;
-                mobileNav.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeMobileMenu));
-                if (typeof applyRoleBasedVisibility === 'function') applyRoleBasedVisibility(getRole());
-            }
 
             const cachedUser = localStorage.getItem('discord_user');
             if (!cachedUser) {
@@ -262,25 +138,67 @@
 
                 let activeUser = dbUser || localData;
 
-                const displayName = activeUser.display_name || activeUser.username || 'Mecanic';
-                const role = activeUser.role || activeUser.default_role || 'Mecanic';
-                const userAvatar = activeUser.avatar || 'img/logo-192.png';
 
-                document.getElementById('user-display-name').textContent = displayName;
-                document.getElementById('user-role').textContent = role;
-                document.getElementById('user-avatar').src = userAvatar;
-
-                const roleLower = role.toLowerCase();
-                const isPrivileged = roleLower.includes('sef') || roleLower.includes('șef') || roleLower.includes('manager') || roleLower.includes('admin') || roleLower.includes('owner');
-
-                if (isPrivileged) {
-                    const navLogs = document.getElementById('nav-logs');
-                    if (navLogs) navLogs.classList.remove('hidden');
-                }
 
                 localStorage.setItem('discord_user', JSON.stringify(activeUser));
+                function scheduleDashboardRefresh() {
+                    if (!dashboardDiscordId) return;
+
+                    clearTimeout(dashboardRefreshTimeout);
+
+                    dashboardRefreshTimeout = setTimeout(async () => {
+                        await loadMechanicDashboard(dashboardDiscordId);
+                    }, 150);
+                }
+
+                function startDashboardRealtime(discordId) {
+                    dashboardDiscordId = String(discordId || '').trim();
+
+                    if (!dashboardDiscordId) return;
+
+                    // Evităm abonamente duplicate.
+                    if (dashboardRealtimeChannel) {
+                        supabaseClient.removeChannel(dashboardRealtimeChannel);
+                        dashboardRealtimeChannel = null;
+                    }
+
+                    dashboardRealtimeChannel = supabaseClient
+                        .channel(`dashboard-personal-${dashboardDiscordId}`)
+                        .on(
+                            'postgres_changes',
+                            {
+                                event: '*',
+                                schema: 'public',
+                                table: 'shifts',
+                                filter: `discord_id=eq.${dashboardDiscordId}`
+                            },
+                            (payload) => {
+                                console.log('[Dashboard Realtime] shifts:', payload.eventType);
+                                scheduleDashboardRefresh();
+                            }
+                        )
+                        .on(
+                            'postgres_changes',
+                            {
+                                event: '*',
+                                schema: 'public',
+                                table: 'absences',
+                                filter: `discord_id=eq.${dashboardDiscordId}`
+                            },
+                            (payload) => {
+                                console.log('[Dashboard Realtime] absences:', payload.eventType);
+                                scheduleDashboardRefresh();
+                            }
+                        )
+                        .subscribe((status) => {
+                            console.log('[Dashboard Realtime]', status);
+                        });
+                }                
                 await loadMechanicDashboard(activeUser.discord_id);
-                loadGlobalSearchData();
+
+                startDashboardRealtime(activeUser.discord_id);
+
+ 
 
             } catch (err) {
                 console.error('Erore sesiune:', err);
@@ -288,60 +206,11 @@
                 return;
             }
 
-            const logoutBtn = document.getElementById('logout-btn');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', () => {
-                    localStorage.clear();
-                    window.location.href = 'login.html';
-                });
-            }
+
         });
 
-        function escapeSearchText(value) { return String(value || '').replace(/[&<>'"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[char])); }
+        
 
-        async function loadGlobalSearchData() {
-            const role = getRole();
-            const modules = [
-                { file: 'craftmecanics.html', role: 1, type: 'Craft' }, { file: 'pontaj.html', role: 1, type: 'Pontaj' },
-                { file: 'cereri.html', role: 1, type: 'Învoire' }, { file: 'marketplace.html', role: 1, type: 'Marketplace' },
-                { file: 'calculatorilegal.html', role: 3, type: 'Calculator' }, { file: 'locatiiilegale.html', role: 3, type: 'Locație' },
-                { file: 'marketplace-ilegal.html', role: 3, type: 'Black Market' }, { file: 'rapoarte.html', role: 4, type: 'Rapoarte' },
-                { file: 'contracte.html', role: 4, type: 'Contracte' }, { file: 'admin.html', role: 5, type: 'Admin' }, { file: 'logs.html', role: 5, type: 'Loguri' }
-            ].filter(module => module.role <= role);
-            await Promise.all(modules.map(async module => {
-                try {
-                    const markup = await (await fetch(module.file)).text();
-                    const page = new DOMParser().parseFromString(markup, 'text/html');
-                    const seen = new Set();
-                    page.querySelectorAll('[data-title], .gallery-card, h1, h2, h3, h4, label, button').forEach(element => {
-                        const title = (element.dataset.title || element.textContent || '').replace(/\s+/g, ' ').trim();
-                        const detail = (element.dataset.desc || element.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim();
-                        if (title.length < 3 || title.length > 100 || seen.has(title)) return;
-                        seen.add(title);
-                        const href = module.file === 'craftmecanics.html' ? `${module.file}?search=${encodeURIComponent(title)}` : module.file;
-                        globalSearchEntries.push({ title, detail: detail || `Secțiune din ${module.type}`, href, role: module.role, type: module.type });
-                    });
-                } catch (error) { console.warn(`Index indisponibil: ${module.file}`, error); }
-            }));
-            const databaseSources = [];
-            if (role >= 1) databaseSources.push(['marketplace', 1, 'Marketplace', row => ({ title: row.produse || row.nume, detail: `${row.tip_actiune || ''} · ${row.categorie || ''} · ${row.pret || ''}`, href: 'marketplace.html' })]);
-            if (role >= 3) databaseSources.push(['marketplace_ilegal', 3, 'Black Market', row => ({ title: row.produse || row.nume, detail: `${row.tip_actiune || ''} · ${row.categorie || ''} · ${row.pret || ''}`, href: 'marketplace-ilegal.html' })], ['illegal_locations', 3, 'Locație', row => ({ title: row.title, detail: `${row.description || ''} · Hartă: ${(row.map_key || '').toUpperCase()}`, href: `locatiiilegale.html?location=${encodeURIComponent(row.id)}` })]);
-            if (role >= 4) databaseSources.push(['users', 4, 'Personal', row => ({ title: row.display_name || row.username || row.discord_id, detail: `Rol: ${row.role || row.default_role || 'Mecanic'}`, href: 'rapoarte.html' })]);
-            await Promise.all(databaseSources.map(async ([table, requiredRole, type, format]) => {
-                try { const { data } = await supabaseClient.from(table).select('*').limit(300); (data || []).forEach(row => { const item = format(row); if (item.title) globalSearchEntries.push({ ...item, role: requiredRole, type }); }); } catch (error) { console.warn(`Date indisponibile: ${table}`, error); }
-            }));
-        }
-
-        function renderGlobalSearch() {
-            const input = document.getElementById('global-search');
-            const results = document.getElementById('global-search-results');
-            const query = input.value.trim().toLocaleLowerCase('ro-RO');
-            if (!query) { results.classList.add('hidden'); results.innerHTML = ''; return; }
-            const role = getRole();
-            const matches = globalSearchEntries.filter(item => item.role <= role && `${item.title} ${item.detail}`.toLocaleLowerCase('ro-RO').includes(query)).slice(0, 12);
-            results.classList.remove('hidden');
-            results.innerHTML = matches.length ? matches.map(item => `<a href="${item.href}" class="block px-4 py-3 border-b border-slate-800 last:border-0 hover:bg-slate-800 transition"><div class="flex justify-between gap-3"><span class="text-xs font-bold text-slate-100">${escapeSearchText(item.title)}</span><span class="text-[10px] text-emerald-400">${escapeSearchText(item.type)}</span></div><p class="text-[11px] text-slate-400 mt-1 truncate">${escapeSearchText(item.detail)}</p></a>`).join('') : '<p class="px-4 py-5 text-center text-xs text-slate-500">Niciun rezultat disponibil pentru rolul tău.</p>';
-        }
 
         function romanianToday() {
             const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Bucharest', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
@@ -377,12 +246,27 @@
         }
 
         function updateDashboardTimer() {
-            const active = dashboardActiveShift && ['active', 'paused'].includes(dashboardActiveShift.status);
-            const seconds = active ? workedSeconds(dashboardActiveShift) : 0;
-            document.getElementById('active-shift-timer').textContent = formatDashboardTime(seconds);
-            const totalPauseSeconds = dashboardAllShifts.reduce((sum, shift) => sum + pauseSecondsValue(shift), 0);
-            const pauseElement = document.getElementById('personal-pause-hours');
-            if (pauseElement) pauseElement.textContent = compactDuration(totalPauseSeconds);
+            const active =
+                dashboardActiveShift &&
+                ['active', 'paused'].includes(dashboardActiveShift.status);
+
+            const seconds = active
+                ? workedSeconds(dashboardActiveShift)
+                : 0;
+
+            const timerElement =
+                document.getElementById('active-shift-timer');
+
+            if (timerElement) {
+                timerElement.textContent =
+                    formatDashboardTime(seconds);
+            }
+
+            // Recalculăm statisticile personale folosind inclusiv
+            // timpul acumulat de tura activă.
+            if (dashboardAllShifts.length) {
+                renderPersonalStatistics(dashboardAllShifts);
+            }
         }
 
         function startOfRomanianWeek() {
@@ -449,7 +333,7 @@
                 dashboardAllShifts = historyResult.data || [];
                 renderPersonalStatistics(dashboardAllShifts);
                 dashboardActiveShift = shifts.find(shift => ['active', 'paused'].includes(shift.status)) || null;
-                completedTodaySeconds = shifts.filter(shift => !['active', 'paused'].includes(shift.status)).reduce((total, shift) => total + Number(shift.duration_ms || 0) / 1000, 0);
+                
 
                 const state = document.getElementById('dashboard-shift-state');
                 const detail = document.getElementById('dashboard-shift-detail');

@@ -6,12 +6,14 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const output = join(root, 'www');
 const sourceDirectories = ['css', 'img', 'js', 'supabase'];
 const sourceFiles = [
-  '403.html', 'admin.html', 'anunturi.html', 'asistent.html',
-  'calculatorilegal.html', 'cereri.html', 'changelog.html', 'contracte.html',
-  'craftmecanics.html', 'developer.html', 'diagnostic.html',
-  'discord-configurare.html', 'index.html', 'organizatii.html',
+  '403.html', 'admin.html', 'administrare-organizatie.html', 'anunturi.html',
+  'asistent.html', 'bucatarie.html', 'calculator.html', 'calculatorilegal.html',
+  'cereri.html', 'changelog.html', 'contracte.html', 'craftmecanics.html',
+  'creare-organizatie-voucher.html', 'descarca-android.html', 'developer.html',
+  'diagnostic.html', 'discord-configurare.html', 'guest.html', 'index.html',
   'locatiiilegale.html', 'login.html', 'logs.html', 'marketplace-ilegal.html',
-  'marketplace.html', 'pontaj.html', 'rapoarte.html', 'thank-you.html',
+  'marketplace.html', 'organizatii.html', 'pontaj.html', 'rapoarte.html',
+  'status-live.html', 'thank-you.html', 'vouchere.html',
   'MIGRARE-MULTI-ORGANIZATIE.md'
 ];
 

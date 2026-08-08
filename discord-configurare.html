@@ -268,12 +268,8 @@
     <link rel="apple-touch-icon" href="img/logo-180.png">
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex text-sm">
-  <aside class="w-72 bg-slate-900 border-r border-slate-800 flex-col justify-between hidden md:flex">
-    <div class="p-6 overflow-y-auto"><h1 class="text-xl font-bold">Panel<span class="block text-xs font-normal text-slate-400">by Little Mario</span></h1><nav id="sidebar-nav" class="mt-6 space-y-1.5"></nav></div>
-    <div class="p-4 border-t border-slate-800 bg-slate-900/50 flex items-center gap-3"><img id="user-avatar" class="w-10 h-10 rounded-full"><div class="min-w-0"><p id="user-display-name" class="font-semibold truncate">Coordonator</p><p id="user-role" class="text-xs text-emerald-400">Nivel 7</p></div></div>
-  </aside>
+
   <main class="flex-1 min-w-0">
-    <header class="min-h-16 border-b border-slate-800 bg-slate-900/50 px-5 md:px-8 flex items-center"><div><h2 class="text-lg font-black">Configurare Discord</h2><p class="text-xs text-slate-400">Mută panelul pe alt server fără să modifici manual fișierele principale.</p></div></header>
     <div class="w-full max-w-5xl mx-auto p-4 md:p-8">
       <form id="discord-setup-form" class="setup-form">
         <section class="setup-card"><h3>Proiect Supabase</h3><p>Acestea sunt singurele două valori publice folosite de toate paginile panelului. Generează fișierul și înlocuiește-l pe GitHub când muți baza de date.</p><div class="fields"><div class="field full"><label>Project URL</label><input id="supabase_public_url" required type="url" placeholder="https://proiect.supabase.co"></div><div class="field full"><label>Publishable / anon key</label><input id="supabase_publishable_key" required type="password" autocomplete="off" placeholder="sb_publishable_... sau cheia anon JWT"></div><div class="field full"><button class="config-action" id="download-supabase-config" type="button">Descarcă js/supabase-config.js</button></div></div><div class="download-pack"><a class="config-action" href="supabase/MASTER-MULTI-ORGANIZATIE.sql" download>🗄️ Descarcă SQL complet</a><a class="config-action" href="supabase/MASTER-MULTI-ORGANIZATIE.sql" download>🏢 Descarcă migrarea multi-organizație</a><a class="config-action" href="supabase/deploy-functions.ps1" download>⚡ Descarcă deploy Edge Functions</a><a class="config-action" href="supabase/edge-secrets.example.env" download>🔐 Descarcă șablon Secrets</a><a class="config-action" href="supabase/apply-edge-secrets.ps1" download>🔑 Descarcă aplicare Secrets</a><a class="config-action" href="supabase/INSTALARE-MASTER-MULTI-ORGANIZATIE.md" download>📘 Descarcă instrucțiunile</a></div><div class="security-note">Cheia <b>service_role / secret</b> nu se introduce și nu se salvează în această pagină. Completeaz-o numai în copia locală a șablonului Secrets și în Supabase → Edge Functions → Secrets. Nu încărca șablonul completat pe GitHub.</div></section>
@@ -406,6 +402,26 @@
           <div class="field"><label>Contracte</label><input id="contracts_webhook_url" type="password" placeholder="Webhook pentru contractele generate"><button class="config-action test-webhook" data-channel="contracts" data-label="Contracte" type="button">Verifică Contracte</button></div>
           <div class="field"><label>Marketplace</label><input id="marketplace_webhook_url" type="password" placeholder="Webhook pentru anunțurile Marketplace"><button class="config-action test-webhook" data-channel="marketplace" data-label="Marketplace" type="button">Verifică Marketplace</button></div>
           <div class="field"><label>Black Market</label><input id="illegal_marketplace_webhook_url" type="password" placeholder="Webhook pentru anunțurile Black Market"><button class="config-action test-webhook" data-channel="illegal_marketplace" data-label="Black Market" type="button">Verifică Black Market</button></div>
+          <div class="field">
+
+            <label>Status Live</label>
+        
+            <input
+                id="live_status_webhook_url"
+                type="password"
+                placeholder="Webhook pentru mesajul Status Live">
+        
+            <button
+                class="config-action test-webhook"
+                data-channel="live_status"
+                data-label="Status Live"
+                type="button">
+        
+                Verifică Status Live
+        
+            </button>
+        
+        </div>
         </div></section>
         <section class="setup-card"><h3>Ce mai trebuie făcut la mutarea Supabase</h3><p>Interfața poate pregăti datele publice, însă un site GitHub Pages nu poate instala singur baza sau funcțiile fără cheia secretă de administrator.</p><ul class="migration-list"><li>1️⃣ <span><b>Rulează schema completă:</b> <code>supabase/MASTER-MULTI-ORGANIZATIE.sql</code>, apoi migrarea de reparare a pontajelor.</span></li><li>2️⃣ <span><b>Publică cele 5 Edge Functions:</b> sync-discord-role, manage-discord-config, manage-community-posts, send-discord-notification și close-expired-shifts.</span></li><li>3️⃣ <span><b>Configurează secretele Edge Functions:</b> SUPABASE_SERVICE_ROLE_KEY (sau secret key), DISCORD_GUILD_ID și CRON_SECRET.</span></li><li>4️⃣ <span><b>Încarcă pe GitHub</b> fișierul <code>js/supabase-config.js</code> descărcat mai sus.</span></li><li>5️⃣ <span><b>Deschide din nou configuratorul</b> pe noul panel și salvează rolurile, webhook-urile, Guild ID-ul și Client ID-ul.</span></li><li>6️⃣ <span><b>Discord Developer Portal:</b> adaugă URL-ul OAuth Redirect afișat mai sus.</span></li></ul></section>
         <section class="setup-card"><h3>Verificarea sistemului</h3><p>După salvare, rulează diagnosticul complet pentru Supabase, Discord, webhook-uri, Edge Functions și fișierele publicate.</p><a class="config-action" href="diagnostic.html">Deschide Verificare sistem</a></section>
@@ -419,9 +435,6 @@
     const roles=[['Grad / Rol 1',1],['Grad / Rol 2',2],['Grad / Rol 3',3],['Grad / Rol 4',4],['Co Lider',5],['Lider',6],['Coordonator',7]];
     const user=getUser();
     if(!user||getRole()!==7)location.href='403.html';
-    document.getElementById('user-display-name').textContent=user?.display_name||user?.username||'Coordonator';
-    document.getElementById('user-role').textContent=user?.role||'Coordonator';
-    document.getElementById('user-avatar').src=user?.avatar||user?.avatar_url||'';
     document.getElementById('supabase_public_url').value=window.PANEL_SUPABASE_CONFIG.url||'';
     document.getElementById('supabase_publishable_key').value=window.PANEL_SUPABASE_CONFIG.publishableKey||'';
     document.getElementById('download-supabase-config').addEventListener('click',()=>{
@@ -706,6 +719,9 @@
 
         config.illegal_marketplace_webhook_url =
             document.getElementById('illegal_marketplace_webhook_url').value.trim();
+
+        config.live_status_webhook_url =
+            document.getElementById('live_status_webhook_url').value.trim();
 
         config.family_role_id =
             document.getElementById('role_3').value.trim();

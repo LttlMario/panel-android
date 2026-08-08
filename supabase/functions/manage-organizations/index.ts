@@ -5,7 +5,19 @@ const headers={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':
 const reply=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers});
 const audit=async(db:any,session:any,action:string,targetId:string,details:unknown={})=>{await db.from('admin_audit_log').insert({organization_id:targetId,actor_discord_id:session.discord_id,action,target_type:'organization',target_id:targetId,details});};
 const slugify=(value:string)=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60);
-const webhookChannels=new Set(['organization','departments','pontaj','requests','contracts','marketplace','illegal_marketplace']);
+const webhookChannels=new Set([
+  'organization',
+  'departments',
+  'pontaj',
+  'requests',
+  'requests_organization',
+  'requests_departments',
+  'contracts',
+  'marketplace',
+  'illegal_marketplace',
+  'fines_organization',
+  'fines_departments'
+]);
 
 Deno.serve(async request=>{
   if(request.method==='OPTIONS')return new Response('ok',{headers});
@@ -27,14 +39,64 @@ Deno.serve(async request=>{
       let parsedWebhook:URL;
       try{parsedWebhook=new URL(webhookUrl);}catch{return reply({error:'Adresa webhookului este invalidă.'},400);}
       if(parsedWebhook.protocol!=='https:'||!['discord.com','discordapp.com'].includes(parsedWebhook.hostname)||!parsedWebhook.pathname.startsWith('/api/webhooks/'))return reply({error:'Adresa trebuie să fie un webhook Discord valid.'},400);
-      const response=await fetch(webhookUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:'✅ Test webhook Panel Mafie — conexiunea funcționează.',allowed_mentions:{parse:[]}})});
+      const response=await fetch(webhookUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:'✅ Test webhook Panel — conexiunea funcționează.',allowed_mentions:{parse:[]}})});
       if(!response.ok)return reply({error:`Discord a răspuns cu HTTP ${response.status}.`},400);
       return reply({ok:true,message:'Webhookul a răspuns cu succes.'});
     }
 
-    if(body.action==='list'){
-      const {data,error}=await db.from('organizations').select('*,organization_guilds(*),organization_settings(*),organization_role_mappings(*)').order('name');
-      if(error)throw error;const ids=(data||[]).map((item:any)=>item.id);const {data:settings,error:settingsError}=ids.length?await db.from('app_settings').select('organization_id,key,value').in('organization_id',ids).in('key',['organization_access','contract_template','page_permissions']):{data:[],error:null};if(settingsError)throw settingsError;return reply({organizations:(data||[]).map((item:any)=>({...item,platform_settings:(settings||[]).filter((setting:any)=>setting.organization_id===item.id).reduce((map:any,setting:any)=>(map[setting.key]=setting.value,map),{})}))});
+    if(body.action === 'list'){
+      const { data, error } = await db
+        .from('organizations')
+        .select(`
+          *,
+          organization_guilds(*),
+          organization_settings(*),
+          organization_role_mappings(*)
+        `)
+        .order('name');
+
+      if(error) throw error;
+
+      const ids = (data || []).map((item:any) => item.id);
+
+      const { data: settings, error: settingsError } = ids.length
+        ? await db
+            .from('app_settings')
+            .select('organization_id,key,value')
+            .in('organization_id', ids)
+            .in('key', [
+              'organization_access',
+              'contract_template',
+              'page_permissions',
+              'action_permissions',
+              'announcement_permissions',
+              'communication_permissions'
+            ])
+        : {
+            data: [],
+            error: null
+          };
+
+      if(settingsError) throw settingsError;
+
+      return reply({
+        organizations: (data || []).map((item:any) => ({
+          ...item,
+
+          platform_settings: (settings || [])
+            .filter(
+              (setting:any) =>
+                setting.organization_id === item.id
+            )
+            .reduce(
+              (map:any, setting:any) => {
+                map[setting.key] = setting.value;
+                return map;
+              },
+              {}
+            )
+        }))
+      });
     }
     if(body.action==='list_audit'){
       const organizationId=String(body.organization_id||'').trim();
@@ -91,17 +153,447 @@ Deno.serve(async request=>{
       const settings=body.settings||{};let clientId=String(settings.discord_client_id||'').trim();let publicUrl=String(settings.panel_public_url||'').replace(/\/$/,'');
       if(!clientId||!publicUrl){const platformOwners=String(Deno.env.get('PLATFORM_OWNER_DISCORD_IDS')||'').split(',').map(value=>value.trim()).filter(Boolean);const {data:ownerSession,error:ownerSessionError}=platformOwners.length?await db.from('panel_sessions').select('organization_id').in('discord_id',platformOwners).order('created_at',{ascending:false}).limit(1).maybeSingle():{data:null,error:null};if(ownerSessionError)throw ownerSessionError;const {data:platformSettings,error:platformSettingsError}=ownerSession?.organization_id?await db.from('organization_settings').select('discord_client_id,panel_public_url').eq('organization_id',ownerSession.organization_id).maybeSingle():{data:null,error:null};if(platformSettingsError)throw platformSettingsError;clientId=clientId||String(platformSettings?.discord_client_id||'').trim();publicUrl=publicUrl||String(platformSettings?.panel_public_url||'').replace(/\/$/,'');}
       if(!/^\d{15,22}$/.test(clientId))throw new Error('Configurarea platformei nu are un Discord Client ID valid.');try{new URL(publicUrl)}catch{throw new Error('Configurarea platformei nu are un URL public valid.');}
-      const rawRoutes=settings.webhook_routes&&typeof settings.webhook_routes==='object'?settings.webhook_routes:{};const validWebhook=(value:any)=>{try{const url=new URL(String(value||''));return url.protocol==='https:'&&url.hostname==='discord.com'}catch{return false}};const webhook_routes=Object.fromEntries(Object.entries(rawRoutes).filter(([channel,route]:any)=>{if(!webhookChannels.has(channel)||!route||typeof route!=='object')return false;const primary=route.primary?.enabled&&validWebhook(route.primary.url),secondary=route.secondary?.enabled&&validWebhook(route.secondary.url);return primary||secondary}).map(([channel,route]:any)=>[channel,{primary:route.primary?.enabled&&validWebhook(route.primary.url)?{enabled:true,url:String(route.primary.url)}:null,secondary:route.secondary?.enabled&&validWebhook(route.secondary.url)?{enabled:true,url:String(route.secondary.url)}:null}]));const {error:settingsError}=await db.from('organization_settings').upsert({organization_id:organizationId,discord_client_id:clientId,panel_public_url:publicUrl,webhook_routes,updated_by_discord_id:session.discord_id,updated_at:new Date().toISOString()},{onConflict:'organization_id'});if(settingsError)throw settingsError;
+const rawRoutes =
+  settings.webhook_routes &&
+  typeof settings.webhook_routes === 'object'
+    ? settings.webhook_routes
+    : {};
+
+const validWebhook = (value:any) => {
+  try {
+    const url = new URL(String(value || ''));
+
+    return (
+      url.protocol === 'https:' &&
+      ['discord.com', 'discordapp.com'].includes(url.hostname) &&
+      url.pathname.startsWith('/api/webhooks/')
+    );
+  } catch {
+    return false;
+  }
+};
+
+const { data: currentOrganizationSettings, error: currentOrganizationSettingsError } =
+  await db
+    .from('organization_settings')
+    .select('webhook_routes')
+    .eq('organization_id', organizationId)
+    .maybeSingle();
+
+if (currentOrganizationSettingsError) {
+  throw currentOrganizationSettingsError;
+}
+
+const existingWebhookRoutes =
+  currentOrganizationSettings?.webhook_routes &&
+  typeof currentOrganizationSettings.webhook_routes === 'object'
+    ? currentOrganizationSettings.webhook_routes
+    : {};
+
+const submittedWebhookRoutes = Object.fromEntries(
+  Object.entries(rawRoutes)
+    .filter(([channel, route]: any) => {
+      if (!webhookChannels.has(channel)) return false;
+      if (!route || typeof route !== 'object') return false;
+
+      return true;
+    })
+    .map(([channel, route]: any) => {
+
+      const existingRoute =
+        existingWebhookRoutes[channel] &&
+        typeof existingWebhookRoutes[channel] === 'object'
+          ? existingWebhookRoutes[channel]
+          : {};
+
+      const buildTarget = (
+        target: 'primary' | 'secondary'
+      ) => {
+
+        const submitted = route?.[target];
+        const existing = existingRoute?.[target];
+
+        /*
+         * Dacă formularul trimite explicit acest target,
+         * folosim valoarea nouă.
+         */
+        if (submitted && typeof submitted === 'object') {
+
+          const enabled = submitted.enabled === true;
+          const url = String(submitted.url || '').trim();
+
+          /*
+           * Debifat sau URL gol = ștergere explicită.
+           */
+          if (!enabled || !url) {
+            return null;
+          }
+
+          if (!validWebhook(url)) {
+            throw new Error(
+              `Webhook Discord invalid pentru ${channel}/${target}.`
+            );
+          }
+
+          return {
+            enabled: true,
+            url
+          };
+        }
+
+        /*
+         * Dacă formularul NU a trimis targetul,
+         * păstrăm configurația existentă.
+         */
+        if (
+          existing &&
+          typeof existing === 'object' &&
+          existing.url
+        ) {
+          return existing;
+        }
+
+        return null;
+      };
+
+      return [
+        channel,
+        {
+          primary: buildTarget('primary'),
+          secondary: buildTarget('secondary')
+        }
+      ];
+    })
+);
+
+/*
+ * Păstrăm și eventualele rute existente care nu au fost
+ * trimise deloc de formular.
+ */
+const webhook_routes = {
+  ...existingWebhookRoutes,
+  ...submittedWebhookRoutes
+};
+
+const { error: settingsError } =
+  await db
+    .from('organization_settings')
+    .upsert({
+      organization_id: organizationId,
+      discord_client_id: clientId,
+      panel_public_url: publicUrl,
+      webhook_routes,
+      updated_by_discord_id: session.discord_id,
+      updated_at: new Date().toISOString()
+    }, {
+      onConflict: 'organization_id'
+    });
+
+if (settingsError) {
+  throw settingsError;
+}
       await db.from('app_settings').upsert({organization_id:organizationId,key:'pontaj_config',value:{maxHours:12,dayEndTime:'19:59',nightEndTime:'23:00',excludeBreaks:false}},{onConflict:'organization_id,key'});
       if(body.access){const expiresAt=String(body.access.expires_at||'').trim();if(expiresAt&&Number.isNaN(Date.parse(expiresAt)))throw new Error('Data expirării este invalidă.');const {error}=await db.from('app_settings').upsert({organization_id:organizationId,key:'organization_access',value:{expires_at:expiresAt||null},updated_at:new Date().toISOString()},{onConflict:'organization_id,key'});if(error)throw error;if(!expiresAt||Date.parse(expiresAt)>Date.now())await db.from('organizations').update({active:true,updated_at:new Date().toISOString()}).eq('id',organizationId);}
-      if(body.contract_template){const title=String(body.contract_template.title||'').trim(),template=String(body.contract_template.template||'').trim();if(title.length<2)throw new Error('Numele contractului este obligatoriu.');if(template.length<20)throw new Error('Textul contractului este prea scurt.');const allowed=['{{COMPANY}}','{{ADDRESS}}','{{MANAGER}}','{{EMPLOYEE_NAME}}','{{CNP}}','{{PHONE}}','{{POSITION}}','{{SALARY}}','{{PROGRAM}}','{{START_DATE}}','{{CONTRACT_NUMBER}}'];const unknown=[...template.matchAll(/{{[A-Z0-9_]+}}/g)].map(match=>match[0]).filter(value=>!allowed.includes(value));if(unknown.length)throw new Error(`Câmpuri necunoscute în contract: ${[...new Set(unknown)].join(', ')}`);const {error}=await db.from('app_settings').upsert({organization_id:organizationId,key:'contract_template',value:{title,template},updated_at:new Date().toISOString()},{onConflict:'organization_id,key'});if(error)throw error;}
-       if(body.page_permissions&&typeof body.page_permissions==='object'){const allowedPages=new Set(['index.html','anunturi.html','pontaj.html','cereri.html','bucatarie.html','contracte.html','calculatorilegal.html','craftmecanics.html','locatiiilegale.html','marketplace.html','marketplace-ilegal.html','rapoarte.html','asistent.html']);const rules=Object.fromEntries(Object.entries(body.page_permissions).filter(([page])=>allowedPages.has(page)).map(([page,ids]:any)=>[page,[...new Set((Array.isArray(ids)?ids:[]).map(String).filter(id=>/^\d{15,22}$/.test(id)))]]));const {error}=await db.from('app_settings').upsert({organization_id:organizationId,key:'page_permissions',value:rules,updated_at:new Date().toISOString()},{onConflict:'organization_id,key'});if(error)throw error;}
-      if(Array.isArray(body.roles)){
-        await db.from('organization_role_mappings').delete().eq('organization_id',organizationId);
-        const rows=body.roles.map((role:any)=>({organization_id:organizationId,guild_id:String(role.guild_id),discord_role_id:String(role.discord_role_id),discord_role_name:String(role.discord_role_name),panel_role:String(role.panel_role),permission_level:Number(role.permission_level),priority:Number(role.permission_level)*10,enabled:true}));
-        if(rows.some((r:any)=>!/^\d{15,22}$/.test(r.discord_role_id)||r.permission_level<1||r.permission_level>99))throw new Error('Mapările rolurilor sunt invalide.');
-        const {error}=await db.from('organization_role_mappings').insert(rows);if(error)throw error;
+      if(body.contract_template){const title=String(body.contract_template.title||'').trim(),template=String(body.contract_template.template||'').trim();if(title.length<2)throw new Error('Numele contractului este obligatoriu.');if(template.length<20)throw new Error('Textul contractului este prea scurt.');const allowed=['{{COMPANY}}','{{ADDRESS}}','{{MANAGER}}','{{EMPLOYEE_NAME}}','{{CNP}}','{{PHONE}}','{{POSITION}}','{{SALARY}}','{{PROGRAM}}','{{START_DATE}}','{{CONTRACT_NUMBER}}'];const unknown=[...template.matchAll(/{{[A-Z0-9_]+}}/g)].map(match=>match[0]).filter(value=>!allowed.includes(value));if(unknown.length)throw new Error(`Câmpuri necunoscute în contract: ${[...new Set(unknown)].join(', ')}`);const defaults=body.contract_template.defaults&&typeof body.contract_template.defaults==='object'?body.contract_template.defaults:{};const {error}=await db.from('app_settings').upsert({organization_id:organizationId,key:'contract_template',value:{title,template,defaults:{salary:String(defaults.salary||'').trim()||null}},updated_at:new Date().toISOString()},{onConflict:'organization_id,key'});if(error)throw error;}
+      if(body.page_permissions && typeof body.page_permissions === 'object'){
+  const allowedPages = new Set([
+    'index.html',
+    'anunturi.html',
+    'pontaj.html',
+    'cereri.html',
+    'bucatarie.html',
+    'contracte.html',
+    'calculatorilegal.html',
+    'craftmecanics.html',
+    'locatiiilegale.html',
+    'marketplace.html',
+    'marketplace-ilegal.html',
+    'rapoarte.html',
+    'asistent.html'
+  ]);
+
+
+
+  const rules = Object.fromEntries(
+    Object.entries(body.page_permissions)
+      .filter(([page]) => allowedPages.has(page))
+      .map(([page, ids]: any) => [
+        page,
+        [...new Set(
+          (Array.isArray(ids) ? ids : [])
+            .map(String)
+            .filter(id => /^\d{15,22}$/.test(id))
+        )]
+      ])
+  );
+
+  const value = rules;
+
+  const { error } = await db
+    .from('app_settings')
+    .upsert({
+      organization_id: organizationId,
+      key: 'page_permissions',
+      value,
+      updated_at: new Date().toISOString()
+    }, {
+      onConflict: 'organization_id,key'
+    });
+
+  if(error) throw error;
+}
+if(
+  body.action_permissions &&
+  typeof body.action_permissions === 'object'
+){
+  /*
+   * Permisiuni pentru acțiuni din interiorul paginilor.
+   *
+   * Momentan permitem:
+   * anunturi.publish = publicare / modificare / ștergere
+   * anunțuri și sondaje.
+   */
+  const allowedActions = new Set([
+    'anunturi.publish',
+    'cereri.organization',
+    'cereri.departments'
+  ]);
+
+  const actionRules = Object.fromEntries(
+    Object.entries(body.action_permissions)
+      .filter(([action]) => allowedActions.has(action))
+      .map(([action, ids]: any) => [
+        action,
+        [
+          ...new Set(
+            (Array.isArray(ids) ? ids : [])
+              .map(String)
+              .filter(id => /^\d{15,22}$/.test(id))
+          )
+        ]
+      ])
+  );
+
+  // Un rol de cereri poate avea o singură destinație. Păstrăm aceeași
+  // regulă și server-side, chiar dacă formularul din browser a fost ocolit.
+  const organizationRequestRoles = new Set(
+    actionRules['cereri.organization'] || []
+  );
+  if (Array.isArray(actionRules['cereri.departments'])) {
+    actionRules['cereri.departments'] = actionRules['cereri.departments']
+      .filter((id: string) => !organizationRequestRoles.has(id));
+  }
+
+  const { error } = await db
+    .from('app_settings')
+    .upsert({
+      organization_id: organizationId,
+      key: 'action_permissions',
+      value: actionRules,
+      updated_at: new Date().toISOString()
+    }, {
+      onConflict: 'organization_id,key'
+    });
+
+  if(error) throw error;
+}
+if(
+  body.communication_permissions &&
+  typeof body.communication_permissions === 'object'
+){
+  const clean = (audience:string, kind:string) => [
+    ...new Set(
+      (Array.isArray(body.communication_permissions[audience]?.[kind])
+        ? body.communication_permissions[audience][kind]
+        : [])
+        .map(String)
+        .filter(id => /^\d{15,22}$/.test(id))
+    )
+  ];
+  const communicationPermissions = {
+    organization: { read: clean('organization','read'), write: clean('organization','write') },
+    departments: { read: clean('departments','read'), write: clean('departments','write') }
+  };
+  const { error } = await db.from('app_settings').upsert({
+    organization_id: organizationId,
+    key: 'communication_permissions',
+    value: communicationPermissions,
+    updated_at: new Date().toISOString()
+  }, { onConflict: 'organization_id,key' });
+  if(error) throw error;
+}
+if(
+  body.announcement_permissions &&
+  typeof body.announcement_permissions === 'object'
+){
+  const clean = (kind:string) => [
+    ...new Set(
+      (
+        Array.isArray(body.announcement_permissions[kind])
+          ? body.announcement_permissions[kind]
+          : []
+      )
+        .map(Number)
+        .filter(
+          (level:number) =>
+            Number.isInteger(level) &&
+            level >= 1 &&
+            level <= 99
+        )
+    )
+  ];
+
+  const announcementPermissions = {
+    read: clean('read'),
+    write: clean('write')
+  };
+
+  const { error } = await db
+    .from('app_settings')
+    .upsert({
+      organization_id: organizationId,
+      key: 'announcement_permissions',
+      value: announcementPermissions,
+      updated_at: new Date().toISOString()
+    }, {
+      onConflict: 'organization_id,key'
+    });
+
+  if(error) throw error;
+}
+if (Array.isArray(body.roles)) {
+
+  /*
+   * Ștergem mapările vechi ale organizației.
+   * Rolurile sunt reconstruite din configurația trimisă
+   * de organizatii.html.
+   */
+  const { error: deleteRolesError } = await db
+    .from('organization_role_mappings')
+    .delete()
+    .eq('organization_id', organizationId);
+
+  if (deleteRolesError) {
+    throw deleteRolesError;
+  }
+
+  /*
+   * Validăm rolurile primite.
+   */
+  const cleanRoles = body.roles.map(
+    (role: any, index: number) => {
+
+      const guildId =
+        String(role.guild_id || '').trim();
+
+      const discordRoleId =
+        String(role.discord_role_id || '').trim();
+
+      const discordRoleName =
+        String(role.discord_role_name || '').trim();
+
+      const panelRole =
+        String(
+          role.panel_role ||
+          role.discord_role_name ||
+          `Rol ${index + 1}`
+        ).trim();
+
+      if (!/^\d{15,22}$/.test(guildId)) {
+        throw new Error(
+          `Guild ID invalid pentru rolul ${index + 1}.`
+        );
       }
+
+      if (!/^\d{15,22}$/.test(discordRoleId)) {
+        throw new Error(
+          `Discord Role ID invalid pentru rolul ${index + 1}.`
+        );
+      }
+
+      if (!panelRole) {
+        throw new Error(
+          `Numele rolului ${index + 1} lipsește.`
+        );
+      }
+
+      return {
+        guild_id: guildId,
+        discord_role_id: discordRoleId,
+        discord_role_name:
+          discordRoleName || panelRole,
+        panel_role: panelRole
+      };
+    }
+  );
+
+  /*
+   * Nu permitem același rol Discord de două ori
+   * în aceeași organizație.
+   */
+  const uniqueRoleKeys = new Set(
+    cleanRoles.map(
+      (role: any) =>
+        `${role.guild_id}:${role.discord_role_id}`
+    )
+  );
+
+  if (uniqueRoleKeys.size !== cleanRoles.length) {
+    throw new Error(
+      'Același rol Discord nu poate fi configurat de două ori.'
+    );
+  }
+
+  /*
+   * IMPORTANT:
+   *
+   * permission_level rămâne doar pentru compatibilitate
+   * cu structura existentă a bazei de date.
+   *
+   * Accesul real la pagini este stabilit prin
+   * page_permissions.
+   *
+   * Ordinea rolurilor Discord nu mai stabilește accesul.
+   */
+  const rows = cleanRoles.map(
+    (role: any, index: number) => ({
+      organization_id: organizationId,
+
+      guild_id:
+        role.guild_id,
+
+      discord_role_id:
+        role.discord_role_id,
+
+      discord_role_name:
+        role.discord_role_name,
+
+      panel_role:
+        role.panel_role,
+
+      permission_level: 1,
+
+      priority:
+        cleanRoles.length - index,
+
+      enabled: true
+    })
+  );
+
+  /*
+   * Salvăm noile mapări.
+   */
+  if (rows.length) {
+
+    const { error: insertRolesError } = await db
+      .from('organization_role_mappings')
+      .insert(rows);
+
+    if (insertRolesError) {
+      throw insertRolesError;
+    }
+  }
+}
       await audit(db,session,'organization_saved',organizationId,{name,roles:Array.isArray(body.roles)?body.roles.length:0});
       return reply({ok:true,organization_id:organizationId});
     }

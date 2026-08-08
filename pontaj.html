@@ -11,97 +11,15 @@
     <script src="js/supabase-config.js"></script>
     <script src="js/permissions.js"></script>
     <script src="js/panel-layout.js"></script>
-    <link rel="stylesheet" href="css/global-footer.css">
     <script src="js/project-version.js"></script>
+    <link rel="stylesheet" href="css/global-footer.css">
     <link rel="icon" href="img/favicon.ico">
     <link rel="apple-touch-icon" href="img/logo-180.png">
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex text-sm">
-
-    <!-- Containerul Principal -->
-    <div class="flex h-screen w-full overflow-hidden">
-
-        <!-- Sidebar / Meniu Lateral -->
-        <aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col justify-between hidden md:flex">
-            <div class="p-6 overflow-y-auto max-h-[calc(100vh-5rem)]">
-                <h1 class="text-xl font-bold text-slate-100 tracking-tight">Panel<span class="block text-xs font-normal text-slate-400 mt-0.5">by Little Mario</span></h1>
-
-                <nav class="mt-6 space-y-1.5" id="sidebar-nav">
-                    <a href="index.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>📊</span>
-                        <span>Dashboard</span>
-                    </a>
-                    <a href="pontaj.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>⏱️</span>
-                        <span>Pontaj</span>
-                    </a>
-                    <a href="cereri.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>📋</span>
-                        <span>Cereri / Absențe</span>
-                    </a>
-                    <a href="rapoarte.html" data-role="4" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>📈</span>
-                        <span>Rapoarte</span>
-                    </a>
-                    <a href="contracte.html" data-role="4" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>📜</span>
-                        <span>Contracte</span>
-                    </a>
-                    <a href="admin.html" data-role="7" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>👑</span>
-                        <span>Panou Admin</span>
-                    </a>
-                    <a href="calculatorilegal.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🧮</span>
-                        <span>Calculator Ilegal</span>
-                    </a>
-                    <a href="craftmecanics.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🔨</span>
-                        <span>Craft Mecanics</span>
-                    </a>
-                    <a href="locatiiilegale.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🗺️</span>
-                        <span>Locații Ilegale</span>
-                    </a>
-                    <a href="marketplace.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🛒</span>
-                        <span>Marketplace</span>
-                    </a>
-                    <a href="marketplace-ilegal.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🚨</span>
-                        <span>Black Market</span>
-                    </a>
-                </nav>
-            </div>
-
-            <!-- Profil Utilizator Dinamic -->
-            <div class="p-4 border-t border-slate-800 bg-slate-900/50 flex items-center justify-between">
-                <div class="flex items-center space-x-3 overflow-hidden">
-                    <img id="user-avatar" src="img/logo-192.png" class="w-10 h-10 rounded-full border border-slate-700 flex-shrink-0 object-cover" alt="Avatar">
-                    <div class="truncate">
-                        <p id="user-display-name" class="text-sm font-semibold text-slate-200 truncate">Se încarcă...</p>
-                        <p id="user-role" class="text-xs text-emerald-400 truncate">Angajat</p>
-                    </div>
-                </div>
-                <button id="logout-btn" title="Ieșire din cont" class="flex items-center space-x-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl transition cursor-pointer text-xs font-medium">
-                    <span></span>
-                    <span>Logout</span>
-                </button>
-            </div>
-        </aside>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen text-sm">
 
         <!-- Conținut Principal -->
-        <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
-            <header class="h-16 border-b border-slate-800 bg-slate-900/50 backdrop-blur px-8 flex items-center justify-between sticky top-0 z-20">
-                <h2 class="text-lg font-bold text-slate-100">Pontaj Angajati</h2>
-                <div class="flex items-center space-x-4">
-                    <button onclick="fetchShiftsHistory()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 transition cursor-pointer flex items-center space-x-1.5">
-                        <span>🔄</span>
-                        <span>Reîmprospătare</span>
-                    </button>
-                    <span class="text-xs bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300">Total Ore Acumulate: <strong id="total-accumulated-hours" class="text-emerald-400">0.00h</strong></span>
-                </div>
-            </header>
+        <main class="min-w-0">
 
             <div class="p-8 space-y-6 max-w-6xl mx-auto w-full">
 
@@ -179,12 +97,9 @@
 
             </div>
         </main>
-    </div>
 
     <!-- Scriptul logic sincronizat cu index.html -->
     <script>
-        const SUPABASE_URL = window.PANEL_SUPABASE_CONFIG.url;
-        const SUPABASE_KEY = window.PANEL_SUPABASE_CONFIG.publishableKey;
         const supabaseClient = window.createPanelSupabaseClient();
 
         const ROMANIA_TIME_ZONE = 'Europe/Bucharest';
@@ -218,22 +133,9 @@
         let timerInterval = null;
         let secondsElapsed = 0;
         let isPaused = false;
-        let shiftStartTime = null;
-        let runningSince = null;
-        let activeShiftId = null;
         let isActionProcessing = false;
-        const ACTIVE_SHIFT_STORAGE_KEY = 'workforce_active_shift';
 
         document.addEventListener('DOMContentLoaded', async () => {
-            // 1. Evidențiere automată a paginii active în meniu
-            const currentPage = window.location.pathname.split("/").pop() || "index.html";
-            document.querySelectorAll('.nav-link').forEach(link => {
-                const linkHref = link.getAttribute('href');
-                if (linkHref === currentPage) {
-                    link.classList.remove('text-slate-300', 'hover:bg-slate-800');
-                    link.classList.add('bg-emerald-500/10', 'text-emerald-400', 'font-medium');
-                }
-            });
 
             // 2. Verificare sesiune locală robustă
             const cachedUser = localStorage.getItem('discord_user');
@@ -250,7 +152,7 @@
                 }
 
                 // 3. Citire live din tabelul `users` din Supabase
-                let { data: dbUser, error } = await supabaseClient
+                let { data: dbUser } = await supabaseClient
                     .from('users')
                     .select('*')
                     .eq('discord_id', localData.discord_id)
@@ -264,41 +166,29 @@
                 currentUser.role = localData.role || localData.default_role || activeUser.role || activeUser.default_role || 'Membru';
                 currentUser.organization_id = activeUser.organization_id || localData.organization_id || null;
 
-                const userAvatar = activeUser.avatar || 'img/logo-192.png';
+                // Păstrăm sesiunea actualizată
+                localStorage.setItem('discord_user', JSON.stringify({
+                    ...localData,
+                    ...activeUser,
+                    organization_id: currentUser.organization_id,
+                    display_name: currentUser.display_name,
+                    role: currentUser.role
+                }));
 
-                document.getElementById('user-display-name').textContent = currentUser.display_name;
-                document.getElementById('user-role').textContent = currentUser.role;
-                document.getElementById('user-avatar').src = userAvatar;
-
-                // Control acces elemente avansate (ex: Loguri)
-                const isPrivileged = Number(localData.permission_level ?? activeUser.permission_level ?? 0) >= 1;
-
-                if (isPrivileged) {
-                    const navLogs = document.getElementById('nav-logs');
-                    if (navLogs) navLogs.classList.remove('hidden');
-                }
-
-                localStorage.setItem('discord_user', JSON.stringify(activeUser));
-                await loadGlobalPontajConfig();
+                // Încărcare configurare și restaurare pontaj activ
+                await loadOrganizationPontajConfig();
                 await restoreActiveShift();
 
-            } catch (err) {
-                console.error('Erore sesiune:', err);
-                window.location.href = 'login.html';
-                return;
-            }
-
-            // 4. Gestionare Logout
-            const logoutBtn = document.getElementById('logout-btn');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', () => {
-                    localStorage.clear();
+                } catch (err) {
+                    console.error('Eroare sesiune:', err);
                     window.location.href = 'login.html';
-                });
-            }
+                    return;
+                }
 
-            fetchShiftsHistory();
-        });
+                // Încărcare istoric pontaj
+                await fetchShiftsHistory();
+
+                });
 
         function selectShiftType(type) {
             if (activeShiftRecord) {
@@ -347,258 +237,6 @@
             document.getElementById('btn-shift-night').className = 'px-5 py-2.5 rounded-xl text-xs font-semibold border transition cursor-pointer bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700';
         }
 
-        async function legacyStartShift() {
-            if (!selectedShiftType) {
-                alert('Te rog selectează mai întâi o tură validă!');
-                return;
-            }
-
-            shiftStartTime = new Date();
-            runningSince = new Date();
-            secondsElapsed = 0;
-            isPaused = false;
-
-            document.getElementById('btn-start').disabled = true;
-            document.getElementById('btn-pause').disabled = false;
-            document.getElementById('btn-stop').disabled = false;
-            document.getElementById('current-shift-status').textContent = `Tura de ${selectedShiftType.toUpperCase()} este activă...`;
-
-            saveActiveShift();
-            startTimer();
-
-            await createActiveShiftRecord();
-
-            await sendGeneralDiscordWebhook("▶️ Pontaj Start", `Angajatul **${currentUser.display_name}** a pornit tura de **${selectedShiftType.toUpperCase()}**.`, 3066993);
-        }
-
-        async function legacyPauseShift() {
-            isPaused = !isPaused;
-            const pauseText = document.getElementById('pause-btn-text');
-            if (isPaused) {
-                secondsElapsed = getElapsedSeconds();
-                runningSince = null;
-                saveActiveShift();
-                pauseText.textContent = 'Reluare';
-                document.getElementById('current-shift-status').textContent = 'Tura este în PAUZĂ';
-                await sendGeneralDiscordWebhook("⏸️ Pontaj Pauză", `Angajatul **${currentUser.display_name}** a pus tura de **${selectedShiftType.toUpperCase()}** pe **pauză** la timpul: **${formatTime(secondsElapsed)}**`, 16776960);
-            } else {
-                runningSince = new Date();
-                saveActiveShift();
-                pauseText.textContent = 'Pauză';
-                document.getElementById('current-shift-status').textContent = `Tura de ${selectedShiftType.toUpperCase()} este activă...`;
-                await sendGeneralDiscordWebhook("▶️ Pontaj Reluat", `Angajatul **${currentUser.display_name}** a reluat tura de **${selectedShiftType.toUpperCase()}**.`, 3066993);
-            }
-        }
-
-        async function legacyStopShift() {
-            clearInterval(timerInterval);
-            secondsElapsed = getElapsedSeconds();
-            const shiftEndTime = new Date();
-            const durationMs = secondsElapsed * 1000;
-            const durationFormatted = formatTime(secondsElapsed);
-            const dateStr = getRomanianDate(shiftStartTime);
-
-            const shiftData = {
-                discord_id: currentUser.discord_id || 'necunoscut',
-                date: dateStr,
-                start_time: getRomanianTime(shiftStartTime),
-                end_time: getRomanianTime(shiftEndTime),
-                duration: durationFormatted,
-                shift_type: selectedShiftType,
-                duration_ms: durationMs,
-                created_at: new Date().toISOString()
-            };
-
-            try {
-                let error;
-                if (activeShiftId) {
-                    const { data, error: updateError } = await supabaseClient.from('shifts')
-                        .update(shiftData).eq('id', activeShiftId).is('end_time', null).select('id');
-                    error = updateError;
-                    if (!error && (!data || data.length === 0)) {
-                        alert('Pontajul fusese deja oprit de un manager.');
-                        resetTimerState();
-                        fetchShiftsHistory();
-                        return;
-                    }
-                } else {
-                    ({ error } = await supabaseClient.from('shifts').insert([shiftData]));
-                }
-                if (error) throw error;
-
-                await sendStopShiftDiscordWebhook({
-                    ...shiftData,
-                    colleague_name: currentUser.display_name
-                });
-
-                alert('Tura a fost salvată și înregistrată cu succes!');
-            } catch (err) {
-                console.error('Erore salvare tură:', err);
-                alert('Tura s-a oprit local, dar a apărut o eroare la salvarea în Supabase sau Discord.');
-            }
-
-            resetTimerState();
-            fetchShiftsHistory();
-        }
-
-        async function sendGeneralDiscordWebhook(title, description, color) {
-            const payload = {
-                embeds: [{
-                    title: title,
-                    description: description,
-                    color: color,
-                    timestamp: new Date().toISOString()
-                }]
-            };
-
-            try {
-                await sendPanelDiscord('pontaj', payload);
-            } catch (err) {
-                console.error('Erore trimitere webhook acțiune pontaj:', err);
-                alert(`Pontajul a fost salvat, dar mesajul Discord nu a fost trimis: ${err.message || 'eroare necunoscută'}`);
-            }
-        }
-
-        async function legacySendStopShiftDiscordWebhook(data) {
-            const payload = {
-                embeds: [{
-                    title: `⏹️ Pontaj Nou Încheiat - Tură de ${data.shift_type.toUpperCase()}`,
-                    color: data.shift_type === 'zi' ? 16766720 : 65535,
-                    fields: [
-                        { name: "👤 Angajat", value: data.colleague_name, inline: true },
-                        { name: "📅 Data", value: data.date, inline: true },
-                        { name: "⏰ Interval", value: `${data.start_time} - ${data.end_time}`, inline: false },
-                        { name: "⏳ Timp Total Lucrat", value: `**${data.duration}**`, inline: true }
-                    ],
-                    timestamp: new Date().toISOString()
-                }]
-            };
-
-            try {
-                await sendPanelDiscord('pontaj', payload);
-            } catch (err) {
-                console.error('Erore trimitere webhook loguri oprire pontaj:', err);
-            }
-        }
-
-        function legacyResetTimerState() {
-            clearInterval(timerInterval);
-            localStorage.removeItem(ACTIVE_SHIFT_STORAGE_KEY);
-            secondsElapsed = 0;
-            isPaused = false;
-            shiftStartTime = null;
-            runningSince = null;
-            activeShiftId = null;
-            document.getElementById('timer-display').textContent = '00:00:00';
-            document.getElementById('current-shift-status').textContent = 'Tură neselectată / Oprită';
-            document.getElementById('btn-start').disabled = false;
-            document.getElementById('btn-pause').disabled = true;
-            document.getElementById('btn-stop').disabled = true;
-            document.getElementById('pause-btn-text').textContent = 'Pauză';
-            selectedShiftType = null;
-            resetUIPlaceholder();
-        }
-
-        function resetUIPlaceholder() {
-            document.getElementById('btn-shift-day').className = 'px-5 py-2.5 rounded-xl text-xs font-semibold border transition cursor-pointer bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700';
-            document.getElementById('btn-shift-night').className = 'px-5 py-2.5 rounded-xl text-xs font-semibold border transition cursor-pointer bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700';
-        }
-
-        function legacyUpdateTimerDisplay() {
-            document.getElementById('timer-display').textContent = formatTime(getElapsedSeconds());
-        }
-
-        function getElapsedSeconds() {
-            if (isPaused || !runningSince) return secondsElapsed;
-            return secondsElapsed + Math.max(0, Math.floor((Date.now() - runningSince.getTime()) / 1000));
-        }
-
-        function legacyStartTimer() {
-            clearInterval(timerInterval);
-            updateTimerDisplay();
-            timerInterval = setInterval(updateTimerDisplay, 1000);
-        }
-
-        function saveActiveShift() {
-            if (!selectedShiftType || !shiftStartTime) return;
-            localStorage.setItem(ACTIVE_SHIFT_STORAGE_KEY, JSON.stringify({
-                userId: currentUser.discord_id,
-                shiftType: selectedShiftType,
-                secondsElapsed,
-                isPaused,
-                shiftStartTime: shiftStartTime.toISOString(),
-                runningSince: runningSince ? runningSince.toISOString() : null
-                ,activeShiftId
-            }));
-        }
-
-        async function createActiveShiftRecord() {
-            const activeRecord = {
-                discord_id: currentUser.discord_id || 'necunoscut',
-                colleague_name: currentUser.display_name || currentUser.username || 'Angajat',
-                date: getRomanianDate(shiftStartTime),
-                start_time: getRomanianTime(shiftStartTime),
-                end_time: null,
-                duration: '00:00:00',
-                shift_type: selectedShiftType,
-                duration_ms: 0,
-                created_at: new Date().toISOString()
-            };
-
-            try {
-                const { data, error } = await supabaseClient.from('shifts').insert([activeRecord]).select('id').single();
-                if (error) throw error;
-                activeShiftId = data.id;
-                saveActiveShift();
-            } catch (err) {
-                console.error('Eroare la inițializarea pontajului activ:', err);
-            }
-        }
-
-        async function legacyRestoreActiveShift() {
-            let savedShift;
-            try {
-                savedShift = JSON.parse(localStorage.getItem(ACTIVE_SHIFT_STORAGE_KEY));
-            } catch (err) {
-                localStorage.removeItem(ACTIVE_SHIFT_STORAGE_KEY);
-                return;
-            }
-
-            if (!savedShift || savedShift.userId !== currentUser.discord_id || !savedShift.shiftType) return;
-
-            shiftStartTime = new Date(savedShift.shiftStartTime);
-            runningSince = savedShift.runningSince ? new Date(savedShift.runningSince) : null;
-            if (Number.isNaN(shiftStartTime.getTime()) || (!savedShift.isPaused && (!runningSince || Number.isNaN(runningSince.getTime())))) {
-                localStorage.removeItem(ACTIVE_SHIFT_STORAGE_KEY);
-                return;
-            }
-
-            selectedShiftType = savedShift.shiftType;
-            secondsElapsed = Number(savedShift.secondsElapsed) || 0;
-            isPaused = Boolean(savedShift.isPaused);
-            activeShiftId = savedShift.activeShiftId || null;
-            if (activeShiftId) {
-                const { data: remoteShift } = await supabaseClient.from('shifts').select('end_time').eq('id', activeShiftId).maybeSingle();
-                if (remoteShift && remoteShift.end_time) {
-                    resetTimerState();
-                    return;
-                }
-            }
-            document.getElementById('btn-start').disabled = true;
-            document.getElementById('btn-pause').disabled = false;
-            document.getElementById('btn-stop').disabled = false;
-            document.getElementById('pause-btn-text').textContent = isPaused ? 'Reluare' : 'Pauză';
-            document.getElementById('current-shift-status').textContent = isPaused
-                ? 'Tura este în PAUZĂ'
-                : `Tura de ${selectedShiftType.toUpperCase()} este activă...`;
-            selectRestoredShiftButton(selectedShiftType);
-
-            if (isPaused) updateTimerDisplay();
-            else startTimer();
-
-            if (!activeShiftId) await createActiveShiftRecord();
-        }
-
         function selectRestoredShiftButton(type) {
             document.getElementById('btn-shift-day').className = type === 'zi'
                 ? 'px-5 py-2.5 rounded-xl text-xs font-semibold border transition cursor-pointer bg-emerald-600 border-emerald-500 text-white shadow-md'
@@ -620,42 +258,50 @@
             const summaryContainer = document.getElementById('daily-summary-container');
 
             try {
-                let query = supabaseClient.from('shifts').select('*');
-                let { data: shifts, error } = await query.order('created_at', { ascending: false });
+                if (!currentUser.organization_id || !currentUser.discord_id) {
+                    throw new Error('Utilizatorul sau organizația activă nu au fost identificate.');
+                }
+
+                let query = supabaseClient
+                    .from('shifts')
+                    .select('*')
+                    .eq('organization_id', currentUser.organization_id)
+                    .eq('discord_id', currentUser.discord_id);
+
+                let { data: shifts, error } = await query
+                    .order('created_at', { ascending: false });
 
                 if (error) throw error;
 
                 if (!shifts || shifts.length === 0) {
                     historyContainer.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">Nu există ture înregistrate în baza de date.</p>`;
                     summaryContainer.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">Nicio dată disponibilă.</p>`;
-                    document.getElementById('total-accumulated-hours').textContent = '0.00h';
                     return;
                 }
 
                 let historyHtml = '';
                 let dailyTotals = {};
-                let totalAccumulatedMs = 0;
 
                 shifts.forEach(shift => {
                     const typeColor = shift.shift_type === 'zi' ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' : 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20';
 
-                    historyHtml += `
-                        <div class="bg-slate-950/50 border border-slate-800 p-3.5 rounded-xl flex items-center justify-between text-xs">
-                            <div class="space-y-1">
-                                <div class="flex items-center space-x-2">
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold border ${typeColor}">Tura de ${shift.shift_type ? shift.shift_type.toUpperCase() : 'STANDARD'}</span>
-                                    <span class="text-slate-400">${shift.date || 'Dată necunoscută'}</span>
-                                </div>
-                                <p class="text-slate-300">Interval: ${shift.start_time || 'N/A'} - ${shift.end_time || 'N/A'}</p>
+                historyHtml += `
+                    <div class="bg-slate-950/50 border border-slate-800 p-3.5 rounded-xl flex items-center justify-between text-xs">
+                        <div class="space-y-1">
+                            <div class="flex items-center space-x-2">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-semibold border ${typeColor}">Tura de ${shift.shift_type ? shift.shift_type.toUpperCase() : 'STANDARD'}</span>
+                                <span class="text-slate-400">${shift.date || 'Dată necunoscută'}</span>
                             </div>
-                            <div class="text-right">
-                                <span class="font-bold text-emerald-400 text-sm">${shift.duration || '00:00:00'}</span>
-                            </div>
+                            <p class="text-slate-200 font-semibold">👤 ${shift.colleague_name || currentUser.display_name || 'Membru'}</p>
+                            <p class="text-slate-300">Interval: ${shift.start_time || 'N/A'} - ${shift.end_time || 'N/A'}</p>
                         </div>
-                    `;
+                        <div class="text-right">
+                            <span class="font-bold text-emerald-400 text-sm">${shift.duration || '00:00:00'}</span>
+                        </div>
+                    </div>
+                `;
 
                     const ms = shift.duration_ms || 0;
-                    totalAccumulatedMs += ms;
 
                     const shiftDate = shift.date || 'Necunoscută';
                     if (!dailyTotals[shiftDate]) {
@@ -667,8 +313,6 @@
 
                 historyContainer.innerHTML = historyHtml;
 
-                const totalHoursNum = (totalAccumulatedMs / 3600000).toFixed(2);
-                document.getElementById('total-accumulated-hours').textContent = `${totalHoursNum}h`;
 
                 let summaryHtml = '';
                 for (const [date, info] of Object.entries(dailyTotals)) {
@@ -692,26 +336,42 @@
         // Sursa unică de adevăr pentru pontaj: rândul activ din Supabase.
         let activeShiftRecord = null;
         let autoStopInProgress = false;
-        let globalPontajConfig = null;
+        let organizationPontajConfig = null;
 
-        async function loadGlobalPontajConfig() {
+        async function loadOrganizationPontajConfig() {
             try {
-                const { data, error } = await supabaseClient.from('app_settings').select('value').eq('key', 'pontaj_config').maybeSingle();
+                if (!currentUser.organization_id) {
+                    throw new Error('Organizația activă nu a fost identificată.');
+                }
+
+                const { data, error } = await supabaseClient
+                    .from('organization_settings')
+                    .select('*')
+                    .eq('organization_id', currentUser.organization_id)
+                    .eq('key', 'pontaj_config')
+                    .maybeSingle();
+
                 if (error) throw error;
-                globalPontajConfig = data?.value || null;
+
+                organizationPontajConfig = data?.value || null;
+
+                console.log(
+                    '[Pontaj] Configurație organizație:',
+                    currentUser.organization_id,
+                    organizationPontajConfig
+                );
+
             } catch (error) {
-                console.warn('Configurația globală de pontaj nu este disponibilă:', error);
-                try { globalPontajConfig = JSON.parse(localStorage.getItem('workforce_admin_settings'))?.pontajConfig || null; } catch (_) { globalPontajConfig = null; }
+                console.error(
+                    'Configurația de pontaj a organizației nu a putut fi încărcată:',
+                    error
+                );
+
+                organizationPontajConfig = null;
             }
         }
 
-        function getPontajMaxHours() {
-            try {
-                const settings = JSON.parse(localStorage.getItem('workforce_admin_settings'));
-                const value = Number(settings?.pontajConfig?.maxHours);
-                return Number.isFinite(value) && value > 0 ? value : 12;
-            } catch (error) { return 12; }
-        }
+
 
         function getRomanianNowDateTime() { return new Date(); }
 
@@ -724,8 +384,14 @@
 
         function getShiftDeadline(shiftType, now = new Date()) {
             const parts = getRomanianDateTimeParts(now);
-            const configuredTime = shiftType === 'noapte' ? globalPontajConfig?.nightEndTime : globalPontajConfig?.dayEndTime;
-            const [configuredHour, configuredMinute] = (configuredTime || (shiftType === 'noapte' ? '23:00' : '19:59')).split(':').map(Number);
+
+            const configuredTime = shiftType === 'noapte'
+                ? '23:00'
+                : '19:59';
+
+            const [configuredHour, configuredMinute] = configuredTime
+                .split(':')
+                .map(Number);
             const limitHour = configuredHour;
             const limitMinute = configuredMinute;
             let dateMarker = new Date(Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day)));
@@ -752,7 +418,6 @@
         function syncActiveShiftUI() {
             if (!activeShiftRecord) return resetTimerState();
             selectedShiftType = activeShiftRecord.shift_type;
-            shiftStartTime = new Date(activeShiftRecord.started_at);
             isPaused = activeShiftRecord.status === 'paused';
             secondsElapsed = getWorkedSeconds(activeShiftRecord);
             document.getElementById('btn-start').disabled = true;
@@ -779,10 +444,23 @@
         }
 
         async function findActiveShift() {
-            const { data, error } = await supabaseClient.from('shifts').select('*')
-                .eq('discord_id', currentUser.discord_id).in('status', ['active', 'paused']).is('end_time', null)
-                .order('started_at', { ascending: false }).limit(1).maybeSingle();
+            if (!currentUser.organization_id) {
+                throw new Error('Organizația activă nu a fost identificată.');
+            }
+
+            const { data, error } = await supabaseClient
+                .from('shifts')
+                .select('*')
+                .eq('organization_id', currentUser.organization_id)
+                .eq('discord_id', currentUser.discord_id)
+                .in('status', ['active', 'paused'])
+                .is('end_time', null)
+                .order('started_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
             if (error) throw error;
+
             return data;
         }
 
@@ -843,7 +521,6 @@
                 const { data, error } = await supabaseClient.from('shifts').insert([newShift]).select('*').single();
                 if (error) throw error;
                 activeShiftRecord = data;
-                activeShiftId = data.id;
                 syncActiveShiftUI(); startTimer();
                 await sendGeneralDiscordWebhook('▶️ Pontaj Start', `Angajatul **${currentUser.display_name}** a pornit tura de **${selectedShiftType.toUpperCase()}**.`, 3066993);
             } catch (error) { console.error('Eroare pornire pontaj:', error); alert('Pontajul nu a putut fi pornit.'); }
@@ -921,17 +598,21 @@
                 const finished = data[0];
                 if (automatic) await notifyAutomaticShiftDiscord(finished, reason);
                 else await sendStopShiftDiscordWebhook({ ...finished, colleague_name: currentUser.display_name, reason });
-                activeShiftRecord = null; activeShiftId = null; resetTimerState(); fetchShiftsHistory();
+                activeShiftRecord = null;
+                resetTimerState();
+                fetchShiftsHistory();
                 if (automatic) alert('Tura a fost încheiată automat: programul maxim a fost atins.');
             } catch (error) { console.error('Eroare închidere pontaj:', error); alert('Tura nu a putut fi închisă corect.'); }
             finally { isActionProcessing = false; autoStopInProgress = false; }
         }
 
         function resetTimerState() {
-            clearInterval(timerInterval); activeShiftRecord = null; activeShiftId = null; secondsElapsed = 0; isPaused = false; shiftStartTime = null;
-            localStorage.removeItem(ACTIVE_SHIFT_STORAGE_KEY);
+            clearInterval(timerInterval);
+            activeShiftRecord = null;
+            secondsElapsed = 0;
+            isPaused = false;
             document.getElementById('timer-display').textContent = '00:00:00'; document.getElementById('current-shift-status').textContent = 'Tură neselectată / Oprită';
-            document.getElementById('btn-start').disabled = false; document.getElementById('btn-pause').disabled = true; document.getElementById('btn-stop').disabled = true; document.getElementById('pause-btn-text').textContent = 'Pauză'; selectedShiftType = null; resetUIPlaceholder();
+            document.getElementById('btn-start').disabled = false; document.getElementById('btn-pause').disabled = true; document.getElementById('btn-stop').disabled = true; document.getElementById('pause-btn-text').textContent = 'Pauză'; selectedShiftType = null; resetUIButtons();
         }
 
         async function sendStopShiftDiscordWebhook(data) {

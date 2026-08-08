@@ -3,6 +3,24 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 const headers = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization,apikey,content-type', 'Content-Type': 'application/json' };
 const reply = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers });
 const validGuild = (value: string) => /^\d{15,22}$/.test(value);
+const webhookChannels = new Set(['organization', 'departments', 'pontaj', 'requests', 'contracts', 'marketplace', 'illegal_marketplace']);
+const validWebhook = (value: unknown) => {
+  try {
+    const url = new URL(String(value || ''));
+    return url.protocol === 'https:' && ['discord.com', 'discordapp.com'].includes(url.hostname) && url.pathname.startsWith('/api/webhooks/');
+  } catch { return false; }
+};
+const sanitizeWebhookRoutes = (raw: unknown) => {
+  if (!raw || typeof raw !== 'object') return {};
+  return Object.fromEntries(Object.entries(raw as Record<string, any>).filter(([channel, route]) => {
+    if (!webhookChannels.has(channel) || !route || typeof route !== 'object') return false;
+    return Boolean(route.primary?.enabled && validWebhook(route.primary.url)) || Boolean(route.secondary?.enabled && validWebhook(route.secondary.url));
+  }).map(([channel, route]) => [channel, {
+    primary: route.primary?.enabled && validWebhook(route.primary.url) ? { enabled: true, url: String(route.primary.url).trim() } : null,
+    secondary: route.secondary?.enabled && validWebhook(route.secondary.url) ? { enabled: true, url: String(route.secondary.url).trim() } : null,
+  }]));
+};
+const allowedContractPlaceholders = new Set(['{{COMPANY}}', '{{ADDRESS}}', '{{MANAGER}}', '{{EMPLOYEE_NAME}}', '{{CNP}}', '{{PHONE}}', '{{POSITION}}', '{{SALARY}}', '{{PROGRAM}}', '{{START_DATE}}', '{{CONTRACT_NUMBER}}']);
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers });
@@ -52,11 +70,24 @@ Deno.serve(async (req) => {
     }
     if (body.webhook_routes) {
       const { data: currentSettings } = await db.from('organization_settings').select('discord_client_id,panel_public_url').eq('organization_id', id).maybeSingle();
-      const { error } = await db.from('organization_settings').upsert({ organization_id: id, discord_client_id: String(body.discord_client_id || currentSettings?.discord_client_id || ''), panel_public_url: String(body.panel_public_url || currentSettings?.panel_public_url || ''), webhook_routes: body.webhook_routes, updated_at: new Date().toISOString() }, { onConflict: 'organization_id' });
+      const { error } = await db.from('organization_settings').upsert({ organization_id: id, discord_client_id: String(body.discord_client_id || currentSettings?.discord_client_id || ''), panel_public_url: String(body.panel_public_url || currentSettings?.panel_public_url || ''), webhook_routes: sanitizeWebhookRoutes(body.webhook_routes), updated_at: new Date().toISOString() }, { onConflict: 'organization_id' });
       if (error) throw error;
     }
     if (body.page_permissions) {
       const { error } = await db.from('app_settings').upsert({ organization_id: id, key: 'page_permissions', value: body.page_permissions, updated_at: new Date().toISOString() }, { onConflict: 'organization_id,key' });
+      if (error) throw error;
+    }
+    if (body.contract_template) {
+      const title = String(body.contract_template.title || '').trim();
+      const template = String(body.contract_template.template || '').trim();
+      if (title.length < 2) return reply({ error: 'Numele contractului este obligatoriu.' }, 400);
+      if (template.length < 20) return reply({ error: 'Textul contractului este prea scurt.' }, 400);
+      const unknown = [...template.matchAll(/{{[A-Z0-9_]+}}/g)].map((match) => match[0]).filter((value) => !allowedContractPlaceholders.has(value));
+      if (unknown.length) return reply({ error: `Câmpuri necunoscute în contract: ${[...new Set(unknown)].join(', ')}` }, 400);
+      const defaults = body.contract_template.defaults && typeof body.contract_template.defaults === 'object' ? body.contract_template.defaults : {};
+      const { error } = await db.from('app_settings').upsert({ organization_id: id, key: 'contract_template', value: {
+        title, template, defaults: { salary: String(defaults.salary || '').trim() || null },
+      }, updated_at: new Date().toISOString() }, { onConflict: 'organization_id,key' });
       if (error) throw error;
     }
     return reply({ ok: true, organization_id: id });

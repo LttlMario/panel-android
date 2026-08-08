@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
     if (!key) throw new Error('Cheia Supabase lipsește.');
     const body = await req.json();
     const code = String(body.voucher_code || '').trim().toUpperCase();
-    const guildId = String(body.guild_id || '').trim();
+    let guildId = String(body.guild_id || '').trim();
     const name = String(body.name || '').trim();
     const accessToken = String(body.access_token || '').trim();
     if (!code || name.length < 2 || !accessToken) return reply({ error: 'Completează voucherul, numele organizației și autentifică-te cu Discord.' }, 400);
@@ -30,6 +30,7 @@ Deno.serve(async (req) => {
     if (!voucher || voucher.redeemed_at) return reply({ error: 'Voucher invalid sau deja folosit.' }, 409);
     if (voucher.expires_at && Date.parse(String(voucher.expires_at)) <= Date.now()) return reply({ error: 'Voucherul a expirat.' }, 400);
     if (voucher.guild_id && guildId && String(voucher.guild_id) !== guildId) return reply({ error: 'Guild ID-ul nu corespunde voucherului.' }, 400);
+    if (!guildId && voucher.guild_id) guildId = String(voucher.guild_id).trim();
 
     if (guildId) {
       const botToken = String(Deno.env.get('DISCORD_BOT_TOKEN') || '').trim();
@@ -71,7 +72,7 @@ Deno.serve(async (req) => {
     if (redeemError) throw redeemError;
     if (!redeemed) return reply({ error: 'Voucherul a fost folosit între timp.' }, 409);
     await db.from('organization_lifecycle_events').insert({ organization_id: organization.id, event_type: 'voucher_organization_created', actor_discord_id: discordId, details: { package_code: voucher.package_code, guild_id: guildId || null } });
-    return reply({ ok: true, requires_guild_setup: !guildId, organization, package_code: voucher.package_code, expires_at: expires });
+    return reply({ ok: true, requires_guild_setup: !guildId, guild_id: guildId || null, organization, package_code: voucher.package_code, expires_at: expires });
   } catch (error) {
     console.error(error);
     return reply({ error: error instanceof Error ? error.message : 'Eroare internă.' }, 500);

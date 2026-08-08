@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ghid Hărți & Locații Ilegale - Familia Es Todo</title>
+    <title>Hărți & Locații Ilegale - Panel Management</title>
     <link rel="stylesheet" href="css/tailwind.css">
     <!-- Leaflet CSS for Pan & Zoom map engine -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
@@ -12,6 +12,7 @@
     <script src="js/supabase-config.js"></script>
     <script src="js/permissions.js"></script>
     <script src="js/panel-layout.js"></script>
+    <script src="js/global-header.js"></script>
     <style>
         /* ==========================================
            CSS CONFIGURATION & THEME VARIABLES
@@ -64,15 +65,13 @@
 
         #app {
             position: relative;
-            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
             height: 100vh;
-            display: grid;
-            grid-template-rows: 84px minmax(0, 1fr) auto;
-            grid-template-columns: 288px minmax(0, 1fr);
+            overflow: hidden;
         }
         #locations-footer-host {
-            grid-column: 2;
-            grid-row: 3;
             min-width: 0;
         }
 
@@ -402,10 +401,9 @@
         }
 
         #map-container-wrapper {
-            grid-column: 2;
             position: relative;
-            width: 100%;
-            height: 100%;
+            flex: 1;
+            min-height: 0;
             overflow: hidden;
         }
 
@@ -485,7 +483,10 @@
 
         @media (max-width: 767px) {
             body, html { overflow: hidden; }
-            #app { grid-template-columns: 1fr !important; grid-template-rows: auto minmax(0, 1fr) !important; }
+            #app {
+                display: flex !important;
+                flex-direction: column !important;
+            }
             #locations-footer-host { display: none; }
             header { min-height: 64px; padding: 10px 62px 10px 12px !important; }
             .header-center-area { min-width: 0; }
@@ -493,7 +494,10 @@
             .header-center-subtitle { font-size: 10px; }
             .controls-area > #admin-badge,
             .controls-area > #admin-login-btn { display: none !important; }
-            #map-container-wrapper { grid-column: 1 !important; min-height: 0; }
+            #map-container-wrapper {
+                flex: 1;
+                min-height: 0;
+            }
 
             .mobile-map-toolbar {
                 position: absolute;
@@ -954,59 +958,8 @@
 <body>
 
     <div id="app">
-        <!-- Sidebar standard, identic cu dashboard-ul -->
-<aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col justify-between" style="grid-row: 1 / 4;">
-            <div class="p-6 overflow-y-auto max-h-[calc(100vh-5rem)]">
-                <h1 class="text-xl font-bold text-slate-100 tracking-tight">Panel<span class="block text-xs font-normal text-slate-400 mt-0.5">by Little Mario</span></h1>
 
-                <nav class="mt-6 space-y-1.5" id="sidebar-nav">
-                    <a href="index.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm"><span>📊</span><span>Dashboard</span></a>
-                    <a href="pontaj.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm"><span>⏱️</span><span>Pontaj</span></a>
-                    <a href="cereri.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm"><span>📋</span><span>Cereri / Absențe</span></a>
-                    <a href="rapoarte.html" data-role="4" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm"><span>📈</span><span>Rapoarte</span></a>
-                    <a href="contracte.html" data-role="4" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm"><span>📜</span><span>Contracte</span></a>
-                    <a href="admin.html" data-role="7" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm"><span>👑</span><span>Panou Admin</span></a>
-                    <a href="calculatorilegal.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm"><span>🧮</span><span>Calculator Ilegal</span></a>
-                    <a href="craftmecanics.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm"><span>🔨</span><span>Craft Mecanics</span></a>
-                    <a href="locatiiilegale.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl bg-emerald-500/10 text-emerald-400 font-medium transition text-sm"><span>🗺️</span><span>Locații Ilegale</span></a>
-                    <a href="marketplace.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm"><span>🛒</span><span>Marketplace</span></a>
-                    <a href="marketplace-ilegal.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm"><span>🚨</span><span>Black Market</span></a>
-                </nav>
-            </div>
-
-            <div class="p-4 border-t border-slate-800 bg-slate-900/50 flex items-center justify-between">
-                <div class="flex items-center space-x-3 overflow-hidden">
-                    <img id="user-avatar" src="img/logo-192.png" class="w-10 h-10 rounded-full border border-slate-700 flex-shrink-0 object-cover" alt="Avatar">
-                    <div class="truncate">
-                        <p id="user-display-name" class="text-sm font-semibold text-slate-200 truncate">Se încarcă...</p>
-                        <p id="user-role" class="text-xs text-emerald-400 truncate">Mecanic</p>
-                    </div>
-                </div>
-                <button title="Ieșire din cont" onclick="handleLogout()" class="flex items-center space-x-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl transition cursor-pointer text-xs font-medium">
-                    <span></span>
-                    <span>Logout</span>
-                </button>
-            </div>
-        </aside>
-
-        <header>
-            <div class="header-center-area">
-                <div class="header-center-title">Hărți & Locații Ilegale</div>
-                <div class="header-center-subtitle">Familia Es Todo</div>
-            </div>
-
-            <div class="controls-area">
-                <div class="search-container">
-                    <span class="search-icon">🔍</span>
-                    <input type="text" id="search-input" placeholder="Caută locații ilegale...">
-                    <div class="search-results" id="search-results"></div>
-                </div>
-                <div id="admin-badge">🔒 Admin Activ</div>
-                <button class="btn" id="admin-login-btn" onclick="logheazaAdmin()">🔑 Admin</button>
-                <button class="btn" id="theme-toggle-btn">🌓</button>
-            </div>
-        </header>
-
+        <div id="panel-header-host"></div>
         <div id="map-container-wrapper">
             <div class="mobile-map-toolbar" aria-label="Selectare hartă și filtre">
                 <button class="map-switch-btn active" data-map-target="ls" onclick="switchMap('ls')">Los Santos</button>
@@ -1182,8 +1135,8 @@
                     </div>
 
                     <div class="meta-row">
-                        <span id="sb-updated">Modificat: 2026-07-26</span>
-                        <span style="color: var(--danger); font-weight: 600;">Familia Es Todo</span>
+                        <span id="sb-updated">Modificat: -</span>
+                        <span id="sb-organization-name" style="color: var(--danger); font-weight: 600;"></span>
                     </div>
                 </div>
             </div>
@@ -1238,18 +1191,15 @@
                 const role = activeUser.role || activeUser.default_role || 'Mecanic';
                 const userAvatar = activeUser.avatar || 'img/logo-192.png';
 
-                document.getElementById('user-display-name').textContent = displayName;
-                document.getElementById('user-role').textContent = role;
-                document.getElementById('user-avatar').src = userAvatar;
+                const nameEl = document.getElementById('user-display-name');
+                const roleEl = document.getElementById('user-role');
+                const avatarEl = document.getElementById('user-avatar');
 
-                const roleLower = String(role).toLowerCase();
-                const isPrivileged = roleLower.includes('sef') || roleLower.includes('șef') || roleLower.includes('manager') || roleLower.includes('admin') || roleLower.includes('owner');
-                const navLogs = document.getElementById('nav-logs');
-                if (isPrivileged && navLogs) {
-                    navLogs.classList.remove('hidden');
-                }
+                if (nameEl) nameEl.textContent = displayName;
+                if (roleEl) roleEl.textContent = role;
+                if (avatarEl) avatarEl.src = userAvatar;
 
-                localStorage.setItem('discord_user', JSON.stringify(activeUser));
+
             } catch (err) {
                 console.error('Eroare neașteptată:', err);
                 window.location.href = 'login.html';
@@ -1261,11 +1211,38 @@
             window.location.href = 'login.html';
         }
 
-        const PAROLA_ADMIN = "admin123";
-        let isAdminLoggedIn = localStorage.getItem('isAdmin') === 'true';
+        let isAdminLoggedIn = false;
         let isDraggingPin = false;
         let draggingMarkerId = null;
         let isCreatingNewLocation = false;
+
+        function actualizeazaAccesAdministratorLocatii() {
+            isAdminLoggedIn =
+                typeof isPlatformAdmin === 'function' &&
+                isPlatformAdmin();
+
+            const adminControls =
+                document.getElementById('admin-controls-section');
+
+            const editButton =
+                document.getElementById('sb-edit-panel-btn');
+
+            if (adminControls) {
+                adminControls.classList.toggle(
+                    'active',
+                    isAdminLoggedIn
+                );
+            }
+
+            if (editButton) {
+                editButton.style.display =
+                    isAdminLoggedIn && currentSelectedLocation
+                        ? 'flex'
+                        : 'none';
+            }
+
+            return isAdminLoggedIn;
+        }
 
         const CONFIG = {
             maps: {
@@ -1497,7 +1474,25 @@
         }
 
         function mapLocationForDatabase(loc) {
-            return { id: loc.id, map_key: loc.map, category: loc.category, title: loc.title, description: loc.description || '', images: loc.images || [], x: loc.x, y: loc.y, notes: loc.notes || '', requirements: loc.requirements || '', rewards: loc.rewards || '', last_updated: loc.lastUpdated || new Date().toISOString().slice(0, 10) };
+            return {
+                id: loc.id,
+                map_key: loc.map,
+                category: loc.category,
+                title: loc.title,
+                description: loc.description || '',
+                images: loc.images || [],
+                x: loc.x,
+                y: loc.y,
+                notes: loc.notes || '',
+                requirements: loc.requirements || '',
+                rewards: loc.rewards || '',
+                last_updated:
+                    loc.lastUpdated ||
+                    new Date().toISOString().slice(0, 10),
+
+                // Locațiile ilegale sunt globale pentru întreaga platformă.
+                organization_id: null
+            };
         }
 
         async function loadLocationsFromDatabase() {
@@ -1509,6 +1504,177 @@
         async function saveLocationToDatabase(location) {
             const { error } = await supabaseClient.from('illegal_locations').upsert(mapLocationForDatabase(location), { onConflict: 'id' });
             if (error) throw error;
+        }
+        // ============================================================
+        // REALTIME - LOCAȚII ILEGALE
+        // Sincronizează automat INSERT / UPDATE / DELETE din Supabase.
+        // ============================================================
+
+        let illegalLocationsRealtimeChannel = null;
+
+        function subscribeToIllegalLocationsRealtime() {
+
+            // Evităm abonarea de două ori.
+            if (illegalLocationsRealtimeChannel) {
+                return;
+            }
+
+            illegalLocationsRealtimeChannel = supabaseClient
+                .channel('illegal-locations-realtime')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'illegal_locations'
+                    },
+                    (payload) => {
+
+                        console.log(
+                            '[Realtime illegal_locations]',
+                            payload.eventType,
+                            payload
+                        );
+
+                        // --------------------------------------------
+                        // INSERT
+                        // --------------------------------------------
+
+                        if (payload.eventType === 'INSERT') {
+
+                            const newLocation =
+                                mapDatabaseLocation(payload.new);
+
+                            const existingIndex =
+                                DATA.findIndex(
+                                    item => item.id === newLocation.id
+                                );
+
+                            if (existingIndex === -1) {
+                                DATA.push(newLocation);
+                            } else {
+                                DATA[existingIndex] = newLocation;
+                            }
+
+                            renderMarkers();
+
+                            return;
+                        }
+
+
+                        // --------------------------------------------
+                        // UPDATE
+                        // --------------------------------------------
+
+                        if (payload.eventType === 'UPDATE') {
+
+                            const updatedLocation =
+                                mapDatabaseLocation(payload.new);
+
+                            const index =
+                                DATA.findIndex(
+                                    item => item.id === updatedLocation.id
+                                );
+
+                            if (index !== -1) {
+                                DATA[index] = updatedLocation;
+                            } else {
+                                DATA.push(updatedLocation);
+                            }
+
+                            /*
+                            * Dacă utilizatorul are exact locația
+                            * modificată deschisă în sidebar,
+                            * actualizăm și sidebar-ul.
+                            */
+                            if (
+                                currentSelectedLocation &&
+                                currentSelectedLocation.id ===
+                                    updatedLocation.id
+                            ) {
+                                currentSelectedLocation =
+                                    updatedLocation;
+
+                                selectLocation(
+                                    updatedLocation.id,
+                                    false
+                                );
+                            }
+
+                            renderMarkers();
+
+                            return;
+                        }
+
+
+                        // --------------------------------------------
+                        // DELETE
+                        // --------------------------------------------
+
+                        if (payload.eventType === 'DELETE') {
+
+                            const deletedId =
+                                payload.old?.id;
+
+                            if (!deletedId) {
+                                return;
+                            }
+
+                            DATA = DATA.filter(
+                                item => item.id !== deletedId
+                            );
+
+                            /*
+                            * Curățăm și favoritele dacă locația
+                            * ștearsă era salvată acolo.
+                            */
+                            state.favorites =
+                                state.favorites.filter(
+                                    id => id !== deletedId
+                                );
+
+                            localStorage.setItem(
+                                'gta_guide_illegal_fav',
+                                JSON.stringify(state.favorites)
+                            );
+
+                            updateFavoritesCounter();
+
+                            /*
+                            * Dacă locația ștearsă era deschisă,
+                            * închidem sidebar-ul.
+                            */
+                            if (
+                                currentSelectedLocation &&
+                                currentSelectedLocation.id === deletedId
+                            ) {
+                                currentSelectedLocation = null;
+                                state.selectedLocationId = null;
+
+                                document
+                                    .getElementById('sidebar')
+                                    ?.classList.remove('open');
+
+                                actualizeazaAccesAdministratorLocatii();
+                            }
+
+                            renderMarkers();
+                        }
+                    }
+                )
+                .subscribe((status) => {
+
+                    console.log(
+                        '[Realtime illegal_locations]',
+                        status
+                    );
+
+                    if (status === 'SUBSCRIBED') {
+                        console.log(
+                            'Realtime pentru locațiile ilegale este activ.'
+                        );
+                    }
+                });
         }
         let state = {
             currentMap: localStorage.getItem('gta_guide_illegal_map') || 'ls',
@@ -1553,9 +1719,7 @@
             updateFavoritesCounter();
 
             if (isAdminLoggedIn) {
-                document.getElementById('admin-login-btn').style.display = 'none';
-                document.getElementById('admin-badge').classList.add('active');
-                document.getElementById('admin-controls-section').classList.add('active');
+                document.getElementById('admin-controls-section')?.classList.add('active');
             }
 
             setTimeout(() => {
@@ -1605,8 +1769,17 @@
                     iconAnchor: [18, 18]
                 });
 
-                const marker = L.marker([lat, lng], { icon: customIcon });
-                marker.on('click', () => selectLocation(loc.id));
+                const marker = L.marker([lat, lng], {
+                    icon: customIcon,
+                    draggable: isDraggingPin && draggingMarkerId === loc.id
+                });
+                marker.on('click', () => {
+                    if (isDraggingPin && draggingMarkerId === loc.id) return;
+                    selectLocation(loc.id);
+                });
+                marker.on('dragend', (event) => {
+                    handleMarkerDragEnd(event, loc.id, loc.map);
+                });
                 markerLayers[loc.map].addLayer(marker);
             });
         }
@@ -1665,24 +1838,6 @@
             selectLocation(state.favorites[0]);
         }
 
-        function logheazaAdmin() {
-            if (isAdminLoggedIn) {
-                showToast('Ești deja autentificat ca administrator!');
-                return;
-            }
-            const parolaIntrodusa = prompt("Introdu parola de administrator:");
-            if (parolaIntrodusa === PAROLA_ADMIN) {
-                isAdminLoggedIn = true;
-                localStorage.setItem('isAdmin', 'true');
-                document.getElementById('admin-login-btn').style.display = 'none';
-                document.getElementById('admin-badge').classList.add('active');
-                document.getElementById('admin-controls-section').classList.add('active');
-                if (currentSelectedLocation) document.getElementById('sb-edit-panel-btn').style.display = 'flex';
-                showToast('Mod Admin activ.');
-            } else if (parolaIntrodusa !== null) {
-                alert("Parolă incorectă!");
-            }
-        }
 
         function salveazaDateleInStorage() {
             renderMarkers();
@@ -1790,7 +1945,8 @@
             inchidePanouEditareStanga();
             document.getElementById('sidebar').classList.remove('open');
             if (loc.map !== state.currentMap) switchMap(loc.map);
-            showToast(`Click pe hartă pentru a muta pinul "${loc.title}"!`);
+            renderMarkers();
+            showToast(`Trage pinul "${loc.title}" pe hartă sau apasă pe hartă pentru poziționare directă.`);
         }
 
         async function copiazaPinulSelectat() {
@@ -1811,24 +1967,43 @@
             showToast('Pin copiat!');
         }
 
-        async function handleMapClickForPinMove(e, mapKey) {
-            if (!isDraggingPin || !draggingMarkerId) return;
-            const loc = DATA.find(item => item.id === draggingMarkerId);
-            if (!loc || loc.map !== mapKey) return;
-
+        async function salveazaPozitiaPin(loc, mapKey, latlng) {
             const mapCfg = CONFIG.maps[mapKey];
-            loc.y = parseFloat(((mapCfg.height - e.latlng.lat) / mapCfg.height * 100).toFixed(2));
-            loc.x = parseFloat((e.latlng.lng / mapCfg.width * 100).toFixed(2));
+            loc.y = parseFloat(((mapCfg.height - latlng.lat) / mapCfg.height * 100).toFixed(2));
+            loc.x = parseFloat((latlng.lng / mapCfg.width * 100).toFixed(2));
             loc.lastUpdated = new Date().toISOString().split('T')[0];
 
-            try { await saveLocationToDatabase(loc); } catch (error) { alert('Poziția nu a putut fi salvată în baza de date.'); return; }
+            try {
+                await saveLocationToDatabase(loc);
+            } catch (error) {
+                alert('Poziția nu a putut fi salvată în baza de date.');
+                renderMarkers();
+                return false;
+            }
+
             salveazaDateleInStorage();
             isDraggingPin = false;
             const targetId = draggingMarkerId;
             draggingMarkerId = null;
             isCreatingNewLocation = false;
+            renderMarkers();
             selectLocation(targetId);
             showToast('Poziție actualizată!');
+            return true;
+        }
+
+        async function handleMarkerDragEnd(event, locationId, mapKey) {
+            if (!isDraggingPin || draggingMarkerId !== locationId) return;
+            const loc = DATA.find(item => item.id === locationId);
+            if (!loc) return;
+            await salveazaPozitiaPin(loc, mapKey, event.target.getLatLng());
+        }
+
+        async function handleMapClickForPinMove(e, mapKey) {
+            if (!isDraggingPin || !draggingMarkerId) return;
+            const loc = DATA.find(item => item.id === draggingMarkerId);
+            if (!loc || loc.map !== mapKey) return;
+            await salveazaPozitiaPin(loc, mapKey, e.latlng);
         }
 
         async function stergeLocatieStanga() {
@@ -2044,29 +2219,67 @@
             const searchInput = document.getElementById('search-input');
             const resultsBox = document.getElementById('search-results');
 
-            searchInput.addEventListener('input', (e) => {
-                const query = e.target.value.toLowerCase().trim();
-                if (!query) { resultsBox.style.display = 'none'; return; }
+            // Header-ul global poate să nu conțină căutarea locală.
+            // În acest caz nu avem nimic de inițializat.
+            if (!searchInput || !resultsBox) {
+                console.log(
+                    '[Locații Ilegale] Căutarea locală nu există în header-ul global.'
+                );
+                return;
+            }
 
-                const matches = DATA.filter(item => item.title.toLowerCase().includes(query) || item.description.toLowerCase().includes(query));
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value
+                    .toLowerCase()
+                    .trim();
+
+                if (!query) {
+                    resultsBox.style.display = 'none';
+                    return;
+                }
+
+                const matches = DATA.filter(item =>
+                    item.title.toLowerCase().includes(query) ||
+                    item.description.toLowerCase().includes(query)
+                );
+
                 if (matches.length === 0) {
-                    resultsBox.innerHTML = `<div class="search-result-item">Nicio locație găsită</div>`;
+                    resultsBox.innerHTML =
+                        `<div class="search-result-item">
+                            Nicio locație găsită
+                        </div>`;
+
                     resultsBox.style.display = 'block';
                     return;
                 }
 
                 resultsBox.innerHTML = '';
+
                 matches.forEach(match => {
                     const div = document.createElement('div');
+
                     div.className = 'search-result-item';
-                    div.innerHTML = `<span>${match.title}</span> <span style="font-size:11px; color: var(--text-muted);">${match.map.toUpperCase()}</span>`;
+
+                    div.innerHTML = `
+                        <span>${match.title}</span>
+                        <span style="
+                            font-size:11px;
+                            color:var(--text-muted);
+                        ">
+                            ${match.map.toUpperCase()}
+                        </span>
+                    `;
+
                     div.addEventListener('click', () => {
                         selectLocation(match.id);
+
                         resultsBox.style.display = 'none';
                         searchInput.value = '';
                     });
+
                     resultsBox.appendChild(div);
                 });
+
                 resultsBox.style.display = 'block';
             });
         }
@@ -2110,15 +2323,38 @@
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
-            // Profilul trebuie afișat chiar dacă inițializarea hărții întâmpină o problemă.
+
+            // Stabilim drepturile folosind sistemul central din permissions.js.
+            actualizeazaAccesAdministratorLocatii();
+
+            // Profilul utilizatorului.
             fetchUserData();
+
             try {
+
+                // 1. Încărcăm starea actuală din baza de date.
                 await loadLocationsFromDatabase();
+
             } catch (error) {
-                console.error('Eroare la încărcarea locațiilor:', error);
-                alert('Locațiile nu au putut fi încărcate. Rulează mai întâi SQL-ul de migrare în Supabase.');
+
+                console.error(
+                    'Eroare la încărcarea locațiilor:',
+                    error
+                );
+
+                alert(
+                    'Locațiile nu au putut fi încărcate din baza de date.'
+                );
             }
+
+            // 2. Construim hărțile și markerele.
             initMaps();
+
+            // 3. Pornim sincronizarea live cu Supabase.
+            subscribeToIllegalLocationsRealtime();
+
+            // Aplicăm din nou drepturile după construirea interfeței.
+            actualizeazaAccesAdministratorLocatii();
         });
     </script>
     <script src="js/global-footer.js"></script>

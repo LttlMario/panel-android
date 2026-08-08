@@ -43,150 +43,7 @@
             line-height: 1.25rem;
         }
 
-        /* Layout Principal cu Sidebar Fix și Conținut */
-        #app-content {
-            display: none;
-            width: 100%;
-            min-height: 100vh;
-        }
-
-        /* Meniu Lateral (Sidebar) Stilizat Tailwind */
-        .sidebar {
-            width: 18rem;
-            background-color: #0f172a;
-            border-right: 1px solid #1e293b;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            z-index: 100;
-        }
-
-        .sidebar-top-container {
-            padding: 1.5rem;
-            overflow-y: auto;
-            max-height: calc(100vh - 5rem);
-        }
-
-        .sidebar-brand {
-            font-size: 1.25rem;
-            line-height: 1.75rem;
-            font-weight: 700;
-            color: #f1f5f9;
-            letter-spacing: -0.025em;
-        }
-
-        .sidebar-brand span {
-            display: block;
-            font-size: 0.75rem;
-            line-height: 1rem;
-            font-weight: 400;
-            color: #94a3b8;
-            margin-top: 0.125rem;
-        }
-
-        .sidebar-nav {
-            list-style: none;
-            margin-top: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.375rem;
-        }
-
-        .sidebar-nav a {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1rem;
-            color: #cbd5e1;
-            text-decoration: none;
-            font-size: 0.875rem;
-            line-height: 1.25rem;
-            border-radius: 0.75rem;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .sidebar-nav a:hover {
-            color: #f1f5f9;
-            background-color: #1e293b;
-        }
-
-        .sidebar-nav a.active {
-            color: #38bdf8;
-            background-color: rgba(56, 189, 248, 0.1);
-            font-weight: 500;
-        }
-
-        /* Secțiune Profil în Sidebar (Stânga Jos) */
-        .sidebar-footer {
-            padding: 1rem;
-            border-top: 1px solid #1e293b;
-            background-color: rgba(15, 23, 42, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .user-profile-badge {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            overflow: hidden;
-        }
-
-        .user-profile-badge img {
-            width: 2.5rem;
-            height: 2.5rem;
-            border-radius: 9999px;
-            object-fit: cover;
-            border: 1px solid #334155;
-            flex-shrink: 0;
-        }
-
-        .user-details {
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            min-width: 0;
-        }
-
-        .user-name {
-            font-weight: 600;
-            font-size: 0.875rem;
-            line-height: 1.25rem;
-            color: #e2e8f0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .user-role {
-            font-size: 0.75rem;
-            line-height: 1rem;
-            color: #34d399;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .logout-btn {
-            background: transparent;
-            border: none;
-            color: #94a3b8;
-            cursor: pointer;
-            font-size: 1rem;
-            padding: 0.5rem;
-            border-radius: 0.5rem;
-            transition: all 0.2s;
-        }
-
-        .logout-btn:hover {
-            color: #fb7185;
-            background-color: #1e293b;
-        }
+    
 
         /* Conținutul Principal (Dreapta) */
         .main-content {
@@ -199,11 +56,7 @@
             align-items: center;
             max-width: none;
         }
-        .main-content #panel-global-footer {
-            width: 100%;
-            margin-left: 0;
-            margin-right: 0;
-        }
+
 
         header {
             text-align: center;
@@ -511,86 +364,10 @@
 
     <!-- Aplicația Principală -->
     <div id="app-content" style="display: flex; width: 100%; min-height: 100vh;">
-        <!-- Meniu Lateral (Sidebar) Sincronizat cu index.html -->
-        <aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col justify-between hidden md:flex">
-            <div class="p-6 overflow-y-auto max-h-[calc(100vh-5rem)]">
-                <h1 class="text-xl font-bold text-slate-100 tracking-tight">Panel<span class="block text-xs font-normal text-slate-400 mt-0.5">by Little Mario</span></h1>
 
-                <nav class="mt-6 space-y-1.5" id="sidebar-nav">
-                    <a href="index.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>📊</span>
-                        <span>Dashboard</span>
-                    </a>
-                    <a href="pontaj.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>⏱️</span>
-                        <span>Pontaj</span>
-                    </a>
-                    <a href="cereri.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>📋</span>
-                        <span>Cereri / Absențe</span>
-                    </a>
-                    <a href="rapoarte.html" data-role="4" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>📈</span>
-                        <span>Rapoarte</span>
-                    </a>
-                    <a href="contracte.html" data-role="4" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>📜</span>
-                        <span>Contracte</span>
-                    </a>
-                    <a href="admin.html" data-role="7" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>👑</span>
-                        <span>Panou Admin</span>
-                    </a>
-                    <a href="calculatorilegal.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🧮</span>
-                        <span>Calculator Ilegal</span>
-                    </a>
-                    <a href="craftmecanics.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🔨</span>
-                        <span>Craft Mecanics</span>
-                    </a>
-                    <a href="locatiiilegale.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🗺️</span>
-                        <span>Locații Ilegale</span>
-                    </a>
-                    <a href="marketplace.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🛒</span>
-                        <span>Marketplace</span>
-                    </a>
-                    <a href="marketplace-ilegal.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🚨</span>
-                        <span>Black Market</span>
-                    </a>
-                </nav>
-            </div>
-
-            <!-- Profil Utilizator Dinamic -->
-            <div class="p-4 border-t border-slate-800 bg-slate-900/50 flex items-center justify-between">
-                <div class="flex items-center space-x-3 overflow-hidden">
-                    <img id="user-avatar" src="img/logo-192.png" class="w-10 h-10 rounded-full border border-slate-700 flex-shrink-0 object-cover" alt="Avatar">
-                    <div class="truncate">
-                        <p id="user-display-name" class="text-sm font-semibold text-slate-200 truncate">Se încarcă...</p>
-                        <p id="user-role" class="text-xs text-emerald-400 truncate">Mecanic</p>
-                    </div>
-                </div>
-                <button id="logout-btn" title="Ieșire din cont" class="flex items-center space-x-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl transition cursor-pointer text-xs font-medium">
-                    <span></span>
-                    <span>Logout</span>
-                </button>
-            </div>
-        </aside>
 
         <!-- Conținutul principal din dreapta -->
         <main class="main-content">
-            <header class="panel-global-header">
-                <div class="panel-global-title">
-                    <h2>🧮 Calculator Ilegal</h2>
-                    <p>Calculează rapid materialele necesare pentru arme, muniție și plicuri.</p>
-                </div>
-                <div class="search-container w-full max-w-2xl relative">
-                    <input type="search" id="calculator-search" class="w-full py-3 pl-4 pr-4 bg-slate-900 border border-slate-700 rounded-xl text-slate-100 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition" placeholder="Caută armă, muniție sau rețetă..." oninput="filterCalculatorRecipes(this.value)">
-                </div>
-            </header>
 
 <div class="calculator-container">
                 <!-- Panou Stânga: Input-uri -->
@@ -717,6 +494,13 @@
                 <div class="panel results-section" id="calculator-results" role="dialog" aria-modal="true" aria-label="Rezultatele calculului">
                     <button type="button" class="mobile-edit-selection" onclick="showMobileCalculator()">✕ Închide rezultatele</button>
                     <!-- Box 1A: Componente din Arme -->
+                    <div class="result-box" id="box_weapon_total">
+                        <h3>Total piese de armă înainte de componente armă</h3>
+                        <div class="grid-results" id="weaponTotalResultsGrid">
+                            <div class="result-card"><div class="item-title">Total piese de armă necesare</div><div class="item-value" id="res_w_total_piese">0</div></div>
+                        </div>
+                    </div>
+
                     <div class="result-box" id="box_weapons">
                         <h3>Componente Necesarare</h3>
                         <div class="grid-results" id="weaponsResultsGrid">
@@ -789,6 +573,7 @@
                         </div>
                     </div>
 
+
                     <!-- Box 4: Total Materiale Brute -->
                     <div class="result-box" id="box_raw_materials">
                         <h3>Total Materiale Brute Necesare (Arme, Componente & Muniții)</h3>
@@ -804,7 +589,19 @@
                             <div class="result-card"><div class="item-title">Plastic</div><div class="item-value" id="raw_plastic">0</div></div>
                             <div class="result-card"><div class="item-title">Scrap</div><div class="item-value" id="raw_scrap">0</div></div>
                             <div class="result-card"><div class="item-title">Cupru</div><div class="item-value" id="raw_cupru">0</div></div>
-                            <div class="result-card"><div class="item-title">Carcasa</div><div class="item-value" id="raw_carcasa">0</div></div>
+                            <div class="result-card">
+                                <div class="item-title">Casing-uri</div>
+                                <div class="item-value" id="raw_casinguri">0</div>
+                            </div>
+                            <div class="result-card">
+                                <div class="item-title">Aur</div>
+                                <div class="item-value gold" id="raw_aur">0</div>
+                            </div>
+
+                            <div class="result-card">
+                                <div class="item-title">Diamant</div>
+                                <div class="item-value" id="raw_diamant">0</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -916,12 +713,118 @@
         };
 
         const ammoData = {
-            ".9MM PBM": { id: "ammo_9mm_pbm", batch: 30, casing: { "Carcasa": 30 }, fill: { "Plumb": 1, "Praf de Pusca": 1 } },
-            ".9MM ACP": { id: "ammo_9mm_acp", batch: 30, casing: { "Carcasa": 30 }, fill: { "Plumb": 1, "Praf de Pusca": 1 } },
-            ".38MM": { id: "ammo_38mm", batch: 20, casing: { "Carcasa": 20 }, fill: { "Plumb": 2, "Praf de Pusca": 2 } },
-            "7.62MM": { id: "ammo_762mm", batch: 30, casing: { "Carcasa": 30 }, fill: { "Plumb": 2, "Praf de Pusca": 2 } },
-            ".44 Marlin": { id: "ammo_44_marlin", batch: 30, casing: { "Carcasa": 30 }, fill: { "Plumb": 1, "Praf de Pusca": 2 } },
-            "7.65 MM": { id: "ammo_765_mm", batch: 30, casing: { "Carcasa": 30 }, fill: { "Plumb": 1, "Praf de Pusca": 1 } }
+
+            ".44 Marlin": {
+                id: "ammo_44_marlin",
+                batch: 30,
+                casing: {
+                    "Cupru": 2
+                },
+                fill: {
+                    "Plumb": 1,
+                    "Praf de Pusca": 2
+                }
+            },
+
+            "7.62mm": {
+                id: "ammo_762mm",
+                batch: 30,
+                casing: {
+                    "Cupru": 2
+                },
+                fill: {
+                    "Plumb": 2,
+                    "Praf de Pusca": 2
+                }
+            },
+
+            ".45 ACP": {
+                id: "ammo_45_acp",
+                batch: 30,
+                casing: {
+                    "Cupru": 1
+                },
+                fill: {
+                    "Plumb": 1,
+                    "Praf de Pusca": 1
+                }
+            },
+
+            "9mm PBM": {
+                id: "ammo_9mm_pbm",
+                batch: 30,
+                casing: {
+                    "Cupru": 1
+                },
+                fill: {
+                    "Plumb": 1,
+                    "Praf de Pusca": 1
+                }
+            },
+
+            "9mm ACP": {
+                id: "ammo_9mm_acp",
+                batch: 30,
+                casing: {
+                    "Cupru": 2
+                },
+                fill: {
+                    "Plumb": 1,
+                    "Praf de Pusca": 1
+                }
+            },
+
+            ".38 Magnum": {
+                id: "ammo_38_magnum",
+                batch: 20,
+                casing: {
+                    "Cupru": 2
+                },
+                fill: {
+                    "Plumb": 2,
+                    "Praf de Pusca": 3
+                }
+            },
+
+            "7.65mm": {
+                id: "ammo_765mm",
+                batch: 20,
+                casing: {
+                    "Cupru": 2
+                },
+                fill: {
+                    "Plumb": 2,
+                    "Praf de Pusca": 2
+                }
+            },
+
+            ".50 DAP": {
+                id: "ammo_50_dap",
+                batch: 20,
+                casing: {
+                    "Cupru": 4,
+                    "Aur": 1
+                },
+                fill: {
+                    "Plumb": 3,
+                    "Praf de Pusca": 4,
+                    "Diamant": 1
+                }
+            },
+
+            "Buckshot": {
+                id: "ammo_buckshot",
+                batch: 20,
+                casing: {
+                    "Aluminiu": 2,
+                    "Plastic": 5
+                },
+                fill: {
+                    "Plumb": 2,
+                    "Praf de Pusca": 2
+                }
+            }
+
         };
 
         function toggleCategory(catId) {
@@ -1085,30 +988,49 @@
                 }
             }
 
+            let independentPartsCrafts = Math.ceil(totalIndependentPartsConsumed / 2);
+
             let partsRawMats = {
-                "Arc": totalIndependentPartsConsumed * 1,
-                "Oțel": totalIndependentPartsConsumed * 1,
-                "Plastic": totalIndependentPartsConsumed * 1,
-                "Scrap": totalIndependentPartsConsumed * 2
+                "Arc": independentPartsCrafts,
+                "Oțel": independentPartsCrafts,
+                "Plastic": independentPartsCrafts,
+                "Scrap": independentPartsCrafts * 2
             };
 
             let hasAmmo = false;
+
+            let ammoCasingTotals = {};
+            let ammoFillTotals = {};
+            let totalCasings = 0;
             let cleanRawMats = {
-                "Arc": 0, "Oțel": 0, "Plumb": 0, "Aluminiu": 0, "Praf de Pusca": 0,
-                "Sulf": 0, "Cărbune": 0, "Fier": 0, "Plastic": 0, "Scrap": 0,
-                "Cupru": 0, "Carcasa": 0
+                "Arc": 0,
+                "Oțel": 0,
+                "Plumb": 0,
+                "Aluminiu": 0,
+                "Praf de Pusca": 0,
+                "Sulf": 0,
+                "Cărbune": 0,
+                "Fier": 0,
+                "Plastic": 0,
+                "Scrap": 0,
+                "Cupru": 0,
+                "Casing-uri": 0,
+                "Aur": 0,
+                "Diamant": 0
             };
 
-            let rawPartsForWeapons = totalWParts;
-            cleanRawMats["Arc"] += rawPartsForWeapons * 1;
-            cleanRawMats["Oțel"] += rawPartsForWeapons * 1;
-            cleanRawMats["Plastic"] += rawPartsForWeapons * 1;
+            let rawPartsForWeapons = Math.ceil(totalWParts / 2);
+
+            cleanRawMats["Arc"] += rawPartsForWeapons;
+            cleanRawMats["Oțel"] += rawPartsForWeapons;
+            cleanRawMats["Plastic"] += rawPartsForWeapons;
             cleanRawMats["Scrap"] += rawPartsForWeapons * 2;
 
-            let weaponComponentsConsumedParts = weaponComponentsAsParts;
-            cleanRawMats["Arc"] += weaponComponentsConsumedParts * 1;
-            cleanRawMats["Oțel"] += weaponComponentsConsumedParts * 1;
-            cleanRawMats["Plastic"] += weaponComponentsConsumedParts * 1;
+            let weaponComponentsConsumedParts = Math.ceil(weaponComponentsAsParts / 2);
+
+            cleanRawMats["Arc"] += weaponComponentsConsumedParts;
+            cleanRawMats["Oțel"] += weaponComponentsConsumedParts;
+            cleanRawMats["Plastic"] += weaponComponentsConsumedParts;
             cleanRawMats["Scrap"] += weaponComponentsConsumedParts * 2;
 
             cleanRawMats["Arc"] += partsRawMats["Arc"];
@@ -1118,20 +1040,39 @@
 
             for (let aName in ammoData) {
                 let a = ammoData[aName];
-                let bulletsQty = parseInt(document.getElementById(`a_${a.id}`).value) || 0;
+
+                let bulletsQty =
+                    parseInt(document.getElementById(`a_${a.id}`).value) || 0;
+
                 if (bulletsQty > 0) {
                     hasAmmo = true;
+
+                    // Numărul de crafturi necesare
                     let crafts = Math.ceil(bulletsQty / a.batch);
 
+                    // Casing-uri necesare
+                    let casingsNeeded = crafts * a.batch;
+                    totalCasings += casingsNeeded;
+
+                    // Materialele necesare pentru casing-uri
                     for (let mat in a.casing) {
-                        cleanRawMats[mat] = (cleanRawMats[mat] || 0) + (a.casing[mat] * crafts);
+                        let amount = a.casing[mat] * crafts;
+
+                        cleanRawMats[mat] =
+                            (cleanRawMats[mat] || 0) + amount;
                     }
+
+                    // Materialele necesare pentru umplere
                     for (let mat in a.fill) {
-                        cleanRawMats[mat] = (cleanRawMats[mat] || 0) + (a.fill[mat] * crafts);
+                        let amount = a.fill[mat] * crafts;
+
+                        cleanRawMats[mat] =
+                            (cleanRawMats[mat] || 0) + amount;
                     }
                 }
             }
 
+            cleanRawMats["Casing-uri"] += totalCasings;
             const resource = document.getElementById('plicuriResource').value;
             const qtyVal = document.getElementById('plicuriQty').value;
             let factor = 0;
@@ -1218,6 +1159,7 @@
             const totalMushroomsCount = mushPinkLight + mushOysterRosu + mushAmanitaRosie + mushBlueLight + mushOysterGalben + mushAmanitaVerde + mushPurpleLight + mushOysterAlbastru + mushPsilocybe;
             const mushTotalKg = (mushAcetona * 2) + ((totalMushroomsCount + mushPlicuriGoale) * 0.10);
 
+            const boxWeaponTotal = document.getElementById('box_weapon_total');
             const boxWeapons = document.getElementById('box_weapons');
             const boxWeaponParts = document.getElementById('box_weapon_parts');
             const boxPlicuri = document.getElementById('box_plicuri');
@@ -1225,7 +1167,10 @@
             const boxMushrooms = document.getElementById('box_mushrooms');
             const boxRawMaterials = document.getElementById('box_raw_materials');
 
+
             if (hasWeapons) {
+                boxWeaponTotal.classList.add('active');
+                document.getElementById('res_w_total_piese').innerText = totalWParts + weaponComponentsAsParts;
                 boxWeapons.classList.add('active');
                 document.getElementById('res_w_piese_arme').innerText = totalWParts;
                 document.getElementById('res_w_blueprint').innerText = wTotals["Blueprint"];
@@ -1241,6 +1186,7 @@
                 document.getElementById('res_w_rubies').innerText = wTotals["Rubies"];
                 document.getElementById('res_w_emeralds').innerText = wTotals["Emeralds"];
             } else {
+                boxWeaponTotal.classList.remove('active');
                 boxWeapons.classList.remove('active');
             }
 
@@ -1306,7 +1252,9 @@
                 document.getElementById('raw_plastic').innerText = cleanRawMats["Plastic"];
                 document.getElementById('raw_scrap').innerText = cleanRawMats["Scrap"];
                 document.getElementById('raw_cupru').innerText = cleanRawMats["Cupru"];
-                document.getElementById('raw_carcasa').innerText = cleanRawMats["Carcasa"];
+                document.getElementById('raw_casinguri').innerText = cleanRawMats["Casing-uri"];
+                document.getElementById('raw_aur').innerText = cleanRawMats["Aur"];
+                document.getElementById('raw_diamant').innerText = cleanRawMats["Diamant"];
             } else {
                 boxRawMaterials.classList.remove('active');
             }

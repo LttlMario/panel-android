@@ -18,84 +18,8 @@
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex text-sm">
 
-    <!-- Containerul Principal -->
-    <div class="flex h-screen w-full overflow-hidden">
-
-        <!-- Sidebar / Meniu Lateral -->
-        <aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col justify-between hidden md:flex">
-            <div class="p-6 overflow-y-auto max-h-[calc(100vh-5rem)]">
-                <h1 class="text-xl font-bold text-slate-100 tracking-tight">Panel<span class="block text-xs font-normal text-slate-400 mt-0.5">by Little Mario</span></h1>
-
-                <nav class="mt-6 space-y-1.5" id="sidebar-nav">
-                    <a href="index.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>📊</span>
-                        <span>Dashboard</span>
-                    </a>
-                    <a href="pontaj.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>⏱️</span>
-                        <span>Pontaj</span>
-                    </a>
-                    <a href="cereri.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>📋</span>
-                        <span>Cereri / Absențe</span>
-                    </a>
-                    <a href="rapoarte.html" data-role="4" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>📈</span>
-                        <span>Rapoarte</span>
-                    </a>
-                    <a href="contracte.html" data-role="4" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>📜</span>
-                        <span>Contracte</span>
-                    </a>
-                    <a href="admin.html" data-role="7" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>👑</span>
-                        <span>Panou Admin</span>
-                    </a>
-                    <a href="calculatorilegal.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🧮</span>
-                        <span>Calculator Ilegal</span>
-                    </a>
-                    <a href="craftmecanics.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🔨</span>
-                        <span>Craft Mecanics</span>
-                    </a>
-                    <a href="locatiiilegale.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🗺️</span>
-                        <span>Locații Ilegale</span>
-                    </a>
-                    <a href="marketplace.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🛒</span>
-                        <span>Marketplace</span>
-                    </a>
-                    <a href="marketplace-ilegal.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🚨</span>
-                        <span>Black Market</span>
-                    </a>
-                </nav>
-            </div>
-
-            <!-- Profil Utilizator Dinamic -->
-            <div class="p-4 border-t border-slate-800 bg-slate-900/50 flex items-center justify-between">
-                <div class="flex items-center space-x-3 overflow-hidden">
-                    <img id="user-avatar" src="img/logo-192.png" class="w-10 h-10 rounded-full border border-slate-700 flex-shrink-0 object-cover" alt="Avatar">
-                    <div class="truncate">
-                        <p id="user-display-name" class="text-sm font-semibold text-slate-200 truncate">Se încarcă...</p>
-                        <p id="user-role" class="text-xs text-emerald-400 truncate">Mecanic</p>
-                    </div>
-                </div>
-                <button id="logout-btn" title="Ieșire din cont" class="flex items-center space-x-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl transition cursor-pointer text-xs font-medium">
-                    <span></span>
-                    <span>Logout</span>
-                </button>
-            </div>
-        </aside>
-
-        <!-- Conținut Principal -->
-        <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
-            <header class="h-16 border-b border-slate-800 bg-slate-900/50 backdrop-blur px-8 flex items-center justify-between sticky top-0 z-20">
-                <h2 class="text-lg font-bold text-slate-100">Cereri și Înștiințări Absență - Sediu Mecanic</h2>
-                <div class="text-xs text-slate-400">Tabel Supabase: <code class="text-emerald-400">absences</code></div>
-            </header>
+            <!-- Conținut Principal -->
+            <main class="flex-1 flex flex-col min-w-0">
 
             <div class="p-8 space-y-6 max-w-5xl mx-auto w-full">
 
@@ -176,7 +100,6 @@
 
             </div>
         </main>
-    </div>
 
     <!-- Modal pentru Editare Înștiințare -->
     <div id="edit-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
@@ -234,19 +157,205 @@
             display_name: '',
             email: '',
             avatar: '',
-            role: 'Mecanic',
-            service: '',
-            created_at: '',
-            maintenance_mode: false,
-            discord_logs_active: true,
-            threshold_value: 0,
-            max_shift_hours: 8,
-            default_role: 'Mecanic'
+            role: '',
+            allowed_pages: [],
+            discord_role_ids: [],
+            organization_id: ''
         };
 
-        function canManageOthers() {
-            const role = (currentUser.role || currentUser.default_role || '').toLowerCase();
-            return role.includes('sef') || role.includes('șef') || role.includes('manager') || role.includes('admin') || role.includes('owner');
+        let activeOrganization = null;
+        let organizationActionPermissions = {};
+        let requestRoute = null;
+
+        function loadActiveOrganizationContext() {
+            try {
+                const storedOrganization =
+                    localStorage.getItem('panel_active_organization');
+
+                if (!storedOrganization) {
+                    throw new Error(
+                        'Nu există o organizație activă în sesiune.'
+                    );
+                }
+
+                activeOrganization =
+                    JSON.parse(storedOrganization);
+                    console.log(
+                    'ACTIVE ORGANIZATION FULL:',
+                    activeOrganization
+                );
+
+                if (!activeOrganization?.id) {
+                    throw new Error(
+                        'Organizația activă nu are un ID valid.'
+                    );
+                }
+
+                /*
+                * Permisiunile pentru acțiuni sunt calculate
+                * server-side la autentificare/sincronizare și
+                * aparțin organizației active.
+                */
+                const cachedUser =
+                    JSON.parse(
+                        localStorage.getItem('discord_user') || '{}'
+                    );
+
+                // Configurația organizației active este sursa de adevăr.
+                // Nu folosim o copie veche rămasă în localStorage pentru rutare.
+                organizationActionPermissions =
+                    activeOrganization.platform_settings?.action_permissions ||
+                    activeOrganization.action_permissions ||
+                    (cachedUser.organization_id === activeOrganization.id
+                        ? cachedUser.action_permissions
+                        : null) ||
+                    {};
+                    console.log(
+                        'ORG PLATFORM SETTINGS:',
+                        activeOrganization.platform_settings
+                    );
+
+                    console.log(
+                        'ACTION PERMISSIONS FINAL:',
+                        organizationActionPermissions
+                    );
+                    console.log(
+                        'ACTION PERMISSIONS JSON:',
+                        JSON.stringify(
+                            organizationActionPermissions,
+                            null,
+                            2
+                        )
+                    );
+                    console.log(
+                        'CACHED USER ORGANIZATION:',
+                        cachedUser.organization
+                    );
+
+                    console.log(
+                        'ACTION PERMISSIONS SOURCE:',
+                        organizationActionPermissions
+                    );
+
+                currentUser.organization_id =
+                    activeOrganization.id;
+
+                /*
+                * Ruta Discord folosită de pagina Cereri / Absențe.
+                * Nu conține webhook-ul propriu-zis.
+                * Webhook-ul este rezolvat server-side pentru organizația activă.
+                */
+let requestChannel = null;
+
+const cachedUserRoles =
+    (cachedUser.discord_role_ids || []).map(String);
+console.log(
+    'ROLURI DISCORD UTILIZATOR:',
+    cachedUser.discord_role_ids
+);
+
+const permissions =
+    organizationActionPermissions || {};
+
+const organizationRoles =
+    (permissions['cereri.organization'] || [])
+        .map(String);
+
+const departmentRoles =
+    (permissions['cereri.departments'] || [])
+        .map(String);
+
+
+const hasOrganizationRole =
+    cachedUserRoles.some(role =>
+        organizationRoles.includes(role)
+    );
+
+
+const hasDepartmentRole =
+    cachedUserRoles.some(role =>
+        departmentRoles.includes(role)
+    );
+
+
+console.log(
+    'HAS ORGANIZATION ROLE:',
+    hasOrganizationRole
+);
+console.log(
+    'ORG PLATFORM SETTINGS JSON:',
+    JSON.stringify(
+        activeOrganization.platform_settings,
+        null,
+        2
+    )
+);
+
+console.log(
+    'HAS DEPARTMENT ROLE:',
+    hasDepartmentRole
+);
+
+
+if (hasDepartmentRole) {
+
+    requestChannel = 'requests_departments';
+
+}
+else if (hasOrganizationRole) {
+
+    requestChannel = 'requests_organization';
+
+}
+else {
+
+    console.warn(
+        'Nu s-a găsit rol cereri. Folosesc requests compatibil.'
+    );
+
+    requestChannel = 'requests';
+
+}
+
+
+requestRoute = {
+    channel: requestChannel,
+    organization_id: activeOrganization.id
+};
+
+
+console.log(
+    'REQUEST ROUTE FINAL:',
+    requestRoute
+);
+
+console.log(
+    'ACTION PERMISSIONS:',
+    permissions
+);
+
+console.log(
+    'USER ROLES:',
+    cachedUserRoles
+);
+console.log(
+    'USER ROLES JSON:',
+    JSON.stringify(
+        cachedUserRoles,
+        null,
+        2
+    )
+);
+    
+                return true;
+
+            } catch (err) {
+                console.error(
+                    'Eroare la încărcarea contextului organizației active:',
+                    err
+                );
+                return false;
+            }
         }
 
         function getCurrentLocalDateTime() {
@@ -261,20 +370,27 @@
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
-            // 1. Evidențiere automată a paginii active în meniu
-            const currentPage = window.location.pathname.split("/").pop() || "index.html";
-            document.querySelectorAll('.nav-link').forEach(link => {
-                const linkHref = link.getAttribute('href');
-                if (linkHref === currentPage) {
-                    link.classList.remove('text-slate-300', 'hover:bg-slate-800');
-                    link.classList.add('bg-emerald-500/10', 'text-emerald-400', 'font-medium');
-                }
-            });
+
 
             // 2. Verificare sesiune locală robustă
             const cachedUser = localStorage.getItem('discord_user');
             if (!cachedUser) {
                 window.location.href = 'login.html';
+                return;
+            }
+            // 3. Reîmprospătăm sesiunea, ca să preluăm selecția actuală
+            // din organizații.html înainte de a calcula ruta cererii.
+            try {
+                await ensurePanelSession();
+            } catch (error) {
+                console.warn('Sesiunea nu a putut fi reîmprospătată:', error);
+            }
+
+            // 4. Încărcare context organizație activă
+            if (!loadActiveOrganizationContext()) {
+                console.error('Nu s-a putut determina organizația activă.');
+
+                window.location.href = 'guest.html';
                 return;
             }
 
@@ -294,29 +410,55 @@
 
                 let activeUser = dbUser || localData;
 
-                currentUser = { ...currentUser, ...activeUser };
+                currentUser = {
+                    ...currentUser,
+                    ...activeUser,
 
-                const displayNameToRender = currentUser.display_name || currentUser.username || 'Mecanic';
-                document.getElementById('user-display-name').textContent = displayNameToRender;
-                const activeRole = currentUser.role || currentUser.default_role || 'Mecanic';
-                document.getElementById('user-role').textContent = activeRole;
+                    discord_role_ids:
+                        activeUser.discord_role_ids ||
+                        JSON.parse(localStorage.getItem('discord_user') || '{}').discord_role_ids ||
+                        [],
 
-                if (currentUser.avatar) {
-                    const avatarUrl = currentUser.avatar.startsWith('http')
-                        ? currentUser.avatar
-                        : `https://cdn.discordapp.com/avatars/${currentUser.discord_id}/${currentUser.avatar}.png`;
-                    document.getElementById('user-avatar').src = avatarUrl;
-                }
+                    organization_id: activeOrganization.id
+                };
+// Recalculăm ruta Discord după userul real din Supabase
+const freshRoles =
+    (currentUser.discord_role_ids || []).map(String);
 
-                const roleLower = activeRole.toLowerCase();
-                const isPrivileged = roleLower.includes('sef') || roleLower.includes('șef') || roleLower.includes('manager') || roleLower.includes('admin') || roleLower.includes('owner');
+const permissions =
+    organizationActionPermissions || {};
 
-                if (isPrivileged) {
-                    const navLogs = document.getElementById('nav-logs');
-                    if (navLogs) navLogs.classList.remove('hidden');
-                }
+const hasOrgRole =
+    (permissions['cereri.organization'] || [])
+        .map(String)
+        .some(role => freshRoles.includes(role));
 
-                localStorage.setItem('discord_user', JSON.stringify(activeUser));
+const hasDeptRole =
+    (permissions['cereri.departments'] || [])
+        .map(String)
+        .some(role => freshRoles.includes(role));
+
+
+requestRoute = {
+    channel: hasDeptRole
+        ? 'requests_departments'
+        : hasOrgRole
+            ? 'requests_organization'
+            : 'requests',
+
+    organization_id: activeOrganization.id
+};
+
+
+console.log(
+    'FINAL REQUEST ROUTE AFTER DB USER:',
+    requestRoute
+);
+
+                localStorage.setItem(
+                    'discord_user',
+                    JSON.stringify(currentUser)
+                );
 
             } catch(e) {
                 console.error('Erore citire cache/bază user:', e);
@@ -324,14 +466,6 @@
                 return;
             }
 
-            // 4. Gestionare Logout
-            const logoutBtn = document.getElementById('logout-btn');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', () => {
-                    localStorage.clear();
-                    window.location.href = 'login.html';
-                });
-            }
 
             const localDateTime = getCurrentLocalDateTime();
             document.getElementById('notice-start-at').value = localDateTime;
@@ -342,6 +476,41 @@
 
         document.getElementById('absence-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const permissions =
+                organizationActionPermissions || {};
+
+            const cachedDiscordUser =
+                JSON.parse(
+                    localStorage.getItem('discord_user') || '{}'
+                );
+
+            const roles = [
+                ...(cachedDiscordUser.discord_role_ids || []),
+                ...(currentUser.discord_role_ids || [])
+            ].map(String);
+
+            console.log(
+                'SUBMIT USER ROLES:',
+                roles
+            );
+
+            const canOrganization =
+                (permissions['cereri.organization'] || [])
+                    .map(String)
+                    .some(role => roles.includes(role));
+
+            const canDepartments =
+                (permissions['cereri.departments'] || [])
+                    .map(String)
+                    .some(role => roles.includes(role));
+
+
+            if (!canOrganization && !canDepartments) {
+                alert(
+                    'Nu ai permisiunea de a trimite înștiințări.'
+                );
+                return;
+            }
 
             const noticeType = document.getElementById('notice-type').value;
             const reason = document.getElementById('absence-reason').value;
@@ -360,8 +529,18 @@
             const activeName = currentUser.display_name || currentUser.username || 'Mecanic';
             const activeRole = currentUser.role || currentUser.default_role || 'Mecanic';
 
+            if (!activeOrganization?.id) {
+                alert('Nu există o organizație activă.');
+                return;
+            }
+
+            if (!currentUser.discord_id) {
+                alert('Nu s-a putut identifica utilizatorul autentificat.');
+                return;
+            }
             const newAbsence = {
-                discord_id: currentUser.discord_id || 'necunoscut',
+                organization_id: activeOrganization.id,
+                discord_id: currentUser.discord_id,
                 colleague_name: `${activeName} [${activeRole}]`,
                 notice_type: noticeType,
                 reason: reason,
@@ -374,33 +553,87 @@
                 created_at: new Date().toISOString()
             };
 
-            try {
-                let { error } = await supabaseClient.from('absences').insert([newAbsence]);
-                if (error) throw error;
+try {
+    const { error } = await supabaseClient
+        .from('absences')
+        .insert([newAbsence]);
 
-                await sendDiscordWebhook(newAbsence, activeRole, 'Înștiințare Nouă');
+    if (error) throw error;
 
-                alert('Înștiințarea a fost înregistrată și trimisă pe Discord cu succes!');
-                document.getElementById('absence-form').reset();
-                const currentLocalDateTime = getCurrentLocalDateTime();
-                document.getElementById('notice-start-at').value = currentLocalDateTime;
-                document.getElementById('notice-end-at').value = currentLocalDateTime;
+} catch (err) {
+    console.error(
+        'Eroare la salvarea înștiințării în Supabase:',
+        err
+    );
 
-                fetchAbsences();
-            } catch (err) {
-                console.error('Erore la salvarea înștiințării:', err);
-                alert('A apărut o eroare la salvarea înștiințării.');
-            }
+    alert(
+        'A apărut o eroare la salvarea înștiințării.'
+    );
+
+    return;
+}
+
+let discordSent = false;
+
+try {
+    await sendDiscordWebhook(
+        newAbsence,
+        activeRole,
+        'Înștiințare Nouă'
+    );
+
+    discordSent = true;
+
+} catch (err) {
+    console.error(
+        'Înștiințarea a fost salvată, dar notificarea Discord a eșuat:',
+        err
+    );
+}
+
+if (discordSent) {
+    alert(
+        'Înștiințarea a fost înregistrată și trimisă pe Discord cu succes!'
+    );
+} else {
+    alert(
+        'Înștiințarea a fost înregistrată, dar notificarea Discord nu a putut fi trimisă.'
+    );
+}
+
+document.getElementById('absence-form').reset();
+
+const currentLocalDateTime =
+    getCurrentLocalDateTime();
+
+document.getElementById('notice-start-at').value =
+    currentLocalDateTime;
+
+document.getElementById('notice-end-at').value =
+    currentLocalDateTime;
+
+fetchAbsences();
         });
 
         async function fetchAbsences() {
             const tbody = document.getElementById('absences-table-body');
+                        if (!activeOrganization?.id || !currentUser.discord_id) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="p-4 text-center text-rose-400">
+                            Nu s-a putut determina organizația sau utilizatorul activ.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
             try {
-                let { data: absences, error } = await supabaseClient
-                    .from('absences')
-                    .select('*')
-                    .eq('discord_id', currentUser.discord_id)
-                    .order('created_at', { ascending: false });
+            let { data: absences, error } = await supabaseClient
+                .from('absences')
+                .select('*')
+                .eq('organization_id', activeOrganization.id)
+                .eq('discord_id', currentUser.discord_id)
+                .order('created_at', { ascending: false });
 
                 if (error) throw error;
 
@@ -445,16 +678,30 @@
         }
 
         async function deleteAbsence(id) {
-            if (!confirm('Ești sigur că vrei să ștergi această înștiințare?')) return;
+            if (!confirm('Ești sigur că vrei să ștergi această înștiințare?')) {
+                return;
+            }
+
+            if (!activeOrganization?.id || !currentUser.discord_id) {
+                alert('Nu s-a putut determina organizația sau utilizatorul activ.');
+                return;
+            }
 
             try {
-                let { error } = await supabaseClient.from('absences').delete().eq('id', id);
+                const { error } = await supabaseClient
+                    .from('absences')
+                    .delete()
+                    .eq('id', id)
+                    .eq('organization_id', activeOrganization.id)
+                    .eq('discord_id', currentUser.discord_id);
+
                 if (error) throw error;
 
-                alert('Înștiințarea a fost ștersă cu succes!');
+                alert('Înștiințarea a fost ștearsă cu succes!');
                 fetchAbsences();
+
             } catch (err) {
-                console.error('Erore la ștergerea înștiințării:', err);
+                console.error('Eroare la ștergerea înștiințării:', err);
                 alert('A apărut o eroare la ștergerea înregistrării.');
             }
         }
@@ -503,21 +750,44 @@
                 proof_url: proofUrl
             };
 
+            if (!activeOrganization?.id || !currentUser.discord_id) {
+                alert('Nu s-a putut determina organizația sau utilizatorul activ.');
+                return;
+            }
+
             try {
-                let { error } = await supabaseClient.from('absences').update(updatedData).eq('id', id);
+                const { error } = await supabaseClient
+                    .from('absences')
+                    .update(updatedData)
+                    .eq('id', id)
+                    .eq('organization_id', activeOrganization.id)
+                    .eq('discord_id', currentUser.discord_id);
+
                 if (error) throw error;
 
                 alert('Înștiințarea a fost actualizată cu succes!');
+
                 closeEditModal();
                 fetchAbsences();
+
             } catch (err) {
-                console.error('Erore la actualizarea înștiințării:', err);
-                alert('A apărut o eroare la actualizarea înregistrării.');
+                console.error(
+                    'Eroare la actualizarea înștiințării:',
+                    err
+                );
+
+                alert(
+                    'A apărut o eroare la actualizarea înregistrării.'
+                );
             }
         });
 
         async function sendDiscordWebhook(data, role, actionTitle = 'Înștiințare Nouă') {
             const payload = {
+                request_type: requestRoute?.channel === 'requests_departments'
+                    ? 'department'
+                    : 'organization',
+
                 embeds: [{
                     title: `📋 ${actionTitle} (Sediu)`,
                     color: 16753920,
@@ -534,9 +804,24 @@
             };
 
             try {
-                await sendPanelDiscord('requests', payload);
+                if (!requestRoute?.organization_id) {
+                    throw new Error(
+                        'Nu există o organizație activă pentru trimiterea notificării Discord.'
+                    );
+                }
+
+                await sendPanelDiscord(
+                    requestRoute?.channel || 'requests',
+                    payload
+                );
+
             } catch (err) {
-                console.error('Erore trimitere webhook Discord:', err);
+                console.error(
+                    'Eroare trimitere notificare Discord pentru organizația activă:',
+                    err
+                );
+
+                throw err;
             }
         }
     </script>

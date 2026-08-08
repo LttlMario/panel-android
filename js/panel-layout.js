@@ -9,6 +9,7 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
     if (window.location.pathname.endsWith('administrare-organizatie.html')) { const script=document.createElement('script');script.src='js/organization-status.js';document.head.appendChild(script); }
     if (window.location.pathname.endsWith('organizatii.html')) { const requestScript=document.createElement('script');requestScript.src='js/organization-request-fix.js';document.head.appendChild(requestScript); const script=document.createElement('script');script.src='js/package-limits.js';document.head.appendChild(script); }
     if (window.location.pathname.endsWith('admin.html')) { const script=document.createElement('script');script.src='js/admin-organization-center.js';document.head.appendChild(script); }
+    if (window.location.pathname.endsWith('anunturi.html')) { const script=document.createElement('script');script.src='js/anunturi-permissions.js';document.head.appendChild(script); }
     const COLLAPSE_KEY = 'panel_sidebar_collapsed';
 
     function addStyles() {
@@ -49,6 +50,9 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             .panel-sidebar-profile small { color:#34d399; font-size:10px; margin-top:2px; }
             .panel-sidebar-profile button { margin-left:auto; padding:6px 7px; border:1px solid rgba(244,63,94,.3); border-radius:7px; color:#fb7185; background:rgba(244,63,94,.08); font-size:10px; }
             body.panel-shared-sidebar-page { padding-left:18rem; }
+            body.panel-global-shell { display:block !important; }
+            body.panel-global-shell > main { width:100% !important; }
+            body.panel-global-shell > #panel-global-footer { width:100% !important; margin-left:0 !important; }
             body.panel-shared-sidebar-page > #panel-shared-sidebar { position:fixed; inset:0 auto 0 0; z-index:60; width:18rem; }
             .panel-responsive-sidebar.fixed { position:fixed; }
             #panel-theme-toggle { width:38px; height:38px; flex:none; display:grid; place-items:center; border:1px solid #334155; border-radius:11px; background:#0b1220; color:#cbd5e1; cursor:pointer; box-shadow:0 5px 16px rgba(0,0,0,.18); }
@@ -58,17 +62,20 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             .panel-responsive-sidebar .nav-link.bg-emerald-500\\/10, .panel-mobile-nav .nav-link.bg-emerald-500\\/10, #mobile-menu .nav-link.bg-emerald-500\\/10 { border-color:rgba(52,211,153,.45); background:linear-gradient(135deg,rgba(5,150,105,.34),rgba(6,95,70,.3)); }
             html,body { max-width:100%; overflow-x:hidden; }
             body,main,#app { min-width:0; }
+            #panel-header-host { grid-column:1 / -1 !important; width:100% !important; min-width:0 !important; }
+            .main-content, #app-content { width:100% !important; min-width:0 !important; align-items:stretch !important; }
+            .main-content > *, #app-content > * { max-width:none; }
             img,svg,video,canvas { max-width:100%; }
-            header { position:relative; min-height:76px !important; height:auto !important; padding-top:12px !important; padding-bottom:12px !important; gap:12px; }
-            header > div:not(.panel-header-tools) { min-width:0; }
-            header h1,header h2 { font-size:clamp(1.05rem,2vw,1.35rem) !important; line-height:1.25 !important; white-space:normal !important; overflow-wrap:anywhere; }
-            header p { white-space:normal; line-height:1.35; }
+            .panel-global-header { position:relative; min-height:76px !important; height:auto !important; padding-top:12px !important; padding-bottom:12px !important; gap:12px; }
+            .panel-global-header > div:not(.panel-header-tools) { min-width:0; }
+            .panel-global-header h1,.panel-global-header h2 { font-size:clamp(1.05rem,2vw,1.35rem) !important; line-height:1.25 !important; white-space:normal !important; overflow-wrap:anywhere; }
+            .panel-global-header p { white-space:normal; line-height:1.35; }
             .panel-global-header { width:100% !important; max-width:none !important; min-height:76px !important; margin:0 !important; padding:12px 32px !important; display:flex !important; align-items:center !important; flex-wrap:wrap; gap:12px; flex:none; position:sticky !important; top:0; z-index:20; border-bottom:1px solid #1e293b; background:rgba(15,23,42,.72); backdrop-filter:blur(10px); text-align:left !important; }
             .panel-global-header .panel-global-title { display:flex; flex-direction:column; justify-content:center; min-width:0; flex:none; }
             .panel-global-header h1,.panel-global-header h2 { margin:0 !important; color:#f1f5f9; font-size:1.125rem !important; font-weight:700; }
             .panel-global-header p { margin:3px 0 0 !important; color:#94a3b8; font-size:11px; }
             .community-toolbar { justify-content:flex-end !important; margin-bottom:18px !important; }
-            header:has(.panel-header-tools) { padding-right:72px !important; }
+            .panel-global-header:has(.panel-header-tools) { padding-right:72px !important; }
             .panel-header-tools { position:absolute; inset:0 18px; z-index:25; display:flex; align-items:center; pointer-events:none; }
             .panel-header-tools .panel-search-host { position:absolute; left:50%; transform:translateX(-50%); width:min(620px,45vw); min-width:0; pointer-events:auto; }
             .panel-header-tools .panel-search-host > div, .panel-header-tools .panel-search-host .relative, .panel-header-tools .search-container { width:100% !important; max-width:none !important; }
@@ -77,6 +84,7 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             .panel-global-search:focus { border-color:#10b981; box-shadow:0 0 0 3px rgba(16,185,129,.12); }
             .panel-global-search-match { outline:2px solid rgba(16,185,129,.7) !important; outline-offset:2px; }
             .panel-header-tools #panel-theme-toggle { margin-left:auto; pointer-events:auto; }
+            .panel-global-header #panel-theme-toggle { margin-left:auto; pointer-events:auto; }
 
             @media (min-width:768px) {
                 .panel-global-header:has(.panel-header-tools) { min-height:132px !important; padding-top:16px !important; padding-bottom:66px !important; }
@@ -87,7 +95,7 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             /* Tema Panel nu primește suprascrieri: păstrează exact designul original al paginilor. */
             html[data-panel-theme="dark"] { color-scheme:dark; --bg-main:#030712; --bg-panel:#080f1d; --bg-panel-hover:#111c2e; --card:#0a1220; --border:#223047; --text-main:#e5edf8; --text-muted:#91a0b6; }
             html[data-panel-theme="dark"] body, html[data-panel-theme="dark"] main, html[data-panel-theme="dark"] #app { background:#030712 !important; color:#e5edf8 !important; }
-            html[data-panel-theme="dark"] aside, html[data-panel-theme="dark"] header, html[data-panel-theme="dark"] footer, html[data-panel-theme="dark"] .bg-slate-900, html[data-panel-theme="dark"] .post, html[data-panel-theme="dark"] .dialog, html[data-panel-theme="dark"] .panel, html[data-panel-theme="dark"] .card { background-color:#080f1d !important; }
+            html[data-panel-theme="dark"] aside, html[data-panel-theme="dark"] .panel-global-header, html[data-panel-theme="dark"] footer, html[data-panel-theme="dark"] .bg-slate-900, html[data-panel-theme="dark"] .post, html[data-panel-theme="dark"] .dialog, html[data-panel-theme="dark"] .panel, html[data-panel-theme="dark"] .card { background-color:#080f1d !important; }
             html[data-panel-theme="dark"] .bg-slate-950, html[data-panel-theme="dark"] input, html[data-panel-theme="dark"] textarea, html[data-panel-theme="dark"] select, html[data-panel-theme="dark"] .poll-option, html[data-panel-theme="dark"] .tab, html[data-panel-theme="dark"] .reaction { background-color:#030712 !important; color:#e5edf8 !important; }
             html[data-panel-theme="dark"] .bg-slate-800 { background-color:#111c2e !important; }
             html[data-panel-theme="dark"] .border-slate-800, html[data-panel-theme="dark"] .border-slate-700, html[data-panel-theme="dark"] .post, html[data-panel-theme="dark"] .dialog { border-color:#223047 !important; }
@@ -114,13 +122,13 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
                 .panel-responsive-sidebar { display:none !important; }
                 .panel-sidebar-toggle { display:none !important; }
                 .panel-mobile-toggle { display:flex; }
-                header { min-height:88px !important; padding:12px 14px !important; display:flex !important; flex-wrap:wrap !important; align-content:center; }
-                header > div:not(.panel-header-tools) { flex:1; min-width:calc(100% - 58px); }
-                header h1,header h2 { font-size:1.08rem !important; }
+                .panel-global-header { min-height:88px !important; padding:12px 14px !important; display:flex !important; flex-wrap:wrap !important; align-content:center; }
+                .panel-global-header > div:not(.panel-header-tools) { flex:1; min-width:calc(100% - 58px); }
+                .panel-global-header h1,.panel-global-header h2 { font-size:1.08rem !important; }
                 .panel-global-header { min-height:76px !important; padding:12px 14px !important; }
                 .panel-header-tools { position:static; order:20; width:100%; gap:10px; pointer-events:auto; inset:auto; }
                 .panel-header-tools .panel-search-host { position:static; transform:none; width:calc(100% - 48px); }
-                header:has(.panel-header-tools) { padding-right:14px !important; }
+                .panel-global-header:has(.panel-header-tools) { padding-right:14px !important; }
                 #app { grid-template-columns:1fr !important; grid-template-rows:auto 1fr !important; width:100% !important; }
                 #app:has(#map-container-wrapper) { grid-template-rows:auto minmax(0,1fr) !important; }
                 #app > header, #app > #map-container-wrapper { grid-column:1 !important; }
@@ -148,10 +156,11 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
 
     function setup() {
         const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+        document.body.classList.add('panel-global-shell');
         addStyles();
         document.querySelector('#banner')?.closest('label')?.style.setProperty('display','none');
         ensureBrandAssets();
-        ensureGlobalFooter();
+        ensureGlobalHeader();
         setupAssistantWidget(currentPage);
         const shared = ensureSharedSidebar();
         const navigation = shared.navigation;
@@ -173,7 +182,12 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         relocateHeaderActions(currentPage);
         setupAdminSaveArea();
         const main = document.querySelector('main');
-        if (main) main.style.minHeight = '100vh';
+        if (main) {
+            main.style.minHeight = '100vh';
+            // Paginile istorice aveau un offset propriu pentru sidebar.
+            // Sidebarul comun este poziționat de body.panel-shared-sidebar-page.
+            main.style.marginLeft = '0';
+        }
         const originalMainMargin = main?.style.marginLeft || '';
         const originalSidebarWidth = sidebar.style.width || '';
 
@@ -257,9 +271,21 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         }
     }
 
-    function ensureGlobalFooter() {
-        if (!document.querySelector('link[href="css/global-footer.css"]')) { const link=document.createElement('link');link.rel='stylesheet';link.href='css/global-footer.css';document.head.appendChild(link); }
-        if (!document.querySelector('script[src="js/global-footer.js"]')) { const script=document.createElement('script');script.src='js/global-footer.js';script.defer=true;document.head.appendChild(script); }
+    function ensureGlobalHeader() {
+        let main = document.querySelector('main');
+        if (!main) return;
+        let host = document.getElementById('panel-header-host');
+        if (!host) {
+            host = document.createElement('div');
+            host.id = 'panel-header-host';
+            main.prepend(host);
+        }
+        if (!document.querySelector('script[src="js/global-header.js"]')) {
+            const script = document.createElement('script');
+            script.src = 'js/global-header.js';
+            script.defer = true;
+            document.head.appendChild(script);
+        }
     }
 
     function ensureBrandAssets() {
@@ -278,15 +304,54 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
     }
 
     function ensureSharedSidebar() {
-        let navigation=document.getElementById('sidebar-nav')||document.querySelector('aside nav');
-        if (navigation) return {navigation};
-        const user=typeof getUser==='function'?getUser():null,organization=typeof getActiveOrganization==='function'?getActiveOrganization():null,sidebar=document.createElement('aside');sidebar.id='panel-shared-sidebar';sidebar.className='panel-responsive-sidebar bg-slate-900 border-r border-slate-800 flex flex-col justify-between';sidebar.innerHTML=`<div class="p-6 overflow-y-auto"><h1 class="text-xl font-bold"><img src="${organization?.logo_url||'img/logo-192.png'}" alt="${organization?.name||'Logo Panel'}" class="panel-brand-logo" onerror="this.src='img/logo-192.png'"></h1>${organization?.banner_url?`<img src="${organization.banner_url}" alt="" class="mt-3 h-16 w-full rounded-lg object-cover" onerror="this.remove()">`:''}<nav id="sidebar-nav" class="mt-6 space-y-1.5"></nav></div><div class="p-4 border-t border-slate-800 flex items-center justify-between gap-2"><div class="flex items-center gap-3 min-w-0"><img id="user-avatar" class="w-9 h-9 rounded-full border border-slate-700 object-cover" src="${user?.avatar||user?.avatar_url||''}" alt=""><div class="min-w-0"><p id="user-display-name" class="font-semibold truncate">${user?.display_name||user?.username||'Utilizator'}</p><p id="user-role" class="text-xs text-emerald-400 truncate">${user?.role||'Rol Discord'}</p></div></div><button type="button" data-shared-logout class="text-xs text-rose-400">Logout</button></div>`;document.body.prepend(sidebar);document.body.classList.add('panel-shared-sidebar-page');navigation=sidebar.querySelector('nav');return {navigation};
+        let existing = document.getElementById('panel-shared-sidebar');
+        if (existing) return {navigation: existing.querySelector('nav')};
+
+        // Elimină sidebarul copiat din pagină. Meniul mobil legacy (dacă există)
+        // rămâne intact pentru compatibilitatea dashboardului.
+        const legacyNavigation = document.getElementById('sidebar-nav') || [...document.querySelectorAll('aside nav')]
+            .find(nav => !nav.closest('#panel-mobile-menu'));
+        const legacySidebar = legacyNavigation?.closest('aside') || null;
+        const user=typeof getUser==='function'?getUser():null,organization=typeof getActiveOrganization==='function'?getActiveOrganization():null,sidebar=document.createElement('aside');sidebar.id='panel-shared-sidebar';sidebar.className='panel-responsive-sidebar bg-slate-900 border-r border-slate-800 flex flex-col justify-between';sidebar.style.width='18rem';sidebar.style.flex='0 0 18rem';sidebar.innerHTML=`<div class="p-6 overflow-y-auto"><h1 class="text-xl font-bold"><img src="${organization?.logo_url||'img/logo-192.png'}" alt="${organization?.name||'Logo Panel'}" class="panel-brand-logo" onerror="this.src='img/logo-192.png'"></h1>${organization?.banner_url?`<img src="${organization.banner_url}" alt="" class="mt-3 h-16 w-full rounded-lg object-cover" onerror="this.remove()">`:''}<nav id="sidebar-nav" class="mt-6 space-y-1.5"></nav></div><div class="p-4 border-t border-slate-800 flex items-center justify-between gap-2"><div class="flex items-center gap-3 min-w-0"><img id="user-avatar" class="w-9 h-9 rounded-full border border-slate-700 object-cover" src="${user?.avatar||user?.avatar_url||''}" alt=""><div class="min-w-0"><p id="user-display-name" class="font-semibold truncate">${user?.display_name||user?.username||'Utilizator'}</p><p id="user-role" class="text-xs text-emerald-400 truncate">${user?.role||'Rol Discord'}</p></div></div><button type="button" data-shared-logout class="text-xs text-rose-400">Logout</button></div>`;
+        if (legacySidebar) {
+            legacySidebar.replaceWith(sidebar);
+        } else if (document.getElementById('panel-sidebar-host')) {
+            document.getElementById('panel-sidebar-host').replaceChildren(sidebar);
+        } else {
+            document.body.prepend(sidebar);
+            document.body.classList.add('panel-shared-sidebar-page');
+        }
+        navigation=sidebar.querySelector('nav');return {navigation};
     }
 
     function normalizePageHeader(currentPage) {
         const main = document.querySelector('main');
         if (!main) return;
-        let header = main.querySelector(':scope > header') || document.querySelector('body > header');
+        let header = [...main.children].find(element => element.matches('header')) ||
+            [...document.body.children].find(element => element.matches('header'));
+
+        // Hostul global este singura sursă pentru header. Mutăm acțiunile utile
+        // într-o bară secundară și eliminăm markupul vechi al paginii.
+        if (header && !header.closest('#panel-header-host')) {
+            const titleBlock=[...header.children].find(child=>child.querySelector?.('h1,h2')||child.matches?.('h1,h2'));
+            const extras=[...header.children].filter(child=>child!==titleBlock);
+            if(extras.length){
+                let bar=main.querySelector(':scope > .panel-page-details');
+                if(!bar){bar=document.createElement('section');bar.className='panel-page-details panel-action-bar';main.querySelector('#panel-header-host')?.after(bar);}
+                extras.forEach(extra=>bar.appendChild(extra));
+            }
+            header.remove();
+            header = null;
+        }
+
+        if (!header && currentPage !== 'anunturi.html') return;
+
+        if (currentPage === 'anunturi.html') {
+            const hero = main.querySelector('.community-hero');
+            hero?.querySelector(':scope > div')?.remove();
+            hero?.classList.add('community-toolbar');
+            return;
+        }
 
         if (currentPage === 'anunturi.html') {
             if (!header) {
@@ -389,12 +454,13 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             ['rapoarte.html', 4, '📈', 'Rapoarte'],
             ['logs.html', 7, '🧾', 'Loguri'],
             ['diagnostic.html', 7, '🩺', 'Verificare sistem'],
-            ['discord-configurare.html', 7, '⚙️', 'Configurare Discord'],
+            ['discord-configurare.html', 99, '⚙️', 'Configurare Discord'],
             ['organizatii.html', 7, '🏢', 'Organizații platformă'],
             ['developer.html', 7, '🛠️', 'Developer'],
             ['admin.html', 7, '👑', 'Panou Admin']
         ];
 
+        if (!links.some(([href]) => href === 'status-live.html')) links.splice(4, 0, ['status-live.html', 1, '📡', 'Status Live']);
         const calculatorIndex = links.findIndex(([href]) => href === 'calculator.html');
         if (calculatorIndex >= 0) {
             const [calculatorLink] = links.splice(calculatorIndex, 1);
@@ -586,6 +652,14 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         const header = document.querySelector('header');
         const themeButton = document.getElementById('panel-theme-toggle');
         if (!header || !themeButton || document.querySelector('.panel-header-tools')) return;
+
+        // Headerul global are deja propriul câmp de căutare. Nu-l mai mutăm
+        // într-o bară absolută, deoarece paginile vechi îl așezau pe două rânduri.
+        if (header.classList.contains('panel-global-header')) {
+            themeButton.classList.add('panel-global-theme-toggle');
+            header.appendChild(themeButton);
+            return;
+        }
 
         const tools = document.createElement('div');
         tools.className = 'panel-header-tools';

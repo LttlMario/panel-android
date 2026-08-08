@@ -36,7 +36,9 @@
           })
         });
         const result = await response.json();
-        status.textContent = response.ok ? `Au fost salvate ${result.count} roluri.` : (result.error || 'Salvarea a eșuat.');
+        if (!response.ok) throw new Error(result.error || 'Salvarea a eșuat.');
+        if (window.saveDraftConfiguration) await window.saveDraftConfiguration({ silent: true });
+        status.textContent = `Au fost salvate ${result.count} roluri și configurația curentă.`;
       } catch (error) { status.textContent = error.message; }
       button.disabled = false;
     });

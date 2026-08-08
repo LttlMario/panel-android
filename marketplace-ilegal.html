@@ -22,92 +22,13 @@
     <div class="flex h-screen w-full overflow-hidden">
 
         <!-- Sidebar / Meniu Lateral preluat direct din layout-ul standard al proiectului -->
-        <aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col justify-between hidden md:flex">
-            <div class="p-6 overflow-y-auto max-h-[calc(100vh-5rem)]">
-                <h1 class="text-xl font-bold text-slate-100 tracking-tight">Panel<span class="block text-xs font-normal text-slate-400 mt-0.5">by Little Mario</span></h1>
 
-                <nav class="mt-6 space-y-1.5" id="sidebar-nav">
-                    <a href="index.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>📊</span>
-                        <span>Dashboard</span>
-                    </a>
-                    <a href="pontaj.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>⏱️</span>
-                        <span>Pontaj</span>
-                    </a>
-                    <a href="cereri.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>📋</span>
-                        <span>Cereri / Absențe</span>
-                    </a>
-                    <a href="rapoarte.html" data-role="4" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>📈</span>
-                        <span>Rapoarte</span>
-                    </a>
-                    <a href="contracte.html" data-role="4" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>📜</span>
-                        <span>Contracte</span>
-                    </a>
-                    <a href="admin.html" data-role="7" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>👑</span>
-                        <span>Panou Admin</span>
-                    </a>
-                    <a href="calculatorilegal.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🧮</span>
-                        <span>Calculator Ilegal</span>
-                    </a>
-                    <a href="craftmecanics.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🔨</span>
-                        <span>Craft Mecanics</span>
-                    </a>
-                    <a href="locatiiilegale.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🗺️</span>
-                        <span>Locații Ilegale</span>
-                    </a>
-                    <a href="marketplace.html" data-role="1" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🛒</span>
-                        <span>Marketplace</span>
-                    </a>
-                    <a href="marketplace-ilegal.html" data-role="3" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition text-sm">
-                        <span>🚨</span>
-                        <span>Black Market</span>
-                    </a>
-                </nav>
-            </div>
-
-            <!-- Profil Utilizator Dinamic -->
-            <div class="p-4 border-t border-slate-800 bg-slate-900/50 flex items-center justify-between">
-                <div class="flex items-center space-x-3 overflow-hidden">
-                    <img id="user-avatar" src="img/logo-192.png" class="w-10 h-10 rounded-full border border-slate-700 flex-shrink-0 object-cover" alt="Avatar">
-                    <div class="truncate">
-                        <p id="user-display-name" class="text-sm font-semibold text-slate-200 truncate">Se încarcă...</p>
-                        <p id="user-role" class="text-xs text-emerald-400 truncate">Mecanic</p>
-                    </div>
-                </div>
-                <button id="logout-btn" title="Ieșire din cont" class="flex items-center space-x-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl transition cursor-pointer text-xs font-medium">
-                    <span></span>
-                    <span>Logout</span>
-                </button>
-            </div>
-        </aside>
+            <div class="p-8 space-y-6 max-w-7xl mx-auto w-full">
+        
 
         <!-- Conținut Principal Black Market -->
         <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
-            <header class="h-16 border-b border-slate-800 bg-slate-900/50 backdrop-blur px-8 flex items-center justify-between sticky top-0 z-20">
-                <div class="flex items-center space-x-3">
-                    <div class="bg-rose-500/10 border border-rose-500/20 p-2 rounded-xl text-rose-500 flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                    </div>
-                    <h2 class="text-lg font-bold text-slate-100 tracking-wide uppercase">Black Market / Ilegal</h2>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <button onclick="incarcaAnunturi()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 transition cursor-pointer flex items-center space-x-1.5">
-                        <span>🔄</span>
-                        <span>Reîmprospătare</span>
-                    </button>
-                </div>
-            </header>
-
-            <div class="p-8 space-y-6 max-w-7xl mx-auto w-full">
+            <section class="panel-action-bar"><div><button onclick="incarcaAnunturi()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 transition cursor-pointer flex items-center space-x-1.5"><span>🔄</span><span>Reîmprospătare</span></button></div></section>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
                     <!-- COLOANA STANGA: Adăugare Anunț Nou -->
@@ -182,7 +103,8 @@
                                 <input type="hidden" id="imagini_json" value="[]">
                             </div>
 
-                            <button type="submit" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-semibold py-2.5 rounded-xl transition text-xs shadow-md cursor-pointer">Publică Anunțul</button>
+                            <button id="marketSubmitBtn" type="submit" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-semibold py-2.5 rounded-xl transition text-xs shadow-md cursor-pointer">Publică Anunțul</button>
+                            <button id="marketCancelEditBtn" type="button" onclick="anuleazaEditareMarketplace()" class="hidden w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 rounded-xl transition text-xs cursor-pointer">Anulează editarea</button>
                         </form>
                     </div>
 
@@ -261,12 +183,32 @@
         const SUPABASE_KEY = window.PANEL_SUPABASE_CONFIG.publishableKey;
         const supabaseClient = window.createPanelSupabaseClient();
 
-        let currentUser = {
+        currentUser = {
             discord_id: '',
             username: '',
             display_name: 'Mecanic',
-            role: 'Ilegal'
+            role: 'Ilegal',
+            panel_level: 0,
+            organization_id: '',
+            organization_name: '',
+            illegal_organization_name: ''
         };
+
+        let editingMarketplaceId = null;
+        let marketplaceItems = [];
+        const MARKETPLACE_PANEL_URL = 'https://lttlmario.github.io/panel-pro/marketplace-ilegal.html';
+        let marketplaceFocusHandled = false;
+
+        function normalizeBlackMarketName(value) {
+            return String(value || '')
+                .replace(/^\s*\d{1,12}\s+/u, '')
+                .replace(/^\s*\d{1,12}\s*[|:/#-]\s*/u, '')
+                .replace(/\s*[|:/#-]\s*\d{1,12}\s*$/u, '')
+                .replace(/\s+\d{1,12}\s*$/u, '')
+                .replace(/\s*[[(]\s*\d{1,12}\s*[\])]\s*$/u, '')
+                .replace(/\s{2,}/g, ' ')
+                .trim();
+        }
 
         const listeArmeMunitie = {
             "Arme": [
@@ -451,6 +393,34 @@
                 currentUser.username = activeUser.username || '';
                 currentUser.display_name = activeUser.display_name || activeUser.username || 'Mecanic';
                 currentUser.role = activeUser.role || activeUser.default_role || 'Ilegal';
+                currentUser.panel_level = Number(
+                    activeUser.permission_level ||
+                    activeUser.panel_level ||
+                    localData.permission_level ||
+                    localData.panel_level ||
+                    0
+                );
+
+                currentUser.organization_id =
+                    localData.organization_id ||
+                    '';
+                window.PANEL_ACTIVE_ORGANIZATION_ID = currentUser.organization_id;
+                if (currentUser.organization_id) {
+                    const { data: organizationData, error: organizationError } =
+                        await supabaseClient
+                            .from('organizations')
+                            .select('id, name')
+                            .select('id, name, illegal_name')
+                            .eq('id', currentUser.organization_id)
+                            .maybeSingle();
+
+                    if (!organizationError && organizationData) {
+                        currentUser.organization_name =
+                            organizationData.name || '';
+                        currentUser.illegal_organization_name =
+                            organizationData.illegal_name || '';
+                    }
+                }
 
                 const userAvatar = activeUser.avatar || 'img/logo-192.png';
 
@@ -459,7 +429,7 @@
                 document.getElementById('user-avatar').src = userAvatar;
 
                 const numeDeCompletat = currentUser.display_name || currentUser.username || '';
-                document.getElementById('nume').value = numeDeCompletat;
+                document.getElementById('nume').value = normalizeBlackMarketName(numeDeCompletat);
 
                 const roleLower = currentUser.role.toLowerCase();
                 const isPrivileged = roleLower.includes('sef') || roleLower.includes('șef') || roleLower.includes('manager') || roleLower.includes('admin') || roleLower.includes('owner');
@@ -491,7 +461,27 @@
             toggleTipActiune();
             toggleCategorie();
             incarcaAnunturi();
+            aboneazaLaMarketplaceRealtime();
         });
+
+        let marketplaceRealtimeChannel = null;
+
+        function aboneazaLaMarketplaceRealtime() {
+            if (marketplaceRealtimeChannel) return;
+
+            marketplaceRealtimeChannel = supabaseClient
+                .channel('marketplace-ilegal-global')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'marketplace_ilegal'
+                    },
+                    () => incarcaAnunturi()
+                )
+                .subscribe();
+        }
 
         async function incarcaAnunturi() {
             const container = document.getElementById('listaAnunturi');
@@ -499,7 +489,7 @@
             container.innerHTML = '<p class="text-xs text-slate-500 text-center py-6 col-span-full">Se încarcă...</p>';
 
             const { data, error } = await supabaseClient
-                .from('marketplace_ilegal')
+                .from('marketplace_ilegal_feed')
                 .select('*')
                 .order('created_at', { ascending: false });
 
@@ -513,6 +503,8 @@
                 document.getElementById('itemCount').innerText = '0 produse';
                 return;
             }
+
+            marketplaceItems = data;
 
             const anunturiFiltrate = data.filter(item => {
                 if (filtru === 'TOATE') return true;
@@ -530,7 +522,7 @@
             }
 
             container.innerHTML = '';
-            anunturiFiltrate.forEach(item => {
+            for (const item of anunturiFiltrate) {
                 let dataFormatata = '';
                 if (item.created_at) {
                     const dataObj = new Date(item.created_at);
@@ -549,7 +541,15 @@
                 let catBadge = item.categorie || '';
                 let subBadge = item.subcategorie ? ` / ${item.subcategorie}` : '';
                 let textCurat = item.produse || '';
-                const poateSterge = getRole() === 7 || String(item.created_by_discord_id || '') === String(currentUser.discord_id || '');
+                const numeAfisat = normalizeBlackMarketName(item.nume);
+                const poateAdministra =
+                    Number(currentUser.panel_level || 0) >= 99 ||
+                    (typeof isPlatformAdmin === 'function' && isPlatformAdmin());
+                const poateEdita =
+                    poateAdministra ||
+                    String(item.created_by_discord_id || '') === String(currentUser.discord_id || '');
+                const poateSterge =
+                    poateEdita;
 
                 let imaginiHtml = '';
                 let listaImaginiFinala = [];
@@ -580,13 +580,24 @@
                     });
                     imaginiHtml += '</div>';
                 }
-
+                const organizatieText =
+                    item.organization_illegal_name ||
+                    item.organization_name ||
+                    'Organizație ilegală';
                 container.innerHTML += `
-                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-lg flex flex-col justify-between space-y-4">
+                    <div data-marketplace-id="${escapeHtml(item.id)}" class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-lg flex flex-col justify-between space-y-4">
                         <div class="space-y-2">
                             <div class="flex items-start justify-between">
                                 <div>
-                                    <span class="font-bold text-slate-100 text-sm">${escapeHtml(item.nume || '')}</span>
+                                    <span class="font-bold text-slate-100 text-sm">
+                                            ${escapeHtml(numeAfisat)}
+                                        </span>
+
+                                        ${organizatieText ? `
+                                        <div class="text-[10px] text-rose-400 mt-1">
+                                        🏴 ${escapeHtml(organizatieText)}
+                                        </div>
+                                        ` : ''}
                                     <div class="text-xs text-slate-400 mt-0.5">Tel: ${escapeHtml(item.telefon || '')}</div>
                                 </div>
                             </div>
@@ -603,14 +614,27 @@
                                 </div>
                                 <div>
                                     ${dataFormatata ? `<div class="text-[10px] text-slate-500">Publicat: ${dataFormatata}</div>` : ''}
-                                    ${poateSterge ? `<button type="button" onclick="stergeAnuntMarketplace('${item.id}')" class="mt-2 px-2.5 py-1 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 text-[10px] font-bold">Șterge</button>` : ''}
+                                    ${poateEdita ? `<button type="button" onclick="editeazaAnuntMarketplace('${item.id}')" class="mt-2 px-2.5 py-1 rounded-lg border border-sky-500/30 bg-sky-500/10 text-sky-300 hover:bg-sky-500/20 text-[10px] font-bold">Editează</button>` : ''}
+                                    ${poateSterge ? `<button type="button" onclick="stergeAnuntMarketplace('${item.id}')" class="mt-2 ml-1 px-2.5 py-1 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 text-[10px] font-bold">Șterge</button>` : ''}
                                 </div>
                             </div>
                             ${imaginiHtml}
                         </div>
                     </div>
                 `;
-            });
+            }
+
+            if (!marketplaceFocusHandled) {
+                const focusId = new URLSearchParams(window.location.search).get('anunt');
+                const focusedCard = focusId
+                    ? container.querySelector(`[data-marketplace-id="${CSS.escape(focusId)}"]`)
+                    : null;
+                if (focusedCard) {
+                    marketplaceFocusHandled = true;
+                    focusedCard.classList.add('ring-2', 'ring-rose-400');
+                    focusedCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
         }
 
         async function stergeAnuntMarketplace(id) {
@@ -624,6 +648,47 @@
             const result = await response.json();
             if (!response.ok) return alert(result.error || 'Anunțul nu a putut fi șters.');
             await incarcaAnunturi();
+        }
+
+        function editeazaAnuntMarketplace(id) {
+            const item = marketplaceItems.find(entry => String(entry.id) === String(id));
+            if (!item) return;
+
+            const poateAdministra =
+                Number(currentUser.panel_level || 0) >= 99 ||
+                (typeof isPlatformAdmin === 'function' && isPlatformAdmin());
+            const poateEdita =
+                poateAdministra ||
+                String(item.created_by_discord_id || '') === String(currentUser.discord_id || '');
+            if (!poateEdita) return;
+
+            editingMarketplaceId = item.id;
+            document.getElementById('nume').value = normalizeBlackMarketName(item.nume);
+            document.getElementById('telefon').value = item.telefon || '';
+            document.getElementById('tipAcțiune').value = item.tip_actiune || 'Vânzare';
+            document.getElementById('categorie').value = item.categorie || '';
+            document.getElementById('produse').value = item.produse || '';
+            document.getElementById('pret').value = item.pret || '';
+            document.getElementById('imagine_url_direct').value = item.imagine_url || '';
+            document.getElementById('imagini_json').value = item.imagini_json || '[]';
+            toggleTipActiune();
+            toggleCategorie();
+            toggleSubcategorie();
+            document.getElementById('subcategorie').value = item.subcategorie || '';
+            document.getElementById('marketSubmitBtn').textContent = 'Salvează modificările';
+            document.getElementById('marketCancelEditBtn').classList.remove('hidden');
+            document.getElementById('marketForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function anuleazaEditareMarketplace() {
+            editingMarketplaceId = null;
+            document.getElementById('marketForm').reset();
+            document.getElementById('nume').value = normalizeBlackMarketName(currentUser.display_name || currentUser.username || '');
+            document.getElementById('imagini_json').value = '[]';
+            document.getElementById('marketSubmitBtn').textContent = 'Publică Anunțul';
+            document.getElementById('marketCancelEditBtn').classList.add('hidden');
+            toggleTipActiune();
+            toggleCategorie();
         }
 
         function dataURItoBlob(dataURI) {
@@ -641,14 +706,20 @@
             let pretText = anunt.pret ? anunt.pret : 'Negociabil / Nespecificat';
             let catText = anunt.categorie ? anunt.categorie : 'N/A';
             let subcatText = anunt.subcategorie ? ` / ${anunt.subcategorie}` : '';
+            let organizatieText = currentUser.illegal_organization_name || 'Organizație ilegală';
 
             const fields = [
-                { name: '👤 Nume', value: anunt.nume, inline: true },
+                { name: '👤 Nume', value: normalizeBlackMarketName(anunt.nume), inline: true },
                 { name: '📞 Telefon', value: anunt.telefon, inline: true },
                 { name: '📌 Tip Acțiune', value: anunt.tip_actiune, inline: true },
                 { name: '📁 Categorie', value: catText + subcatText, inline: false },
                 { name: '📦 Produse / Detalii', value: anunt.produse, inline: false },
-                { name: '💰 Preț', value: pretText, inline: true }
+                { name: '💰 Preț', value: pretText, inline: true },
+                {
+                name:'🏴 Organizație',
+                value: organizatieText,
+                inline:true
+                },
             ];
 
             const formData = new FormData();
@@ -669,6 +740,7 @@
 
             const embedPrincipal = {
                 title: '🚨 Anunț Nou - Black Market',
+                url: anunt.id ? `${MARKETPLACE_PANEL_URL}?anunt=${encodeURIComponent(anunt.id)}` : MARKETPLACE_PANEL_URL,
                 color: 15548997,
                 fields: fields,
                 footer: { text: 'Publicat prin Black Market - Panel by Little Mario' },
@@ -676,7 +748,16 @@
             };
 
             const payload = {
-                embeds: [embedPrincipal]
+                embeds: [embedPrincipal],
+                components: anunt.id ? [{
+                    type: 1,
+                    components: [{
+                        type: 2,
+                        style: 5,
+                        label: 'Deschide anunțul în panel',
+                        url: `${MARKETPLACE_PANEL_URL}?anunt=${encodeURIComponent(anunt.id)}`
+                    }]
+                }] : []
             };
 
             formData.append('payload_json', JSON.stringify(payload));
@@ -686,15 +767,25 @@
 
                 if (!response.ok) {
                     const errText = await response.text();
-                    console.error('Erore Discord Webhook API:', response.status, errText);
+                    console.error('Eroare Discord Webhook API:', response.status, errText);
                 }
+                return response;
+
             } catch (err) {
-                console.error('Erore la trimiterea pe Discord:', err);
+                console.error('Eroare la trimiterea pe Discord:', err);
+                console.error('Mesaj eroare:', err?.message);
+                console.error('Detalii complete:', JSON.stringify(err, null, 2));
             }
         }
 
         document.getElementById('marketForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            const numeCuratat = normalizeBlackMarketName(document.getElementById('nume').value);
+            if (!numeCuratat) {
+                alert('Numele este obligatoriu și nu poate conține doar un identificator numeric.');
+                return;
+            }
 
             let pretValoare = document.getElementById('pret').value.trim();
             const tipSelectat = document.getElementById('tipAcțiune').value;
@@ -729,7 +820,7 @@
             const imagineUrlDirectValoare = document.getElementById('imagine_url_direct').value.trim();
 
             const nouAnunt = {
-                nume: document.getElementById('nume').value,
+                nume: numeCuratat,
                 telefon: document.getElementById('telefon').value,
                 tip_actiune: tipSelectat,
                 categorie: categorieSelectata,
@@ -737,22 +828,54 @@
                 produse: textProdus,
                 pret: pretValoare,
                 imagini_json: imaginiJsonValoare,
-                imagine_url: imagineUrlDirectValoare !== '' ? imagineUrlDirectValoare : null
-                ,created_by_discord_id: currentUser.discord_id
+                imagine_url: imagineUrlDirectValoare !== '' ? imagineUrlDirectValoare : null,
+                created_by_discord_id: currentUser.discord_id,
+                organization_id: currentUser.organization_id
             };
 
-            const { error } = await supabaseClient
+            if (editingMarketplaceId) {
+                const token = localStorage.getItem('discord_access_token');
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/manage-community-posts`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}` },
+                    body: JSON.stringify({
+                        action: 'marketplace_update',
+                        table: 'marketplace_ilegal',
+                        item_id: editingMarketplaceId,
+                        access_token: token,
+                        ...nouAnunt
+                    })
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    alert(result.error || 'Anunțul nu a putut fi modificat.');
+                    return;
+                }
+
+                anuleazaEditareMarketplace();
+                await incarcaAnunturi();
+                alert('Anunțul a fost modificat cu succes.');
+                return;
+            }
+
+            const { data: savedAnunt, error } = await supabaseClient
                 .from('marketplace_ilegal')
-                .insert([nouAnunt]);
+                .insert([nouAnunt])
+                .select('id')
+                .single();
 
             if (error) {
                 alert('Erore la salvare: ' + error.message);
             } else {
-                await trimitePeDiscord(nouAnunt);
+                const discordResponse = await trimitePeDiscord({ ...nouAnunt, id: savedAnunt.id });
+                if (discordResponse?.ok) {
+                    const discordResult = await discordResponse.json();
+                    await supabaseClient.from('marketplace_ilegal').update({ discord_message_ids: discordResult.messages || [] }).eq('id', savedAnunt.id);
+                }
 
                 alert('Anunț publicat cu succes!');
                 document.getElementById('marketForm').reset();
-                document.getElementById('nume').value = currentUser.display_name || currentUser.username || '';
+                document.getElementById('nume').value = normalizeBlackMarketName(currentUser.display_name || currentUser.username || '');
 
                 imaginiCurente = [];
                 actualizeazaPrevizualizariImagini();
