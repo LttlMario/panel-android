@@ -1,12 +1,16 @@
 # Panel pentru Android
 
-Acesta este proiectul mobil separat. Site-ul web original nu este modificat.
+Aplicația Android este reconstruită din aceeași sursă ca repository-ul `panel-pro`.
 
 ## Configurare obligatorie Discord
 
 În Discord Developer Portal, la aplicația folosită de panel, adaugă exact următorul OAuth2 Redirect URI:
 
-`https://lttlmario.github.io/panel-mafie/login.html`
+`https://lttlmario.github.io/panel-pro/login.html`
+
+Aplicația folosește acest URL public pentru autorizarea Discord și apoi revine în
+aplicație prin `discord-1531023771211792384:/authorize/callback`. Nu se folosește
+redirect-ul intern `panel.local`.
 
 ## Comenzi
 

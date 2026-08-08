@@ -9,7 +9,12 @@
 .supabase/
 supabase/.temp/
 node_modules/
+.gradle-cache/
+.npm-cache/
 www/
+Panel-Android-*.apk
+android/app/build/
+android/build/
 
 # Sistem/editor
 .DS_Store

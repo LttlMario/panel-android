@@ -255,14 +255,9 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             document.body.classList.add('panel-mobile-menu-open');
             document.body.style.overflow = 'hidden';
         };
-        closeMobileMenu();
         mobileMenu.querySelector('button').addEventListener('click', closeMobileMenu);
         backdrop.addEventListener('click', closeMobileMenu);
         mobileNav.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeMobileMenu));
-        document.querySelector('main')?.addEventListener('click', (event) => {
-            if (!mobileMenu.contains(event.target)) closeMobileMenu();
-        });
-        window.addEventListener('pageshow', closeMobileMenu);
 
         const header = document.querySelector('header');
         if (header) {

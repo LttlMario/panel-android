@@ -179,7 +179,9 @@
 
         let CLIENT_ID = window.PANEL_DISCORD_CONFIG.clientId;
         const DISCORD_SCOPES = window.PANEL_DISCORD_CONFIG.scopes.join(' ');
-        const REDIRECT_URI = window.location.origin + window.location.pathname;
+        // În aplicația Android, Discord revine întâi pe pagina publică HTTPS,
+        // apoi mobile-runtime transferă tokenul înapoi prin schema aplicației.
+        const REDIRECT_URI = window.PANEL_MOBILE_REDIRECT_URI || (window.location.origin + window.location.pathname);
         function getLoginDestination(user) {
             const permissionLevel = Number(user?.permission_level);
 
