@@ -282,6 +282,11 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         });
         mobileMenu.querySelector('button').addEventListener('click', closeMobileMenu);
         backdrop.addEventListener('click', closeMobileMenu);
+        document.addEventListener('pointerdown', (event) => {
+            if (mobileMenu.classList.contains('is-open')
+                && !mobileMenu.contains(event.target)
+                && !event.target.closest?.('#global-header-mobile-btn')) closeMobileMenu();
+        });
         mobileNav.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeMobileMenu));
         closeMobileMenu();
         window.addEventListener('pageshow', closeMobileMenu);
@@ -289,16 +294,6 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             if (document.visibilityState === 'visible') closeMobileMenu();
         });
 
-        const header = document.querySelector('header');
-        if (header) {
-            const mobileToggle = document.createElement('button');
-            mobileToggle.type = 'button';
-            mobileToggle.className = 'panel-mobile-toggle';
-            mobileToggle.textContent = '☰';
-            mobileToggle.setAttribute('aria-label', 'Deschide meniul');
-            mobileToggle.addEventListener('click', openMobileMenu);
-            header.insertBefore(mobileToggle, header.firstChild);
-        }
     }
 
     function ensureGlobalHeader() {
