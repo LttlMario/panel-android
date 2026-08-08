@@ -93,6 +93,38 @@
     });
   }
 
+  function addStatusLivePagePermission() {
+    const host = $('page-permissions');
+    if (!host || host.querySelector('[data-status-live-permission]')) return;
+    const roleInputs = [...host.querySelectorAll('input[data-page-role]')];
+    if (!roleInputs.length) return;
+    const card = document.createElement('div');
+    card.dataset.statusLivePermission = 'true';
+    card.className = 'rounded-xl border border-emerald-700/60 bg-emerald-950/10 p-3';
+    card.innerHTML = '<b class="text-sm">Status Live</b><div class="mt-2 flex flex-wrap gap-3"></div>';
+    const roles = new Map();
+    roleInputs.forEach((input) => {
+      const key = input.dataset.pageRole;
+      if (roles.has(key)) return;
+      roles.set(key, input.closest('label')?.textContent?.trim() || key);
+    });
+    const target = card.querySelector('div');
+    roles.forEach((label, roleId) => {
+      const wrapper = document.createElement('label');
+      wrapper.className = 'flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2';
+      wrapper.innerHTML = `<input type="checkbox" data-status-live-role="${roleId}"><span>${label}</span>`;
+      const checkbox = wrapper.querySelector('input');
+      checkbox.checked = Array.isArray(pagePermissions['status-live.html']) && pagePermissions['status-live.html'].includes(roleId);
+      checkbox.addEventListener('change', () => {
+        const current = new Set(pagePermissions['status-live.html'] || []);
+        checkbox.checked ? current.add(roleId) : current.delete(roleId);
+        pagePermissions['status-live.html'] = [...current];
+      });
+      target.appendChild(wrapper);
+    });
+    host.appendChild(card);
+  }
+
   async function loadStatusRoutes(organizationId) {
     try {
       const result = await invoke({ action: 'list' });
@@ -118,13 +150,13 @@
           body.communication_permissions = communicationPermissions;
           options.body = JSON.stringify(body);
         }
-      } catch (_) { /* Cererile care nu sunt JSON rămân nemodificate. */ }
+      } catch (_) { /* Cererile care nu sunt JSON răm�n nemodificate. */ }
     }
     return originalFetch(url, options);
   };
 
   const originalRenderPermissions = renderPagePermissions;
-  renderPagePermissions = () => { originalRenderPermissions(); addAnnouncementPermissions(); };
+  renderPagePermissions = () => { originalRenderPermissions(); addStatusLivePagePermission(); addAnnouncementPermissions(); };
 
   const originalEditOrganization = editOrganization;
   editOrganization = async (...args) => {
@@ -154,8 +186,9 @@
       });
     });
     injectStatusWebhookFields();
+    addStatusLivePagePermission();
     addAnnouncementPermissions();
-    const observer = new MutationObserver(() => { injectStatusWebhookFields(); addAnnouncementPermissions(); });
+    const observer = new MutationObserver(() => { injectStatusWebhookFields(); addStatusLivePagePermission(); addAnnouncementPermissions(); });
     observer.observe(document.body, { childList: true, subtree: true });
   });
 })();

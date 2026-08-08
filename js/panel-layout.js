@@ -217,7 +217,7 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             if (title) title.classList.toggle('hidden', collapsed);
             sidebar.querySelectorAll('#user-display-name, #user-role').forEach((element) => element.classList.toggle('hidden', collapsed));
             toggle.textContent = collapsed ? '›' : '‹';
-            toggle.setAttribute('aria-label', collapsed ? 'Extinde meniul' : 'Micșorează meniul');
+        toggle.setAttribute('aria-label', collapsed ? 'Extinde meniul' : 'Micșorează meniul');
         };
 
         const savedState = localStorage.getItem(COLLAPSE_KEY) === 'true';
@@ -255,9 +255,14 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             document.body.classList.add('panel-mobile-menu-open');
             document.body.style.overflow = 'hidden';
         };
+        closeMobileMenu();
         mobileMenu.querySelector('button').addEventListener('click', closeMobileMenu);
         backdrop.addEventListener('click', closeMobileMenu);
         mobileNav.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeMobileMenu));
+        document.querySelector('main')?.addEventListener('click', (event) => {
+            if (!mobileMenu.contains(event.target)) closeMobileMenu();
+        });
+        window.addEventListener('pageshow', closeMobileMenu);
 
         const header = document.querySelector('header');
         if (header) {
@@ -293,6 +298,20 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         if (!document.querySelector('link[rel="apple-touch-icon"]')) { const touch=document.createElement('link');touch.rel='apple-touch-icon';touch.href='img/logo-180.png';document.head.appendChild(touch); }
     }
 
+    function discordRoleLabel(user) {
+        const active = typeof getActiveOrganization === 'function' ? getActiveOrganization() : null;
+        const candidates = [user?.discord_role_name, user?.discord_role, user?.role_name, user?.panel_role, user?.organization?.panel_role, user?.active_organization?.panel_role, active?.discord_role_name, active?.panel_role, user?.role, user?.default_role];
+        const value = candidates.map(item => String(item || '').trim()).find(item => item && !/^\d+$/.test(item) && !/^(?:level|nivel)\b/i.test(item));
+        return value || 'Rol Discord';
+    }
+
+    function refreshSidebarUserRole() {
+        const roleElement = document.getElementById('user-role');
+        if (roleElement && typeof getUser === 'function') roleElement.textContent = discordRoleLabel(getUser());
+    }
+
+    window.addEventListener('panel-user-updated', refreshSidebarUserRole);
+
     function ensureBrandLogo(sidebar) {
         const heading=sidebar.querySelector('h1');
         if(!heading)return;
@@ -300,7 +319,7 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         heading.replaceChildren();
         const organization=typeof getActiveOrganization==='function'?getActiveOrganization():null;
         heading.innerHTML=`<img class="panel-brand-logo" src="${organization?.logo_url||'img/logo-192.png'}" alt="${organization?.name||'Organizație'}" onerror="this.src='img/logo-192.png'"><span class="panel-org-name">${organization?.name||'Organizație'}</span>`;
-        if(!sidebar.querySelector('.panel-sidebar-profile')){const user=typeof getUser==='function'?getUser():null;const profile=document.createElement('div');profile.className='panel-sidebar-profile';profile.innerHTML=`<img id="user-avatar" src="${user?.avatar||user?.avatar_url||''}" alt=""><div><strong id="user-display-name">${user?.display_name||user?.username||'Utilizator'}</strong><small id="user-role">${user?.role||'Rol'}</small></div><button type="button" id="logout-btn" data-sidebar-logout>Logout</button>`;heading.after(profile);profile.querySelector('[data-sidebar-logout]')?.addEventListener('click',()=>typeof logout==='function'?logout():location.replace('login.html'));}
+        if(!sidebar.querySelector('.panel-sidebar-profile')){const user=typeof getUser==='function'?getUser():null;const profile=document.createElement('div');profile.className='panel-sidebar-profile';profile.innerHTML=`<img id="user-avatar" src="${user?.avatar||user?.avatar_url||''}" alt=""><div><strong id="user-display-name">${user?.display_name||user?.username||'Utilizator'}</strong><small id="user-role">${discordRoleLabel(user)}</small></div><button type="button" id="logout-btn" data-sidebar-logout>Logout</button>`;heading.after(profile);profile.querySelector('[data-sidebar-logout]')?.addEventListener('click',()=>typeof logout==='function'?logout():location.replace('login.html'));}
     }
 
     function ensureSharedSidebar() {
@@ -312,7 +331,7 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         const legacyNavigation = document.getElementById('sidebar-nav') || [...document.querySelectorAll('aside nav')]
             .find(nav => !nav.closest('#panel-mobile-menu'));
         const legacySidebar = legacyNavigation?.closest('aside') || null;
-        const user=typeof getUser==='function'?getUser():null,organization=typeof getActiveOrganization==='function'?getActiveOrganization():null,sidebar=document.createElement('aside');sidebar.id='panel-shared-sidebar';sidebar.className='panel-responsive-sidebar bg-slate-900 border-r border-slate-800 flex flex-col justify-between';sidebar.style.width='18rem';sidebar.style.flex='0 0 18rem';sidebar.innerHTML=`<div class="p-6 overflow-y-auto"><h1 class="text-xl font-bold"><img src="${organization?.logo_url||'img/logo-192.png'}" alt="${organization?.name||'Logo Panel'}" class="panel-brand-logo" onerror="this.src='img/logo-192.png'"></h1>${organization?.banner_url?`<img src="${organization.banner_url}" alt="" class="mt-3 h-16 w-full rounded-lg object-cover" onerror="this.remove()">`:''}<nav id="sidebar-nav" class="mt-6 space-y-1.5"></nav></div><div class="p-4 border-t border-slate-800 flex items-center justify-between gap-2"><div class="flex items-center gap-3 min-w-0"><img id="user-avatar" class="w-9 h-9 rounded-full border border-slate-700 object-cover" src="${user?.avatar||user?.avatar_url||''}" alt=""><div class="min-w-0"><p id="user-display-name" class="font-semibold truncate">${user?.display_name||user?.username||'Utilizator'}</p><p id="user-role" class="text-xs text-emerald-400 truncate">${user?.role||'Rol Discord'}</p></div></div><button type="button" data-shared-logout class="text-xs text-rose-400">Logout</button></div>`;
+        const user=typeof getUser==='function'?getUser():null,organization=typeof getActiveOrganization==='function'?getActiveOrganization():null,sidebar=document.createElement('aside');sidebar.id='panel-shared-sidebar';sidebar.className='panel-responsive-sidebar bg-slate-900 border-r border-slate-800 flex flex-col justify-between';sidebar.style.width='18rem';sidebar.style.flex='0 0 18rem';sidebar.innerHTML=`<div class="p-6 overflow-y-auto"><h1 class="text-xl font-bold"><img src="${organization?.logo_url||'img/logo-192.png'}" alt="${organization?.name||'Logo Panel'}" class="panel-brand-logo" onerror="this.src='img/logo-192.png'"></h1>${organization?.banner_url?`<img src="${organization.banner_url}" alt="" class="mt-3 h-16 w-full rounded-lg object-cover" onerror="this.remove()">`:''}<nav id="sidebar-nav" class="mt-6 space-y-1.5"></nav></div><div class="p-4 border-t border-slate-800 flex items-center justify-between gap-2"><div class="flex items-center gap-3 min-w-0"><img id="user-avatar" class="w-9 h-9 rounded-full border border-slate-700 object-cover" src="${user?.avatar||user?.avatar_url||''}" alt=""><div class="min-w-0"><p id="user-display-name" class="font-semibold truncate">${user?.display_name||user?.username||'Utilizator'}</p><p id="user-role" class="text-xs text-emerald-400 truncate">${discordRoleLabel(user)}</p></div></div><button type="button" data-shared-logout class="text-xs text-rose-400">Logout</button></div>`;
         if (legacySidebar) {
             legacySidebar.replaceWith(sidebar);
         } else if (document.getElementById('panel-sidebar-host')) {
@@ -572,9 +591,9 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
     async function setupAssistantWidget(currentPage) {
         const allowedPages = new Set([
             'calculator.html',
-            'index.html', 'pontaj.html', 'cereri.html', 'rapoarte.html', 'contracte.html', 'admin.html',
+            'index.html', 'pontaj.html', 'cereri.html', 'anunturi.html', 'rapoarte.html', 'contracte.html',
             'calculatorilegal.html', 'craftmecanics.html', 'bucatarie.html', 'locatiiilegale.html', 'marketplace.html',
-            'marketplace-ilegal.html', 'logs.html', 'diagnostic.html', 'organizatii.html'
+            'marketplace-ilegal.html'
         ]);
         if (!allowedPages.has(currentPage) || document.getElementById('panel-assistant-widget')) return;
         try {
