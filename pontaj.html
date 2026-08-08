@@ -345,8 +345,8 @@
                 }
 
                 const { data, error } = await supabaseClient
-                    .from('organization_settings')
-                    .select('*')
+                    .from('app_settings')
+                    .select('value')
                     .eq('organization_id', currentUser.organization_id)
                     .eq('key', 'pontaj_config')
                     .maybeSingle();
@@ -613,6 +613,12 @@
             isPaused = false;
             document.getElementById('timer-display').textContent = '00:00:00'; document.getElementById('current-shift-status').textContent = 'Tură neselectată / Oprită';
             document.getElementById('btn-start').disabled = false; document.getElementById('btn-pause').disabled = true; document.getElementById('btn-stop').disabled = true; document.getElementById('pause-btn-text').textContent = 'Pauză'; selectedShiftType = null; resetUIButtons();
+        }
+
+        async function sendGeneralDiscordWebhook(title, description, color) {
+            const payload = { embeds: [{ title, description, color, timestamp: new Date().toISOString() }] };
+            try { await sendPanelDiscord('pontaj', payload); return true; }
+            catch (error) { console.error('Eroare webhook pontaj:', error); return false; }
         }
 
         async function sendStopShiftDiscordWebhook(data) {
