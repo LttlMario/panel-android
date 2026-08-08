@@ -37,7 +37,7 @@
     overlay.id = 'panel-android-update';
     overlay.setAttribute('role', 'dialog');
     overlay.setAttribute('aria-modal', 'true');
-    overlay.innerHTML = `<div class="pau-dialog"><div class="pau-body"><div class="pau-icon">â¬†ï¸</div><h2>Actualizare nouÄƒ disponibilÄƒ</h2><p>Este disponibilÄƒ o versiune nouÄƒ a aplicaÈ›iei Panel. PoÈ›i instala acum sau poÈ›i amÃ¢na notificarea pentru 24 de ore.</p><div class="pau-version">InstalatÄƒ: ${currentAppVersion} Â· NouÄƒ: ${String(release.tag_name).replace(/^v/i, '')}</div></div><div class="pau-actions"><button type="button" class="pau-later">Mai tÃ¢rziu</button><button type="button" class="pau-install">InstaleazÄƒ acum</button></div></div>`;
+    overlay.innerHTML = `<div class="pau-dialog"><div class="pau-body"><div class="pau-icon">⬆️</div><h2>Actualizare nouă disponibilă</h2><p>Este disponibilă o versiune nouă a aplicației Panel. Poți instala acum sau poți amâna notificarea pentru 24 de ore.</p><div class="pau-version">Instalată: ${currentAppVersion} · Nouă: ${String(release.tag_name).replace(/^v/i, '')}</div></div><div class="pau-actions"><button type="button" class="pau-later">Mai târziu</button><button type="button" class="pau-install">Instalează acum</button></div></div>`;
     document.body.appendChild(overlay);
     overlay.querySelector('.pau-later').addEventListener('click', () => {
       localStorage.setItem(updateLaterKey, JSON.stringify({ tag: release.tag_name, until: Date.now() + 24 * 60 * 60 * 1000 }));
@@ -68,7 +68,7 @@
       if (postponed?.tag === release.tag_name && Number(postponed.until) > Date.now()) return;
       showUpdateNotice(release, apk);
     } catch (error) {
-      console.warn('ActualizÄƒrile Android nu au putut fi verificate.', error);
+      console.warn('Actualizările Android nu au putut fi verificate.', error);
     }
   }
 
@@ -120,8 +120,8 @@
     sessionStorage.setItem(consumedCallbackKey, url);
     sessionStorage.setItem(pendingOAuthTokenKey, accessToken);
     browser?.close?.().catch(() => {});
-    // Tokenul rÄƒmÃ¢ne doar Ã®n memoria sesiunii, nu Ã®n URL. Parametrul forÈ›eazÄƒ
-    // reÃ®ncÄƒrcarea paginii chiar dacÄƒ WebView-ul se aflÄƒ deja pe login.html.
+    // Tokenul rămâne doar în memoria sesiunii, nu în URL. Parametrul forțează
+    // reîncărcarea paginii chiar dacă WebView-ul se află deja pe login.html.
     window.location.replace('login.html?oauth_return=1');
     return true;
   }
