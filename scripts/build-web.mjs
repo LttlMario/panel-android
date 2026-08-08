@@ -1,4 +1,4 @@
-import { cp, mkdir, rm } from 'node:fs/promises';
+import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -29,7 +29,11 @@ for (const file of sourceFiles) {
   const sourcePath = join(root, file);
   const destinationPath = join(output, file);
   await mkdir(dirname(destinationPath), { recursive: true });
-  await cp(sourcePath, destinationPath);
+  let html = await readFile(sourcePath, 'utf8');
+  if (file.endsWith('.html') && !html.includes('android-oauth-runtime.js')) {
+    html = html.replace('</head>', '    <script src="js/android-oauth-runtime.js"></script>\n</head>');
+  }
+  await writeFile(destinationPath, html, 'utf8');
 }
 
 console.log(`Aplicatia web a fost generata in ${relative(root, output)}.`);
