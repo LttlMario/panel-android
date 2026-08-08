@@ -278,7 +278,10 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             document.addEventListener('pointerdown', (event) => {
                 if (!legacyMenu.contains(event.target) && !legacyBackdrop?.contains(event.target)) closeLegacyMenu();
             }, { passive: true });
-            return;
+            // Folosește același meniu unificat ca panel-ios; meniul vechi nu trebuie
+            // să rămână vizibil sau să blocheze inițializarea hamburgerului.
+            legacyMenu.remove();
+            legacyBackdrop?.remove();
         }
 
         const backdrop = document.createElement('div');

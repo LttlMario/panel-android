@@ -2,6 +2,9 @@
   const capacitor = window.Capacitor;
   if (!capacitor?.isNativePlatform?.()) return;
 
+  // Android folosește același shell mobil ca panel-ios.
+  document.documentElement.classList.add('panel-ios-device');
+
   const app = capacitor.Plugins?.App;
   const browser = capacitor.Plugins?.Browser;
   const callbackScheme = 'discord-1531023771211792384:/authorize/callback';
