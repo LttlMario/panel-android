@@ -13,7 +13,7 @@ const sourceFiles = [
   'diagnostic.html', 'discord-configurare.html', 'guest.html', 'index.html',
   'locatiiilegale.html', 'login.html', 'logs.html', 'marketplace-ilegal.html',
   'marketplace.html', 'organizatii.html', 'pontaj.html', 'rapoarte.html',
-  'status-live.html', 'thank-you.html', 'vouchere.html',
+  'thank-you.html', 'vouchere.html',
   'MIGRARE-MULTI-ORGANIZATIE.md'
 ];
 
