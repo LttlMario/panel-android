@@ -182,6 +182,7 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             html.panel-ios-device .panel-global-header > div:not(.panel-global-title) { width:100% !important; max-width:none !important; margin:0 !important; }
             html.panel-android-device .panel-global-header { min-height:132px !important; padding-top:28px !important; padding-bottom:16px !important; }
             html.panel-android-device #global-header-mobile-btn { top:28px !important; }
+            html.panel-android-device #panel-mobile-menu { top:28px !important; height:calc(100% - 28px) !important; }
             html.panel-android-device #panel-global-footer .pgf-android-badge,
             html.panel-android-device #panel-global-footer .pgf-ios-badge { display:none !important; }
         `;
