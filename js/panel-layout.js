@@ -228,24 +228,12 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             applyCollapsedState(nextState);
         });
 
-        // Dashboard are deja propriul meniu mobil, păstrat pentru compatibilitate.
-        // Îl forțăm în starea închisă la fiecare deschidere/revenire în aplicație.
+        // Eliminăm meniul mobil vechi pentru a folosi aceeași interfață pe toate paginile.
         if (document.getElementById('mobile-menu')) {
             const legacyMenu = document.getElementById('mobile-menu');
             const legacyBackdrop = document.getElementById('mobile-menu-backdrop');
-            const closeLegacyMenu = () => {
-                legacyMenu.classList.add('-translate-x-full');
-                legacyMenu.classList.remove('is-open', 'open');
-                legacyBackdrop?.classList.add('hidden');
-                legacyBackdrop?.classList.remove('is-open', 'open');
-            };
-            closeLegacyMenu();
-            window.closePanelMobileMenu = closeLegacyMenu;
-            window.addEventListener('pageshow', closeLegacyMenu);
-            document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'visible') closeLegacyMenu();
-            });
-            return;
+            legacyMenu.remove();
+            legacyBackdrop?.remove();
         }
 
         const backdrop = document.createElement('div');
@@ -266,6 +254,7 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             document.body.style.overflow = '';
         };
         window.closePanelMobileMenu = closeMobileMenu;
+        window.closeMobileMenu = closeMobileMenu;
         const openMobileMenu = () => {
             document.dispatchEvent(new CustomEvent('panel:mobile-menu-open'));
             mobileMenu.classList.add('is-open');
