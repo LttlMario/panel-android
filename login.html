@@ -177,19 +177,10 @@
         const SUPABASE_KEY = window.PANEL_SUPABASE_CONFIG.publishableKey;
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        document.getElementById('voucher-code')?.closest('div')?.remove();
-        const loginInfo = document.createElement('details');
-        loginInfo.className = 'rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-4 text-left';
-        loginInfo.innerHTML = '<summary class="cursor-pointer text-sm font-bold text-cyan-200">Cum funcționează accesul?</summary><div class="mt-3 space-y-2 text-xs leading-5 text-slate-300"><p>Te conectezi cu Discord, iar panelul verifică automat organizația și rolurile tale.</p><p>Dacă nu ai încă o organizație, vei primi o pagină separată unde verifici voucherul și începi configurarea.</p><p>Guild ID-ul se adaugă după verificarea voucherului, în pasul de configurare al organizației.</p></div>';
-        document.getElementById('discord-login-btn')?.before(loginInfo);
-
         let CLIENT_ID = window.PANEL_DISCORD_CONFIG.clientId;
         const DISCORD_SCOPES = window.PANEL_DISCORD_CONFIG.scopes.join(' ');
         const REDIRECT_URI = window.PANEL_ANDROID_REDIRECT_URI || (window.location.origin + window.location.pathname);
         function getLoginDestination(user) {
-            if (user?.organization_access_expired === true) {
-                return 'administrare-organizatie.html';
-            }
             const permissionLevel = Number(user?.permission_level);
 
             const selectedPages = Array.isArray(user?.allowed_pages) && user.allowed_pages.length > 0;
@@ -202,9 +193,6 @@
 
         function getSafeReturnDestination(user) {
             const fallback = getLoginDestination(user);
-            if (user?.organization_access_expired === true) {
-                return 'administrare-organizatie.html';
-            }
             const savedDestination = sessionStorage.getItem('panel_return_after_login');
             sessionStorage.removeItem('panel_return_after_login');
             if (!savedDestination) return fallback;
@@ -383,15 +371,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                         apikey: SUPABASE_KEY,
                         authorization: `Bearer ${SUPABASE_KEY}`
                     },
-                    body: JSON.stringify({ access_token: token })
+                    body: JSON.stringify({ access_token: token, voucher_code: document.getElementById('voucher-code')?.value.trim().toUpperCase() || null, voucher_guild_id: document.getElementById('voucher-guild-id')?.value.trim() || null })
                 });
                 const syncResult = await syncResponse.json();
                 if (!syncResponse.ok || !syncResult.user) {
-                    if (['NO_ORGANIZATION', 'ROLE_NOT_CONFIGURED'].includes(String(syncResult.code || ''))) {
+                    if ((syncResult.code === 'NO_ORGANIZATION' || syncResult.code === 'VOUCHER_REQUIRES_ORGANIZATION_SETUP') && document.getElementById('voucher-code')?.value.trim()) {
+                        const voucher = document.getElementById('voucher-code').value.trim().toUpperCase();
+                        const guild = document.getElementById('voucher-guild-id')?.value.trim() || '';
                         localStorage.setItem('discord_access_token', token);
                         localStorage.setItem('discord_user', JSON.stringify({ discord_id: discordData.id, username: discordData.username, display_name: discordData.global_name || discordData.username, avatar: discordData.avatar }));
-                        sessionStorage.removeItem('panel_onboarding_voucher');
-                        window.location.href = 'organizatie-bun-venit.html';
+                        const params = new URLSearchParams({ voucher, guild });
+                        window.location.href = `creare-organizatie-voucher.html?${params}`;
                         return;
                     }
                     throw new Error(syncResult.error || 'Rolul Discord nu a putut fi verificat.');
@@ -423,6 +413,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
     </script>
+    <script src="js/voucher-onboarding.js"></script>
     <script src="js/global-footer.js"></script>
 </body>
 </html>
