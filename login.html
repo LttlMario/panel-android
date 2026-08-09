@@ -246,7 +246,10 @@
                 redirect_uri: REDIRECT_URI,
                 response_type: 'token',
                 scope: DISCORD_SCOPES,
-                state: isNativeOAuth ? `${window.PANEL_ANDROID_OAUTH_STATE}:${oauthState}` : oauthState
+                // Pagina publica de callback este aceeasi cu cea folosita de iOS.
+                // Pentru Android pastram markerul exact asteptat de callback-ul comun;
+                // tokenul este preluat apoi de android-oauth-runtime.js prin deep-link.
+                state: isNativeOAuth ? window.PANEL_ANDROID_OAUTH_STATE : oauthState
             });
 
             const authorizationUrl = `https://discord.com/oauth2/authorize?${authParams.toString()}`;
