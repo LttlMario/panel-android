@@ -187,11 +187,6 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             html.panel-ios-device .panel-global-header { min-height:116px !important; padding:14px !important; display:grid !important; grid-template-columns:minmax(0,1fr) !important; gap:10px !important; align-items:center !important; }
             html.panel-ios-device .panel-global-header .panel-global-title { width:100% !important; min-height:40px !important; }
             html.panel-ios-device .panel-global-header > div:not(.panel-global-title) { width:100% !important; max-width:none !important; margin:0 !important; }
-            html.panel-android-device .panel-global-header { min-height:132px !important; padding-top:28px !important; padding-bottom:16px !important; }
-            html.panel-android-device #global-header-mobile-btn { top:28px !important; }
-            html.panel-android-device #panel-mobile-menu { top:28px !important; height:calc(100% - 28px) !important; }
-            html.panel-android-device #panel-global-footer .pgf-android-badge,
-            html.panel-android-device #panel-global-footer .pgf-ios-badge { display:none !important; }
         `;
         document.head.appendChild(style);
     }
@@ -290,10 +285,7 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             document.addEventListener('pointerdown', (event) => {
                 if (!legacyMenu.contains(event.target) && !legacyBackdrop?.contains(event.target)) closeLegacyMenu();
             }, { passive: true });
-            // Folosește același meniu unificat ca panel-ios; meniul vechi nu trebuie
-            // să rămână vizibil sau să blocheze inițializarea hamburgerului.
-            legacyMenu.remove();
-            legacyBackdrop?.remove();
+            return;
         }
 
         const backdrop = document.createElement('div');
@@ -341,7 +333,6 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         mobileMenu.querySelector('button').addEventListener('click', closeMobileMenu);
         backdrop.addEventListener('click', closeMobileMenu);
         mobileNav.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeMobileMenu));
-        closeMobileMenu();
         document.addEventListener('pointerdown', (event) => {
             const header = document.querySelector('.panel-global-header, header');
             if (!mobileMenu.contains(event.target) && !header?.contains(event.target)) closeMobileMenu();
@@ -617,6 +608,20 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
 
         if (typeof isPlatformAdmin === 'function' && isPlatformAdmin() && !navigation.querySelector('a[href="vouchere.html"]')) {
             const voucher = document.createElement('a'); voucher.href='vouchere.html'; voucher.dataset.role='99'; voucher.className='nav-link flex items-center space-x-3 px-4 py-3 rounded-xl transition text-sm text-slate-300 hover:bg-slate-800'; voucher.innerHTML='<span>🎟️</span><span>Vouchere</span>'; navigation.appendChild(voucher);
+        }
+        if (!navigation.querySelector('a[href="administrare-organizatie.html"]')) {
+            const organizationAdmin = document.createElement('a');
+            organizationAdmin.href = 'administrare-organizatie.html';
+            organizationAdmin.dataset.role = '1';
+            organizationAdmin.className = 'nav-link flex items-center space-x-3 px-4 py-3 rounded-xl transition text-sm ' + (
+                currentPage === 'administrare-organizatie.html'
+                    ? 'bg-emerald-500/10 text-emerald-400 font-medium'
+                    : 'text-slate-300 hover:bg-slate-800'
+            );
+            organizationAdmin.innerHTML = '<span>🏢</span><span>Administrare organizație</span>';
+            const voucher = navigation.querySelector('a[href="vouchere.html"]');
+            if (voucher) voucher.after(organizationAdmin);
+            else navigation.appendChild(organizationAdmin);
         }
         if (typeof isPlatformAdmin === 'function' && isPlatformAdmin()) {
             navigation.querySelectorAll('a.nav-link').forEach((link) => { link.style.display = ''; });

@@ -3,7 +3,6 @@
   "appName": "Panel",
   "webDir": "www",
   "server": {
-    "url": "https://lttlmario.github.io/panel-pro/",
     "hostname": "panel.local",
     "androidScheme": "https"
   },
