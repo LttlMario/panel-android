@@ -12,7 +12,7 @@ const sourceFiles = [
   'creare-organizatie-voucher.html', 'descarca-android.html', 'developer.html',
   'diagnostic.html', 'discord-configurare.html', 'guest.html', 'index.html',
   'instalare-ios.html', 'locatiiilegale.html', 'login.html', 'logs.html', 'marketplace-ilegal.html',
-  'marketplace.html', 'organizatii.html', 'pontaj.html', 'rapoarte.html',
+  'marketplace.html', 'organizatie-bun-venit.html', 'organizatie-noua.html', 'organizatii.html', 'pontaj.html', 'rapoarte.html',
   'service-worker.js', 'status-live.html', 'thank-you.html', 'vouchere.html',
   'manifest.webmanifest',
   'MIGRARE-MULTI-ORGANIZATIE.md'
