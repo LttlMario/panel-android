@@ -1,39 +1,33 @@
-import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const source = join(root, 'web-src');
 const output = join(root, 'www');
 const sourceDirectories = ['css', 'img', 'js', 'supabase'];
-const sourceFiles = [
-  '403.html', 'admin.html', 'administrare-organizatie.html', 'anunturi.html',
-  'asistent.html', 'bucatarie.html', 'calculator.html', 'calculatorilegal.html',
-  'cereri.html', 'changelog.html', 'contracte.html', 'craftmecanics.html',
-  'creare-organizatie-voucher.html', 'descarca-android.html', 'developer.html',
-  'diagnostic.html', 'discord-configurare.html', 'guest.html', 'index.html',
-  'instalare-ios.html', 'locatiiilegale.html', 'login.html', 'logs.html', 'marketplace-ilegal.html',
-  'marketplace.html', 'organizatie-bun-venit.html', 'organizatie-noua.html', 'organizatii.html', 'pontaj.html', 'rapoarte.html',
-  'service-worker.js', 'status-live.html', 'thank-you.html', 'vouchere.html',
-  'manifest.webmanifest',
-  'MIGRARE-MULTI-ORGANIZATIE.md'
-];
+const androidRuntime = join(root, 'js', 'android-oauth-runtime.js');
 
 await rm(output, { recursive: true, force: true });
 await mkdir(output, { recursive: true });
 
 for (const directory of sourceDirectories) {
-  await cp(join(root, directory), join(output, directory), { recursive: true });
+  await cp(join(source, directory), join(output, directory), { recursive: true });
 }
 
-for (const file of sourceFiles) {
-  const sourcePath = join(root, file);
-  const destinationPath = join(output, file);
-  await mkdir(dirname(destinationPath), { recursive: true });
+await cp(androidRuntime, join(output, 'js', 'android-oauth-runtime.js'));
+
+const sourceEntries = await readdir(source, { withFileTypes: true });
+for (const entry of sourceEntries) {
+  if (!entry.isFile() || !entry.name.endsWith('.html')) continue;
+
+  const sourcePath = join(source, entry.name);
+  const destinationPath = join(output, entry.name);
   let html = await readFile(sourcePath, 'utf8');
-  if (file.endsWith('.html') && !html.includes('android-oauth-runtime.js')) {
+  if (!html.includes('android-oauth-runtime.js')) {
     html = html.replace('</head>', '    <script src="js/android-oauth-runtime.js"></script>\n</head>');
   }
   await writeFile(destinationPath, html, 'utf8');
 }
 
-console.log(`Aplicatia web a fost generata in ${relative(root, output)}.`);
+console.log(`Aplicatia Android a fost generata din ${relative(root, source)}.`);
