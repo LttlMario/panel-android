@@ -1,11 +1,29 @@
 // Navigare comună pentru panel: meniu mobil și sidebar pliabil pe desktop.
 if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetchFixed) { window.__organizationFetchFixed = true; const _fetch = window.fetch; window.fetch = (url, options = {}) => { if (String(url).includes('/functions/v1/manage-organizations')) options.headers = { ...(options.headers || {}), 'x-panel-session': localStorage.getItem('panel_session_token') || '' }; return _fetch(url, options); }; }
 (() => {
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (isIOSDevice) {
+        if (!document.querySelector('link[data-panel-ios-style]')) {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'css/ios-app.css';
+            link.dataset.panelIosStyle = 'true';
+            document.head.appendChild(link);
+        }
+        if (!document.querySelector('script[data-panel-ios-runtime]')) {
+            const runtime = document.createElement('script');
+            runtime.src = 'js/ios-runtime.js';
+            runtime.dataset.panelIosRuntime = 'true';
+            runtime.defer = true;
+            document.head.appendChild(runtime);
+        }
+    }
     if (window.location.pathname.endsWith('vouchere.html')) {
         const script = document.createElement('script'); script.src = 'js/voucher-admin-controls.js?v=3.3.1'; document.head.appendChild(script);
         const listScript = document.createElement('script'); listScript.src = 'js/voucher-list-controls.js?v=3.3.1'; document.head.appendChild(listScript);
         const enhancementScript = document.createElement('script'); enhancementScript.src = 'js/voucher-enhancements.js?v=4.0.0'; document.head.appendChild(enhancementScript);
     }
+    if (window.location.pathname.endsWith('administrare-organizatie.html')) { const script=document.createElement('script');script.src='js/organization-status.js';document.head.appendChild(script); }
     if (window.location.pathname.endsWith('organizatii.html')) { const requestScript=document.createElement('script');requestScript.src='js/organization-request-fix.js';document.head.appendChild(requestScript); const script=document.createElement('script');script.src='js/package-limits.js';document.head.appendChild(script); }
     if (window.location.pathname.endsWith('admin.html')) { const script=document.createElement('script');script.src='js/admin-organization-center.js';document.head.appendChild(script); }
     if (window.location.pathname.endsWith('anunturi.html')) { const script=document.createElement('script');script.src='js/anunturi-permissions.js';document.head.appendChild(script); }
@@ -99,14 +117,14 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             html[data-panel-theme="dark"] .bg-slate-800 { background-color:#111c2e !important; }
             html[data-panel-theme="dark"] .border-slate-800, html[data-panel-theme="dark"] .border-slate-700, html[data-panel-theme="dark"] .post, html[data-panel-theme="dark"] .dialog { border-color:#223047 !important; }
 
-            .panel-sidebar-toggle { position:absolute; top:18px; right:-14px; z-index:70; width:28px; height:28px; display:flex; align-items:center; justify-content:center; border:1px solid #334155; border-radius:999px; background:#0f172a; color:#cbd5e1; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.3); }
+            .panel-sidebar-toggle { display:none !important; }
             .panel-sidebar-toggle:hover { background:#1e293b; color:#fff; }
             #panel-mobile-backdrop { display:none; position:fixed; inset:0; z-index:4000; background:rgba(2,6,23,.78); backdrop-filter:blur(3px); }
             #panel-mobile-menu { position:fixed; inset:0 auto 0 0; z-index:4001; width:min(288px,86vw); background:#0f172a; border-right:1px solid #1e293b; transform:translateX(-102%); transition:transform .2s ease; box-shadow:16px 0 40px rgba(0,0,0,.45); overflow:auto; }
             #panel-mobile-menu.is-open { transform:translateX(0); }
             #panel-mobile-menu .panel-mobile-top { height:64px; padding:0 18px; border-bottom:1px solid #1e293b; display:flex; align-items:center; justify-content:space-between; }
             #panel-mobile-menu .panel-mobile-nav { padding:16px; }
-            .panel-mobile-toggle { display:none; position:relative; z-index:40; width:40px; height:40px; flex:none; align-items:center; justify-content:center; border:1px solid #334155; border-radius:12px; background:#020617; color:#e2e8f0; font-size:18px; cursor:pointer; }
+            .panel-mobile-toggle { display:none !important; }
             .panel-action-bar { display:flex; align-items:center; justify-content:flex-end; gap:12px; flex-wrap:wrap; padding:12px max(16px, calc((100vw - 1280px) / 2)); border-bottom:1px solid #1e293b; background:rgba(15,23,42,.72); }
             .panel-action-bar > div { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
             .panel-bottom-save-bar { position:sticky; bottom:0; z-index:30; display:flex; justify-content:flex-end; padding:14px 16px; border-top:1px solid #1e293b; background:rgba(15,23,42,.96); backdrop-filter:blur(10px); }
@@ -149,6 +167,24 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
                 #panel-save-reminder { right:10px; bottom:82px; max-width:calc(100vw - 20px); }
             }
             @media (min-width:768px) and (max-width:1100px) { .panel-header-tools .panel-search-host { width:min(460px,42vw); } }
+            /* Pe iPhone/PWA folosim întotdeauna meniul mobil, chiar dacă Safari raportează un viewport CSS mai mare. */
+            html.panel-ios-device body.panel-shared-sidebar-page { padding-left:0 !important; }
+            html.panel-ios-device #panel-shared-sidebar { display:none !important; }
+            html.panel-ios-device .panel-responsive-sidebar { display:none !important; }
+            html.panel-ios-device .panel-sidebar-toggle { display:none !important; }
+            html.panel-ios-device .panel-mobile-toggle { display:none !important; }
+            html.panel-ios-device main { width:100% !important; max-width:100vw !important; margin-left:0 !important; overflow-x:hidden !important; }
+            html.panel-ios-device .panel-global-header { min-height:76px !important; padding:12px 14px !important; }
+            html.panel-ios-device #global-header-mobile-btn { position:absolute !important; left:14px !important; top:12px !important; }
+            html.panel-ios-device .panel-global-title { padding-left:54px !important; }
+            html.panel-ios-device .panel-global-header { min-height:116px !important; padding:14px !important; display:grid !important; grid-template-columns:minmax(0,1fr) !important; gap:10px !important; align-items:center !important; }
+            html.panel-ios-device .panel-global-header .panel-global-title { width:100% !important; min-height:40px !important; }
+            html.panel-ios-device .panel-global-header > div:not(.panel-global-title) { width:100% !important; max-width:none !important; margin:0 !important; }
+            html.panel-android-device .panel-global-header { min-height:132px !important; padding-top:28px !important; padding-bottom:16px !important; }
+            html.panel-android-device #global-header-mobile-btn { top:28px !important; }
+            html.panel-android-device #panel-mobile-menu { top:28px !important; height:calc(100% - 28px) !important; }
+            html.panel-android-device #panel-global-footer .pgf-android-badge,
+            html.panel-android-device #panel-global-footer .pgf-ios-badge { display:none !important; }
         `;
         document.head.appendChild(style);
     }
@@ -166,7 +202,8 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         const sidebar = navigation?.closest('aside');
         if (!navigation || !sidebar) return;
         ensureBrandLogo(sidebar);
-        sidebar.querySelector(':scope > div:last-child')?.remove();
+        const sidebarFooter = sidebar.querySelector(':scope > div:last-child');
+        if (sidebar.children.length > 1 && sidebarFooter) sidebarFooter.remove();
 
         ensureCommunityLink(navigation, currentPage);
         normalizeNavigation(navigation, currentPage);
@@ -227,8 +264,7 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             applyCollapsedState(nextState);
         });
 
-        // Compatibilitate cu meniul mobil vechi: îl închidem și îl eliminăm,
-        // apoi folosim meniul unificat pentru toate paginile.
+        // Dashboard are deja propriul meniu mobil, păstrat pentru compatibilitate.
         if (document.getElementById('mobile-menu')) {
             const legacyMenu = document.getElementById('mobile-menu');
             const legacyBackdrop = document.getElementById('mobile-menu-backdrop');
@@ -244,6 +280,11 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             document.addEventListener('visibilitychange', () => {
                 if (document.visibilityState === 'visible') closeLegacyMenu();
             });
+            document.addEventListener('pointerdown', (event) => {
+                if (!legacyMenu.contains(event.target) && !legacyBackdrop?.contains(event.target)) closeLegacyMenu();
+            }, { passive: true });
+            // Folosește același meniu unificat ca panel-ios; meniul vechi nu trebuie
+            // să rămână vizibil sau să blocheze inițializarea hamburgerului.
             legacyMenu.remove();
             legacyBackdrop?.remove();
         }
@@ -254,7 +295,6 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         mobileMenu.id = 'panel-mobile-menu';
         mobileMenu.innerHTML = `<div class="panel-mobile-top"><img src="img/logo-192.png" alt="Logo Panel" class="panel-brand-logo"><button type="button" class="w-9 h-9 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-lg" aria-label="Închide meniul">×</button></div><nav class="panel-mobile-nav space-y-1.5"></nav>`;
         document.body.append(backdrop, mobileMenu);
-
         const sidebarProfile = document.querySelector('[data-panel-user-profile]');
         if (sidebarProfile) {
             const mobileProfile = sidebarProfile.cloneNode(true);
@@ -303,6 +343,33 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') closeMobileMenu();
         });
+
+        if (false) {
+            const headerObserver = new MutationObserver(() => {
+                const header = document.querySelector('.panel-global-header, header');
+                if (!header || document.querySelector('.panel-mobile-toggle')) return;
+                const mobileToggle = document.createElement('button');
+                mobileToggle.type = 'button';
+                mobileToggle.className = 'panel-mobile-toggle';
+                mobileToggle.textContent = '☰';
+                mobileToggle.setAttribute('aria-label', 'Deschide meniul');
+                mobileToggle.addEventListener('click', openMobileMenu);
+                header.insertBefore(mobileToggle, header.firstChild);
+                headerObserver.disconnect();
+            });
+            headerObserver.observe(document.body, { childList: true, subtree: true });
+            window.setTimeout(() => headerObserver.disconnect(), 5000);
+        }
+        const header = document.querySelector('header');
+        if (false && header) {
+            const mobileToggle = document.createElement('button');
+            mobileToggle.type = 'button';
+            mobileToggle.className = 'panel-mobile-toggle';
+            mobileToggle.textContent = '☰';
+            mobileToggle.setAttribute('aria-label', 'Deschide meniul');
+            mobileToggle.addEventListener('click', openMobileMenu);
+            header.insertBefore(mobileToggle, header.firstChild);
+        }
     }
 
     function ensureGlobalHeader() {
@@ -339,7 +406,21 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         if (roleElement && typeof getUser === 'function') roleElement.textContent = discordRoleLabel(getUser());
     }
 
+    function refreshSidebarUser() {
+        if (typeof getUser !== 'function') return;
+        const user = getUser() || {};
+        document.querySelectorAll('[data-panel-user-profile]').forEach((profile) => {
+            const avatar = profile.querySelector('#user-avatar, [data-user-avatar]');
+            const name = profile.querySelector('#user-display-name, [data-user-name]');
+            const role = profile.querySelector('#user-role, [data-user-role]');
+            if (avatar) avatar.src = user.avatar || user.avatar_url || '';
+            if (name) name.textContent = user.display_name || user.username || 'Utilizator';
+            if (role) role.textContent = discordRoleLabel(user);
+        });
+    }
+
     window.addEventListener('panel-user-updated', refreshSidebarUserRole);
+    window.addEventListener('panel-user-updated', refreshSidebarUser);
 
     function ensureBrandLogo(sidebar) {
         const heading=sidebar.querySelector('h1');
@@ -361,6 +442,12 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             .find(nav => !nav.closest('#panel-mobile-menu'));
         const legacySidebar = legacyNavigation?.closest('aside') || null;
         const user=typeof getUser==='function'?getUser():null,organization=typeof getActiveOrganization==='function'?getActiveOrganization():null,sidebar=document.createElement('aside');sidebar.id='panel-shared-sidebar';sidebar.className='panel-responsive-sidebar bg-slate-900 border-r border-slate-800 flex flex-col justify-between';sidebar.style.width='18rem';sidebar.style.flex='0 0 18rem';sidebar.innerHTML=`<div class="p-6 overflow-y-auto"><h1 class="text-xl font-bold"><img src="${organization?.logo_url||'img/logo-192.png'}" alt="${organization?.name||'Logo Panel'}" class="panel-brand-logo" onerror="this.src='img/logo-192.png'"></h1>${organization?.banner_url?`<img src="${organization.banner_url}" alt="" class="mt-3 h-16 w-full rounded-lg object-cover" onerror="this.remove()">`:''}<nav id="sidebar-nav" class="mt-6 space-y-1.5"></nav></div><div class="p-4 border-t border-slate-800 flex items-center justify-between gap-2"><div class="flex items-center gap-3 min-w-0"><img id="user-avatar" class="w-9 h-9 rounded-full border border-slate-700 object-cover" src="${user?.avatar||user?.avatar_url||''}" alt=""><div class="min-w-0"><p id="user-display-name" class="font-semibold truncate">${user?.display_name||user?.username||'Utilizator'}</p><p id="user-role" class="text-xs text-emerald-400 truncate">${discordRoleLabel(user)}</p></div></div><button type="button" data-shared-logout class="text-xs text-rose-400">Logout</button></div>`;
+        const userProfile = sidebar.lastElementChild;
+        if (userProfile) {
+            userProfile.dataset.panelUserProfile = 'true';
+            userProfile.classList.add('panel-sidebar-profile');
+            sidebar.firstElementChild?.querySelector('nav')?.before(userProfile);
+        }
         if (legacySidebar) {
             legacySidebar.replaceWith(sidebar);
         } else if (document.getElementById('panel-sidebar-host')) {
@@ -523,20 +610,6 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
 
         if (typeof isPlatformAdmin === 'function' && isPlatformAdmin() && !navigation.querySelector('a[href="vouchere.html"]')) {
             const voucher = document.createElement('a'); voucher.href='vouchere.html'; voucher.dataset.role='99'; voucher.className='nav-link flex items-center space-x-3 px-4 py-3 rounded-xl transition text-sm text-slate-300 hover:bg-slate-800'; voucher.innerHTML='<span>🎟️</span><span>Vouchere</span>'; navigation.appendChild(voucher);
-        }
-        if (!navigation.querySelector('a[href="administrare-organizatie.html"]')) {
-            const organizationAdmin = document.createElement('a');
-            organizationAdmin.href = 'administrare-organizatie.html';
-            organizationAdmin.dataset.role = '1';
-            organizationAdmin.className = 'nav-link flex items-center space-x-3 px-4 py-3 rounded-xl transition text-sm ' + (
-                currentPage === 'administrare-organizatie.html'
-                    ? 'bg-emerald-500/10 text-emerald-400 font-medium'
-                    : 'text-slate-300 hover:bg-slate-800'
-            );
-            organizationAdmin.innerHTML = '<span>🏢</span><span>Administrare organizație</span>';
-            const voucher = navigation.querySelector('a[href="vouchere.html"]');
-            if (voucher) voucher.after(organizationAdmin);
-            else navigation.appendChild(organizationAdmin);
         }
         if (typeof isPlatformAdmin === 'function' && isPlatformAdmin()) {
             navigation.querySelectorAll('a.nav-link').forEach((link) => { link.style.display = ''; });

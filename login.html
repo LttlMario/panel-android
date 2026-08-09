@@ -185,7 +185,7 @@
 
         let CLIENT_ID = window.PANEL_DISCORD_CONFIG.clientId;
         const DISCORD_SCOPES = window.PANEL_DISCORD_CONFIG.scopes.join(' ');
-        const REDIRECT_URI = window.location.origin + window.location.pathname;
+        const REDIRECT_URI = window.PANEL_ANDROID_REDIRECT_URI || (window.location.origin + window.location.pathname);
         function getLoginDestination(user) {
             if (user?.organization_access_expired === true) {
                 return 'administrare-organizatie.html';
@@ -250,6 +250,7 @@
                 // Configurația locală răm�ne fallback pentru prima instalare.
             }
             const oauthState = crypto.randomUUID();
+            const isNativeOAuth = typeof window.openPanelDiscordOAuth === 'function';
             sessionStorage.setItem('discord_oauth_state', oauthState);
 
             const authParams = new URLSearchParams({
@@ -257,13 +258,25 @@
                 redirect_uri: REDIRECT_URI,
                 response_type: 'token',
                 scope: DISCORD_SCOPES,
-                state: oauthState
+                state: isNativeOAuth ? `${window.PANEL_ANDROID_OAUTH_STATE}:${oauthState}` : oauthState
             });
 
-            window.location.href = `https://discord.com/oauth2/authorize?${authParams.toString()}`;
+            const authorizationUrl = `https://discord.com/oauth2/authorize?${authParams.toString()}`;
+            if (isNativeOAuth) await window.openPanelDiscordOAuth(authorizationUrl);
+            else window.location.href = authorizationUrl;
         });
 
 document.addEventListener('DOMContentLoaded', async () => {
+
+    const pendingMobileToken = sessionStorage.getItem('panel_pending_discord_oauth_token');
+    if (pendingMobileToken) {
+        sessionStorage.removeItem('panel_pending_discord_oauth_token');
+        window.history.replaceState({}, document.title, window.location.pathname);
+        sessionStorage.removeItem('discord_oauth_state');
+        setLoginStatus('🔄 Se inițiază autentificarea...');
+        await processDiscordLogin(pendingMobileToken);
+        return;
+    }
 
     const hash = window.location.hash;
     // Discord OAuth Implicit Flow returneaza tokenul in fragmentul URL.
@@ -275,7 +288,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const expectedState = sessionStorage.getItem('discord_oauth_state');
 
         if(accessToken){
-            if (returnedState === 'panel_android') {
+            if (returnedState === 'panel_android' || returnedState?.startsWith('panel_android:')) {
                 window.location.replace(`discord-1531023771211792384:/authorize/callback#${params.toString()}`);
                 return;
             }

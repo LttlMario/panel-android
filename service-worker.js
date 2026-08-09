@@ -1,4 +1,4 @@
-const CACHE_NAME = 'panel-android-v13-panel-3-6-0';
+const CACHE_NAME = 'panel-android-v12-panel-3-5-1';
 const APP_SHELL = [
   './login.html',
   './organizatie-bun-venit.html',
