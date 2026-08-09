@@ -10,6 +10,9 @@
 supabase/.temp/
 node_modules/
 .gradle-cache/
+.gradle-user-home/
+.android-build-home/
+.release-signing/
 .npm-cache/
 www/
 Panel-Android-*.apk
