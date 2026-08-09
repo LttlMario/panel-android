@@ -30,6 +30,13 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
     const COLLAPSE_KEY = 'panel_sidebar_collapsed';
 
     function addStyles() {
+        if (!document.querySelector('link[data-panel-visual-theme]')) {
+            const themeLink = document.createElement('link');
+            themeLink.rel = 'stylesheet';
+            themeLink.dataset.panelVisualTheme = 'true';
+            themeLink.href = 'css/panel-demo-theme.css?v=1.0.0';
+            document.head.appendChild(themeLink);
+        }
         if (document.getElementById('panel-layout-styles')) return;
         const style = document.createElement('style');
         style.id = 'panel-layout-styles';
