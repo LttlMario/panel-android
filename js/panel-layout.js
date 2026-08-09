@@ -227,8 +227,26 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             applyCollapsedState(nextState);
         });
 
-        // Dashboard are deja propriul meniu mobil, păstrat pentru compatibilitate.
-        if (document.getElementById('mobile-menu')) return;
+        // Compatibilitate cu meniul mobil vechi: îl închidem și îl eliminăm,
+        // apoi folosim meniul unificat pentru toate paginile.
+        if (document.getElementById('mobile-menu')) {
+            const legacyMenu = document.getElementById('mobile-menu');
+            const legacyBackdrop = document.getElementById('mobile-menu-backdrop');
+            const closeLegacyMenu = () => {
+                legacyMenu.classList.add('-translate-x-full');
+                legacyMenu.classList.remove('is-open', 'open');
+                legacyBackdrop?.classList.add('hidden');
+                legacyBackdrop?.classList.remove('is-open', 'open');
+            };
+            closeLegacyMenu();
+            window.closePanelMobileMenu = closeLegacyMenu;
+            window.addEventListener('pageshow', closeLegacyMenu);
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') closeLegacyMenu();
+            });
+            legacyMenu.remove();
+            legacyBackdrop?.remove();
+        }
 
         const backdrop = document.createElement('div');
         backdrop.id = 'panel-mobile-backdrop';
@@ -236,6 +254,20 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         mobileMenu.id = 'panel-mobile-menu';
         mobileMenu.innerHTML = `<div class="panel-mobile-top"><img src="img/logo-192.png" alt="Logo Panel" class="panel-brand-logo"><button type="button" class="w-9 h-9 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-lg" aria-label="Închide meniul">×</button></div><nav class="panel-mobile-nav space-y-1.5"></nav>`;
         document.body.append(backdrop, mobileMenu);
+
+        const sidebarProfile = document.querySelector('[data-panel-user-profile]');
+        if (sidebarProfile) {
+            const mobileProfile = sidebarProfile.cloneNode(true);
+            mobileProfile.dataset.mobileUserProfile = 'true';
+            mobileProfile.querySelectorAll('[id]').forEach((element) => {
+                if (element.id === 'user-avatar') element.dataset.userAvatar = 'true';
+                if (element.id === 'user-display-name') element.dataset.userName = 'true';
+                if (element.id === 'user-role') element.dataset.userRole = 'true';
+                element.removeAttribute('id');
+            });
+            mobileProfile.querySelector('[data-shared-logout]')?.addEventListener('click', () => typeof logout === 'function' ? logout() : location.replace('login.html'));
+            mobileMenu.querySelector('.panel-mobile-top').after(mobileProfile);
+        }
 
         const mobileNav = mobileMenu.querySelector('.panel-mobile-nav');
         mobileNav.innerHTML = navigation.innerHTML;
@@ -247,6 +279,7 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             document.body.classList.remove('panel-mobile-menu-open');
             document.body.style.overflow = '';
         };
+        window.closePanelMobileMenu = closeMobileMenu;
         const openMobileMenu = () => {
             document.dispatchEvent(new CustomEvent('panel:mobile-menu-open'));
             mobileMenu.classList.add('is-open');
@@ -254,20 +287,22 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             document.body.classList.add('panel-mobile-menu-open');
             document.body.style.overflow = 'hidden';
         };
+        window.toggleMobileMenu = openMobileMenu;
+        document.addEventListener('click', (event) => {
+            if (event.target.closest?.('#global-header-mobile-btn')) openMobileMenu();
+        });
         mobileMenu.querySelector('button').addEventListener('click', closeMobileMenu);
         backdrop.addEventListener('click', closeMobileMenu);
         mobileNav.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeMobileMenu));
-
-        const header = document.querySelector('header');
-        if (header) {
-            const mobileToggle = document.createElement('button');
-            mobileToggle.type = 'button';
-            mobileToggle.className = 'panel-mobile-toggle';
-            mobileToggle.textContent = '☰';
-            mobileToggle.setAttribute('aria-label', 'Deschide meniul');
-            mobileToggle.addEventListener('click', openMobileMenu);
-            header.insertBefore(mobileToggle, header.firstChild);
-        }
+        closeMobileMenu();
+        document.addEventListener('pointerdown', (event) => {
+            const header = document.querySelector('.panel-global-header, header');
+            if (!mobileMenu.contains(event.target) && !header?.contains(event.target)) closeMobileMenu();
+        }, { passive: true });
+        window.addEventListener('pageshow', closeMobileMenu);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') closeMobileMenu();
+        });
     }
 
     function ensureGlobalHeader() {
