@@ -1,6 +1,10 @@
-const CACHE_NAME = 'panel-ios-v12-panel-3-5-1';
+const CACHE_NAME = 'panel-android-v13-panel-3-6-0';
 const APP_SHELL = [
   './login.html',
+  './organizatie-bun-venit.html',
+  './organizatie-noua.html',
+  './creare-organizatie-voucher.html',
+  './administrare-organizatie.html',
   './index.html',
   './manifest.webmanifest',
   './img/logo-192.png',
