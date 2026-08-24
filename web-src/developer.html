@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Administrare versiuni - Admin</title>
   <link rel="stylesheet" href="css/global-footer.css">
-  <script src="js/project-version.js"></script>
-  <script src="js/supabase-config.js"></script>
-  <script src="js/permissions.js?v=4.5.0"></script>
-  <script src="js/panel-layout.js?v=4.9.0"></script>
+  <script src="js/project-version.js?v=3.11.5"></script>
+  <script src="js/supabase-config.js?v=20260820-session-date-fix"></script>
+    <script src="js/permissions.js?v=4.6.0"></script>
+    <script src="js/panel-layout.js?v=4.23.0"></script>
   <style>
     *{box-sizing:border-box} body{margin:0;min-height:100vh;display:flex;flex-direction:column;background:#020617;color:#f8fafc;font-family:Inter,Segoe UI,Arial,sans-serif}
     main{width:min(100% - 28px,940px);margin:0 auto;padding:32px 0 50px;flex:1}
@@ -33,7 +33,7 @@
       <header class="card warning">
         <p class="eyebrow">Administrare internă • Admin platformă</p>
         <h1>Administrare versiuni</h1>
-        <p>Versiunea curentă este <strong data-panel-version>v3.5.0</strong>. Informațiile de aici nu apar în changelog-ul public.</p>
+        <p>Versiunea curentă este <strong data-panel-version>v3.11.0</strong>. Informațiile de aici nu apar în changelog-ul public.</p>
         <div class="actions"><a href="index.html">← Dashboard</a><a href="changelog.html">Vezi changelog-ul public</a></div>
       </header>
 
@@ -45,7 +45,14 @@
           <li>Scrie numai schimbări confirmate: funcții noi, îmbunătățiri și probleme rezolvate.</li>
           <li>Verifică Dashboard, Pontaj, Cereri, Rapoarte, Contracte, Admin și versiunea mobilă.</li>
           <li>Publică fișierele actualizate pe GitHub Pages și verifică dacă nu există fișiere vechi în cache.</li>
+          <li>După fiecare modificare, creează o arhivă în <code>panel-project-versions/vX.Y.Z-nume-actualizare/</code> cu manifestul, fișierele afectate, funcțiile Supabase și SQL-ul.</li>
         </ol>
+      </section>
+
+      <section class="card">
+        <h2>Arhive și rollback</h2>
+        <p>Fiecare versiune publicată este păstrată în <code>panel-project-versions/</code>. În folderul versiunii găsești fișierele modificate, funcțiile Edge, migrarea SQL, commit-ul GitHub și statusul deploy-ului.</p>
+        <div class="actions"><a href="panel-project-versions/README.md">Deschide indexul arhivelor</a></div>
       </section>
 
       <section class="card">
@@ -95,28 +102,14 @@
 
   <script>
     (() => {
-      function roleNumber(value) {
-        if (typeof value === "number") return value;
-        const text = String(value || "").trim().toLowerCase();
-        if (/^\d+$/.test(text)) return Number(text);
-        if (text.includes("coordonator") || text.includes("admin") || text.includes("owner")) return 7;
-        if (text === "lider") return 6;
-        if (text.includes("colider") || text.includes("co lider") || text.includes("co-lider")) return 5;
-        if (text.includes("manager")) return 4;
-        if (text.includes("familia")) return 3;
-        if (text.includes("șef") || text.includes("sef")) return 2;
-        return 1;
-      }
-
       let user = null;
       try {
         user = JSON.parse(localStorage.getItem("discord_user") || "null");
       } catch (_) {}
 
-      const role = roleNumber(user?.role ?? user?.default_role ?? user?.role_level);
       const allowed = typeof isPlatformAdmin === "function"
         ? isPlatformAdmin()
-        : String(user?.discord_id || user?.id || user?.user_id || "") === "247012210021236738";
+        : user?.platform_admin === true || user?.is_platform_admin === true;
 
       document.getElementById(allowed ? "admin-content" : "access-denied").style.display = "block";
 

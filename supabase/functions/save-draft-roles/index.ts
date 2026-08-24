@@ -1,6 +1,7 @@
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient } from 'jsr:@supabase/supabase-js@2.112.3';
+import { getPlatformSecret } from '../_shared/platform-secrets.ts';
 
-const headers = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'authorization,apikey,content-type,x-panel-session', 'Access-Control-Max-Age': '86400', 'Content-Type': 'application/json' };
+const headers = { 'Access-Control-Allow-Origin': 'https://lttlmario.github.io', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'authorization,apikey,content-type,x-panel-session', 'Access-Control-Max-Age': '86400', 'Content-Type': 'application/json' };
 const reply = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers });
 
 Deno.serve(async (request) => {
@@ -27,7 +28,7 @@ Deno.serve(async (request) => {
     allowedGuilds.add(primaryGuildId);
     if (roles.some((role: any) => !/^\d{15,22}$/.test(String(role.guild_id || primaryGuildId)) || !allowedGuilds.has(String(role.guild_id || primaryGuildId)))) return reply({ error: 'Un rol selectat nu aparține unui server configurat.' }, 400);
     const guildIds = [...new Set(roles.map((role: any) => String(role.guild_id || primaryGuildId)))];
-    const bot = String(Deno.env.get('DISCORD_BOT_TOKEN') || '').trim();
+    const bot = await getPlatformSecret(db, 'discord_bot_token');
     if (!bot) return reply({ error: 'Botul Discord nu este configurat în Supabase.' }, 500);
     const availableRoles = new Set<string>();
     for (const guildId of guildIds) {
@@ -37,9 +38,9 @@ Deno.serve(async (request) => {
     }
     if (roles.some((role: any) => !availableRoles.has(`${String(role.guild_id || primaryGuildId)}:${String(role.id)}`))) return reply({ error: 'Un rol selectat nu există pe server.' }, 400);
     const { data: packageSetting } = await db.from('app_settings').select('value').eq('organization_id', organizationId).eq('key', 'organization_package').maybeSingle();
-    if (packageSetting?.value?.code !== 'full' && roles.length > 6) return reply({ error: 'Pachetul Standard permite maximum 6 roluri.' }, 400);
+    if (packageSetting?.value?.code !== 'full' && roles.length > 10) return reply({ error: 'Pachetul Standard permite maximum 10 roluri.' }, 400);
     await db.from('organization_role_mappings').delete().eq('organization_id', organizationId);
-    const { error } = await db.from('organization_role_mappings').insert(roles.map((role: any) => ({ organization_id: organizationId, guild_id: String(role.guild_id || primaryGuildId), discord_role_id: String(role.id), discord_role_name: String(role.name || ''), panel_role: String(role.panel_role || role.name || ''), permission_level: Number(role.level || role.panel_level) || 1, priority: Number(role.level || role.panel_level || 1) * 10, enabled: true })));
+    const { error } = await db.from('organization_role_mappings').insert(roles.map((role: any, index: number) => ({ organization_id: organizationId, guild_id: String(role.guild_id || primaryGuildId), discord_role_id: String(role.id), discord_role_name: String(role.name || ''), panel_role: String(role.panel_role || role.name || ''), permission_level: 1, priority: roles.length - index, enabled: true })));
     if (error) throw error;
     return reply({ ok: true, count: roles.length });
   } catch (error) {

@@ -1,14 +1,39 @@
-import { createClient } from 'jsr:@supabase/supabase-js@2';
-import { isPlatformAdminDiscordId } from '../_shared/platform-admin.ts';
+import { createClient } from 'jsr:@supabase/supabase-js@2.112.3';
+import { isPlatformAdminAccount, isPlatformUserBanned } from '../_shared/platform-admin.ts';
+import { packageAllowsPage, resolvePackageFeatures } from '../_shared/package-features.ts';
+import { getPlatformSecret } from '../_shared/platform-secrets.ts';
 
 const headers = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://lttlmario.github.io',
   'Access-Control-Allow-Headers': 'authorization,apikey,content-type,x-panel-session',
   'Content-Type': 'application/json',
 };
 const reply = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers });
 const serviceKey = () => Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS') ?? '{}').default;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const avatarUrl = (id: string, avatar?: string | null) => avatar ? `https://cdn.discordapp.com/avatars/${id}/${avatar}.png` : 'https://panel-management.netlify.app//img/logo-192.png';
+const normalizeId = (value: unknown) => String(value ?? '').trim();
+const discordBotHeaders = (bot: string) => ({ Authorization: `Bot ${bot}`, 'User-Agent': 'PanelManagement/1.0 (+https://panel-management.netlify.app)' });
+const fetchDiscordMember = async (guildId: string, discordId: string, accessToken: string, botToken: string) => {
+  const botResponse = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${discordId}`, { headers: discordBotHeaders(botToken) });
+  if (botResponse.ok || !accessToken) return botResponse;
+  const oauthResponse = await fetch(`https://discord.com/api/v10/users/@me/guilds/${guildId}/member`, { headers: { Authorization: `Bearer ${accessToken}`, 'User-Agent': 'PanelManagement/1.0 (+https://panel-management.netlify.app)' } });
+  return oauthResponse.ok || oauthResponse.status === 404 ? oauthResponse : botResponse;
+};
+const fetchGuildSnapshot = async (guildId: string, discordId: string, accessToken: string, botToken: string) => {
+  const [memberResponse, rolesResponse] = await Promise.all([
+    fetchDiscordMember(guildId, discordId, accessToken, botToken),
+    fetch(`https://discord.com/api/v10/guilds/${guildId}/roles`, { headers: discordBotHeaders(botToken) })
+  ]);
+  const member = memberResponse.ok ? await memberResponse.json() : null;
+  const roles = new Map<string, { name: string; position: number }>();
+  if (rolesResponse.ok) {
+    for (const role of (await rolesResponse.json()) as any[]) {
+      roles.set(String(role.id), { name: String(role.name), position: Number(role.position) || 0 });
+    }
+  }
+  return { memberResponse, member, roles };
+};
 const randomToken = () => { const bytes = crypto.getRandomValues(new Uint8Array(32)); return btoa(String.fromCharCode(...bytes)).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', ''); };
 const sha256 = async (value: string) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)))).map((byte) => byte.toString(16).padStart(2, '0')).join('');
 
@@ -17,21 +42,40 @@ Deno.serve(async (request) => {
   if (request.method !== 'POST') return reply({ error: 'Metodă invalidă.' }, 405);
   try {
     const body = await request.json();
+    const emailLogin = body.email_login === true;
+    const requestedOrganizationId = String(body.organization_id || '').trim();
+    if (requestedOrganizationId && !UUID_RE.test(requestedOrganizationId)) {
+      return reply({ error: 'Organizația activă este veche sau invalidă. Selectează din nou organizația.', code: 'ORGANIZATION_ID_INVALID' }, 400);
+    }
     const voucherCode = String(body.voucher_code || '').trim().toUpperCase();
     let voucherGuildId = String(body.voucher_guild_id || '').trim();
     if (voucherCode && voucherGuildId && !/^\d{15,22}$/.test(voucherGuildId)) return reply({ error: 'Guild ID-ul voucherului este invalid.' }, 400);
-    const accessToken = String(body.access_token || '').trim();
-    if (!accessToken) return reply({ error: 'Tokenul Discord lipsește.' }, 400);
+    let accessToken = String(body.access_token || '').trim();
+    if (emailLogin && voucherCode) return reply({ error: 'Voucherul se verifică numai prin loginul Discord.' }, 400);
+    if (!emailLogin && !accessToken) return reply({ error: 'Tokenul Discord lipsește.' }, 400);
     const key = serviceKey();
-    const botToken = String(Deno.env.get('DISCORD_BOT_TOKEN') || '').trim();
     if (!key) throw new Error('Cheia secretă Supabase lipsește.');
-    if (!botToken) throw new Error('DISCORD_BOT_TOKEN lipsește. Botul comun trebuie configurat.');
     const db = createClient(Deno.env.get('SUPABASE_URL')!, key);
+    const botToken = await getPlatformSecret(db, 'discord_bot_token');
+    if (!botToken) throw new Error('DISCORD_BOT_TOKEN lipsește. Botul comun trebuie configurat.');
+    const requestIp = String(request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown')
+      .split(',')[0].trim().slice(0, 120);
+    const { data: syncAllowed, error: syncRateError } = await db.rpc('consume_panel_rate_limit', {
+      p_key: `discord-role-sync:ip:${requestIp}`,
+      p_limit: 120,
+      p_window_seconds: 900,
+    });
+    if (syncRateError) {
+      console.error('Discord role sync rate-limit unavailable:', syncRateError.message);
+      return reply({ error: 'Protecția anti-abuz este temporar indisponibilă. Încearcă din nou în câteva minute.' }, 503);
+    }
+    if (syncAllowed === false) return reply({ error: 'Prea multe verificări. Așteaptă câteva minute și încearcă din nou.' }, 429);
 
     if (voucherCode) {
-      const { data: voucher, error: voucherError } = await db.from('organization_vouchers').select('guild_id,redeemed_at,redeemed_organization_id,expires_at').eq('code', voucherCode).maybeSingle();
+      const { data: voucher, error: voucherError } = await db.from('organization_vouchers').select('guild_id,redeemed_at,redeemed_organization_id,expires_at,revoked_at').eq('code', voucherCode).maybeSingle();
       if (voucherError) throw voucherError;
       if (!voucher) return reply({ error: 'Voucherul nu există.' }, 400);
+      if (voucher.revoked_at) return reply({ error: 'Voucherul a fost revocat.' }, 409);
       if (voucher.redeemed_at || voucher.redeemed_organization_id) return reply({ error: 'Voucherul a fost deja folosit.' }, 409);
       if (voucher.expires_at && Date.parse(String(voucher.expires_at)) <= Date.now()) return reply({ error: 'Voucherul a expirat.' }, 400);
       const voucherGuild = String(voucher.guild_id || '').trim();
@@ -39,10 +83,42 @@ Deno.serve(async (request) => {
       if (voucherGuild && !voucherGuildId) voucherGuildId = voucherGuild;
     }
 
-    const userResponse = await fetch('https://discord.com/api/v10/users/@me', { headers: { Authorization: `Bearer ${accessToken}` } });
-    if (!userResponse.ok) return reply({ error: 'Sesiunea Discord a expirat.' }, 401);
-    const discordUser = await userResponse.json();
-    const isPlatformAdmin=isPlatformAdminDiscordId(discordUser.id);
+    let discordUser: any;
+    let selectedGuildId = '';
+    if (emailLogin) {
+      const jwt = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim();
+      if (!jwt || jwt === key) return reply({ error: 'Sesiunea email lipsește sau a expirat.' }, 401);
+      const { data: authData, error: authError } = await db.auth.getUser(jwt);
+      if (authError || !authData.user) return reply({ error: 'Sesiunea email nu este validă.' }, 401);
+      if (!authData.user.email_confirmed_at) return reply({ error: 'Confirmă mai întâi adresa de email.' }, 403);
+      const { data: account, error: accountError } = await db
+        .from('user_accounts')
+        .select('username,discord_id,discord_guild_id')
+        .eq('auth_user_id', authData.user.id)
+        .maybeSingle();
+      if (accountError) throw accountError;
+      if (!account || !account.discord_id || !account.discord_guild_id) {
+        return reply({ error: 'Conectează mai întâi Discord și selectează serverul pentru acest cont.', code: 'NEEDS_DISCORD_LINK' }, 409);
+      }
+      selectedGuildId = String(account.discord_guild_id);
+      discordUser = {
+        id: String(account.discord_id),
+        username: String(account.username || 'utilizator'),
+        global_name: String(account.username || 'utilizator'),
+        avatar: null,
+      };
+      accessToken = '';
+    } else {
+      const userResponse = await fetch('https://discord.com/api/v10/users/@me', { headers: { Authorization: `Bearer ${accessToken}`, 'User-Agent': 'PanelManagement/1.0 (+https://panel-management.netlify.app)' } });
+      if (!userResponse.ok) return reply({ error: 'Sesiunea Discord a expirat.' }, 401);
+      discordUser = await userResponse.json();
+    }
+    const guildsPromise = db.from('organization_guilds')
+      .select('guild_id,guild_name,kind,organization_id,organizations!inner(id,name,slug,address,logo_url,banner_url,active)')
+      .eq('enabled', true);
+    const isPlatformAdmin=await isPlatformAdminAccount(db,discordUser.id);
+    const platformBan=await isPlatformUserBanned(db,discordUser.id);
+    if(platformBan&&!isPlatformAdmin)return reply({error:`Contul este blocat în platformă. Motiv: ${String(platformBan.reason||'nespecificat')}`,code:'PLATFORM_BANNED'},403);
 
     if (voucherCode) {
       return reply({
@@ -54,17 +130,33 @@ Deno.serve(async (request) => {
       });
     }
 
-    const { data: guilds, error: guildError } = await db.from('organization_guilds')
-      .select('guild_id,guild_name,kind,organization_id,organizations!inner(id,name,slug,address,logo_url,banner_url,active)')
-      .eq('enabled', true);
+    const { data: guilds, error: guildError } = await guildsPromise;
     if (guildError) throw guildError;
-    const organizationIds=[...new Set((guilds||[]).map((guild:any)=>String(guild.organization_id)))];
-    const {data:accessRows,error:accessError}=organizationIds.length?await db.from('app_settings').select('organization_id,key,value').in('organization_id',organizationIds).in('key',['organization_access','page_permissions','assistant_page_permissions','action_permissions']):{data:[],error:null};
-    if(accessError)throw accessError;const expiredIds=new Set((accessRows||[]).filter((row:any)=>row.key==='organization_access'&&row.value?.expires_at&&Date.parse(String(row.value.expires_at))<=Date.now()).map((row:any)=>String(row.organization_id))),pageSettings=new Map((accessRows||[]).filter((row:any)=>row.key==='page_permissions').map((row:any)=>[String(row.organization_id),row.value||{}])),assistantPageSettings=new Map((accessRows||[]).filter((row:any)=>row.key==='assistant_page_permissions').map((row:any)=>[String(row.organization_id),row.value||{}])),actionSettings=new Map((accessRows||[]).filter((row:any)=>row.key==='action_permissions').map((row:any)=>[String(row.organization_id),row.value||{}]));
-     if(expiredIds.size)await db.from('organizations').update({active:false,updated_at:new Date().toISOString()}).in('id',[...expiredIds]);
-     const inactiveOrganizationIds=new Set((guilds||[]).filter((item:any)=>item.organizations?.active===false&&!expiredIds.has(String(item.organization_id))).map((item:any)=>String(item.organization_id)));
-    const { data: mappings, error: mappingError } = await db.from('organization_role_mappings').select('*').eq('enabled', true);
+    // Folosim ID-ul din relația organizations, nu valoarea istorică din
+    // organization_guilds, pentru a nu propaga ID-uri numerice vechi.
+    const normalizedGuilds=(guilds||[]).map((guild:any)=>({
+      ...guild,
+      organization_id: UUID_RE.test(String(guild.organizations?.id||''))
+        ? String(guild.organizations.id)
+        : String(guild.organization_id||''),
+    })).filter((guild:any)=>UUID_RE.test(String(guild.organization_id||'')));
+    const scopedGuilds = requestedOrganizationId
+      ? normalizedGuilds.filter((guild:any)=>String(guild.organization_id) === requestedOrganizationId)
+      : normalizedGuilds;
+    const organizationIds=[...new Set(scopedGuilds.map((guild:any)=>String(guild.organization_id)))];
+    const [accessResult, mappingResult] = await Promise.all([
+      organizationIds.length
+        ? db.from('app_settings').select('organization_id,key,value').in('organization_id',organizationIds).in('key',['organization_access','organization_package','page_permissions','assistant_page_permissions','action_permissions'])
+        : Promise.resolve({ data: [], error: null }),
+      db.from('organization_role_mappings').select('*').eq('enabled', true)
+    ]);
+    const { data: accessRows, error: accessError } = accessResult;
+    if(accessError)throw accessError;
+    const { data: mappings, error: mappingError } = mappingResult;
     if (mappingError) throw mappingError;
+    const expiredIds=new Set((accessRows||[]).filter((row:any)=>row.key==='organization_access'&&row.value?.expires_at&&Date.parse(String(row.value.expires_at))<=Date.now()).map((row:any)=>String(row.organization_id))),packageSettings=new Map((accessRows||[]).filter((row:any)=>row.key==='organization_package').map((row:any)=>[String(row.organization_id),row.value||{}])),pageSettings=new Map((accessRows||[]).filter((row:any)=>row.key==='page_permissions').map((row:any)=>[String(row.organization_id),row.value||{}])),assistantPageSettings=new Map((accessRows||[]).filter((row:any)=>row.key==='assistant_page_permissions').map((row:any)=>[String(row.organization_id),row.value||{}])),actionSettings=new Map((accessRows||[]).filter((row:any)=>row.key==='action_permissions').map((row:any)=>[String(row.organization_id),row.value||{}]));
+     if(expiredIds.size)await db.from('organizations').update({active:false,updated_at:new Date().toISOString()}).in('id',[...expiredIds]);
+     const inactiveOrganizationIds=new Set(scopedGuilds.filter((item:any)=>item.organizations?.active===false&&!expiredIds.has(String(item.organization_id))).map((item:any)=>String(item.organization_id)));
 
     const matches = new Map<string, {
       organization: any;
@@ -74,28 +166,57 @@ Deno.serve(async (request) => {
       discord_role_ids: string[];
     }>();
     const liveRoles = new Map<string, Map<string, { name: string; position: number }>>();
-    for (const guild of (guilds || []).filter((item:any)=>!inactiveOrganizationIds.has(String(item.organization_id))&&(!voucherCode || String(item.guild_id) === voucherGuildId))) {
-      const memberResponse = await fetch(`https://discord.com/api/v10/guilds/${guild.guild_id}/members/${discordUser.id}`, { headers: { Authorization: `Bot ${botToken}` } });
+    let platformRoleLabel = '';
+    let platformRolePosition = -1;
+    const guildsToProcess = scopedGuilds.filter((item:any)=>!inactiveOrganizationIds.has(String(item.organization_id))&&(!voucherCode || String(item.guild_id) === voucherGuildId)&&(!emailLogin || String(item.guild_id) === selectedGuildId));
+    const guildSnapshots = new Map<string, Promise<{ memberResponse: Response; member: any; roles: Map<string, { name: string; position: number }> }>>();
+    const getGuildSnapshot = (guildId: string) => {
+      if (!guildSnapshots.has(guildId)) guildSnapshots.set(guildId, fetchGuildSnapshot(guildId, String(discordUser.id), accessToken, botToken));
+      return guildSnapshots.get(guildId)!;
+    };
+    // Pornim verificările tuturor serverelor simultan, apoi păstrăm ordinea existentă la procesarea rolurilor.
+    await Promise.all(guildsToProcess.map((guild:any) => getGuildSnapshot(String(guild.guild_id))));
+    for (const guild of guildsToProcess) {
+      const snapshot = await getGuildSnapshot(String(guild.guild_id));
+      const memberResponse = snapshot.memberResponse;
       if (memberResponse.status === 404) continue;
       if (!memberResponse.ok) { console.warn('Guild indisponibil', guild.guild_id, memberResponse.status); continue; }
-      const member = await memberResponse.json();
-      if (!liveRoles.has(String(guild.guild_id))) {
-        const rolesResponse = await fetch(`https://discord.com/api/v10/guilds/${guild.guild_id}/roles`, { headers: { Authorization: `Bot ${botToken}` } });
-        const roles = new Map<string, { name: string; position: number }>();
-        if (rolesResponse.ok) for (const role of (await rolesResponse.json()) as any[]) roles.set(String(role.id), { name: String(role.name), position: Number(role.position) || 0 });
-        liveRoles.set(String(guild.guild_id), roles);
-      }
-      const roleIds = new Set<string>(Array.isArray(member.roles) ? member.roles.map(String) : []);
+      const member = snapshot.member;
+      liveRoles.set(String(guild.guild_id), snapshot.roles);
+      const roleIds = new Set<string>(Array.isArray(member.roles) ? member.roles.map(normalizeId) : []);
       const highestDiscordRole = [...roleIds]
         .map((roleId) => liveRoles.get(String(guild.guild_id))?.get(roleId))
         .filter(Boolean)
         .sort((a:any, b:any) => b.position - a.position)[0] as { name: string; position: number } | undefined;
         const matchedMappings = (mappings || [])
           .filter((item: any) =>
-            item.organization_id === guild.organization_id &&
-            item.guild_id === guild.guild_id &&
-            roleIds.has(String(item.discord_role_id))
+            String(item.organization_id).trim() === String(guild.organization_id).trim() &&
+            String(item.guild_id).trim() === String(guild.guild_id).trim() &&
+            roleIds.has(String(item.discord_role_id).trim())
           );
+
+        const mappedFallback = [...matchedMappings].sort((a: any, b: any) => {
+          const roleA = liveRoles.get(String(guild.guild_id))?.get(String(a.discord_role_id))?.position ?? Number(a.priority ?? a.permission_level ?? 0);
+          const roleB = liveRoles.get(String(guild.guild_id))?.get(String(b.discord_role_id))?.position ?? Number(b.priority ?? b.permission_level ?? 0);
+          return Number(roleB) - Number(roleA);
+        })[0];
+        const fallbackRoleLabel = String(
+          highestDiscordRole?.name ||
+          mappedFallback?.discord_role_name ||
+          mappedFallback?.panel_role ||
+          ''
+        ).trim();
+        const fallbackRolePosition = Number(
+          highestDiscordRole?.position ??
+          liveRoles.get(String(guild.guild_id))?.get(String(mappedFallback?.discord_role_id || ''))?.position ??
+          mappedFallback?.priority ??
+          mappedFallback?.permission_level ??
+          0
+        );
+        if (isPlatformAdmin && fallbackRoleLabel && fallbackRolePosition >= platformRolePosition) {
+          platformRoleLabel = fallbackRoleLabel;
+          platformRolePosition = fallbackRolePosition;
+        }
 
         const best = matchedMappings
           .sort((a: any, b: any) => {
@@ -118,11 +239,11 @@ if (!best) {
    * Platform Admin poate intra în organizație chiar dacă
    * nu are un mapping normal configurat.
    */
-  if (isPlatformAdmin && highestDiscordRole) {
+  if (isPlatformAdmin && fallbackRoleLabel) {
     matches.set(String(guild.organization_id), {
       organization: guild.organizations,
 
-      panel_role: highestDiscordRole.name,
+      panel_role: fallbackRoleLabel,
 
       nickname: String(
         member.nick ||
@@ -157,7 +278,7 @@ if (!existing) {
         ?.name ||
       best.discord_role_name ||
       best.panel_role ||
-      'Grad Discord'
+      'Rol Discord'
     ),
 
     nickname: String(
@@ -213,7 +334,7 @@ if (!existing) {
       if (!matches.has(organizationId)) {
         matches.set(organizationId, {
           organization,
-          panel_role: 'Administrator platformă',
+          panel_role: platformRoleLabel || 'Administrator platformă',
           nickname: String(discordUser.global_name || discordUser.username),
           guild_ids: [],
           discord_role_ids: []
@@ -236,7 +357,7 @@ if (!existing) {
           roleIds.length > 0
       );
 
-    const allowed_pages =
+    let allowed_pages =
       Object.entries(rules)
         .filter(([, roleIds]: any) =>
           Array.isArray(roleIds) &&
@@ -249,17 +370,35 @@ if (!existing) {
         )
         .map(([page]) => page);
 
+    // Orice rol Discord identificat trebuie să poată intra în Dashboard și Pontaj.
+    // Restul paginilor rămân controlate de selecțiile configurate în organizație.
+    if (value.discord_role_ids.length) {
+      allowed_pages = [
+        ...new Set(['index.html', 'pontaj.html', ...allowed_pages])
+      ];
+    }
+    const packageValue = packageSettings.get(organization_id) || {};
+    if (!isPlatformAdmin) {
+      allowed_pages = allowed_pages.filter((page) => packageAllowsPage(String(page), packageValue));
+    }
+
     const assistantRules: any = assistantPageSettings.get(organization_id) || {};
     const assistantConfigured = Object.keys(assistantRules).length > 0;
     const assistant_allowed_pages = (assistantConfigured ? Object.entries(assistantRules) : Object.entries(rules))
       .filter(([, roleIds]: any) => Array.isArray(roleIds) && roleIds.some((roleId: string) => value.discord_role_ids.includes(String(roleId))))
       .map(([page]) => page)
-      .filter((page) => !['admin.html','logs.html','diagnostic.html','discord-configurare.html','organizatii.html','vouchere.html','developer.html','administrare-organizatie.html'].includes(page));
+      .filter((page) => !['admin.html','logs.html','diagnostic.html','discord-configurare.html','organizatii.html','vouchere.html','developer.html','administrare-organizatie.html'].includes(page))
+      .filter((page) => isPlatformAdmin || packageAllowsPage(String(page), packageValue));
+    const packageFeatures = resolvePackageFeatures(packageValue);
+    const actionPermissions = { ...(actionSettings.get(organization_id) || {}) };
+    if (!isPlatformAdmin && !packageFeatures.includes('requests_organization')) delete actionPermissions['cereri.organization'];
 
     return {
       organization_id,
       ...value,
-      action_permissions: actionSettings.get(organization_id) || {},
+      action_permissions: actionPermissions,
+      package_code: String(packageValue.code || 'standard'),
+      package_features: resolvePackageFeatures(packageValue),
       allowed_pages,
       assistant_allowed_pages,
       assistant_permissions_configured: assistantConfigured,
@@ -284,14 +423,36 @@ if (!existing) {
       voucher_code: voucherCode,
       voucher_guild_id: voucherGuildId || null,
     }, 409);
-    const requestedId = String(body.organization_id || '').trim();
-    const active = available.find((item) => item.organization_id === requestedId) || available[0];
+    const requestedId = requestedOrganizationId;
+    let active: any;
+    if (emailLogin) {
+      const emailGuildOrganizations = available.filter((item) => item.guild_ids.includes(selectedGuildId));
+      if (requestedId) {
+        active = emailGuildOrganizations.find((item) => item.organization_id === requestedId);
+        if (!active) return reply({ error: 'Organizatia selectata nu corespunde serverului Discord ales.', code: 'ORGANIZATION_MISMATCH' }, 403);
+      } else if (emailGuildOrganizations.length === 1) {
+        active = emailGuildOrganizations[0];
+      } else {
+        return reply({ error: 'Serverul Discord este asociat cu mai multe organizatii. Selecteaza organizatia din nou.', code: 'ORGANIZATION_SELECTION_REQUIRED' }, 409);
+      }
+    } else {
+      active = available.find((item) => item.organization_id === requestedId) || available[0];
+    }
+    const { data: linkedAccount, error: linkedAccountError } = await db
+      .from('user_accounts')
+      .select('username,auth_user_id,avatar_url')
+      .eq('discord_id', String(discordUser.id))
+      .maybeSingle();
+    if (linkedAccountError) throw linkedAccountError;
+    const accountUsername = String(linkedAccount?.username || '').trim();
+    const accountAvatar = String(linkedAccount?.avatar_url || '').trim();
     const userData = {
-      discord_id: String(discordUser.id), username: String(discordUser.username), display_name: active.nickname,
-      email: discordUser.email ?? null, avatar: avatarUrl(discordUser.id, discordUser.avatar), avatar_url: avatarUrl(discordUser.id, discordUser.avatar),
+      discord_id: String(discordUser.id), username: accountUsername || String(discordUser.username), display_name: accountUsername || active.nickname,
+      avatar: accountAvatar || avatarUrl(discordUser.id, discordUser.avatar), avatar_url: accountAvatar || avatarUrl(discordUser.id, discordUser.avatar),
       role: active.panel_role, default_role: active.panel_role,
     };
-    const { data: savedUser, error: userError } = await db.from('users').upsert(userData, { onConflict: 'discord_id' }).select('*').single();
+    // Emailul nu este solicitat prin OAuth și nu este sincronizat în panel.
+    const { data: savedUser, error: userError } = await db.from('users').upsert(userData, { onConflict: 'discord_id' }).select('id,discord_id,username,display_name,avatar,avatar_url,role,default_role,tutorial_read,service,maintenance_mode,discord_logs_active,threshold_value,max_shift_hours,created_at,updated_at').single();
     if (userError) throw userError;
     await Promise.all(
       available.map((item) =>
@@ -357,6 +518,10 @@ const { error: sessionError } =
 
       is_platform_admin:
         isPlatformAdmin,
+
+      // RLS folosește rolurile Discord reale pentru paginile configurate.
+      discord_role_ids:
+        [...new Set((active.discord_role_ids || []).map(String))],
 
       expires_at:
         expiresAt,

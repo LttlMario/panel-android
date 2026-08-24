@@ -6,7 +6,7 @@
   <title>Începe configurarea organizației · Panel</title>
   <link rel="stylesheet" href="css/tailwind.css">
   <link rel="stylesheet" href="css/global-footer.css">
-  <script src="js/supabase-config.js"></script>
+  <script src="js/supabase-config.js?v=20260820-session-date-fix"></script>
   <link rel="icon" href="img/favicon.ico">
   <style>
     html, body { min-height: 100%; }
@@ -92,7 +92,7 @@
 
   <script>
     (() => {
-      const token = localStorage.getItem('discord_access_token') || '';
+      const token = window.getPanelDiscordAccessToken?.() || '';
       const user = JSON.parse(localStorage.getItem('discord_user') || 'null');
       const config = window.PANEL_SUPABASE_CONFIG;
       const identity = document.getElementById('identity');

@@ -1,8 +1,9 @@
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient } from 'jsr:@supabase/supabase-js@2.112.3';
 import { requirePanelSession } from '../_shared/panel-session.ts';
+import { resolvePackageFeatures } from '../_shared/package-features.ts';
 
 const cors = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://lttlmario.github.io',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization,apikey,content-type,x-panel-session',
   'Content-Type': 'application/json'
@@ -17,6 +18,7 @@ const reply = (data: unknown, status = 200) =>
 const levels: Record<string, number> = {
   organization: 1,
   pontaj: 1,
+  weekly_reports: 1,
 
   requests_organization: 1,
   requests_departments: 1,
@@ -25,12 +27,27 @@ const levels: Record<string, number> = {
   requests: 1,
 
   contracts: 1,
+  contract_identity_weekly: 1,
   marketplace: 1,
   illegal_marketplace: 1,
   live_status: 1
 };
 
 const channels = new Set(Object.keys(levels));
+const MESSAGE_REFS_KEY = 'discord_message_refs';
+
+const executeWebhookUrl = (webhook: string) => {
+  const url = new URL(webhook);
+  url.searchParams.set('wait', 'true');
+  return url.toString();
+};
+
+const editWebhookMessageUrl = (webhook: string, messageId: string) => {
+  const url = new URL(webhook);
+  url.pathname = `${url.pathname.replace(/\/$/, '')}/messages/${encodeURIComponent(messageId)}`;
+  url.searchParams.delete('wait');
+  return url.toString();
+};
 
 
 Deno.serve(async (request) => {
@@ -65,6 +82,7 @@ if (request.method === 'OPTIONS') {
     let payload: any = null;
 
     let requestedOrganizationId = '';
+    let requestedMessageKey = '';
 
     let forwardBody: BodyInit;
     let forwardHeaders: Record<string,string> = {};
@@ -121,6 +139,7 @@ if (request.method === 'OPTIONS') {
         String(
           body.organization_id || ''
         );
+      requestedMessageKey = String(body.message_key || '').trim().slice(0, 120);
 
 
       payload =
@@ -220,7 +239,7 @@ if (request.method === 'OPTIONS') {
 
     if (!serviceKey) {
       throw new Error(
-        'Cheia service role lipseÈ™te.'
+        'Cheia service role lipsește.'
       );
     }
 
@@ -231,7 +250,7 @@ if (request.method === 'OPTIONS') {
 
     if (!supabaseUrl) {
       throw new Error(
-        'SUPABASE_URL lipseÈ™te.'
+        'SUPABASE_URL lipsește.'
       );
     }
 
@@ -258,11 +277,24 @@ if (request.method === 'OPTIONS') {
         levels[finalChannel]
       );
 
+    const requestIp = String(request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown')
+      .split(',')[0].trim().slice(0, 120);
+    const { data: notificationAllowed, error: notificationRateError } = await db.rpc('consume_panel_rate_limit', {
+      p_key: `discord-notification:${session.organization_id}:${session.discord_id}:${requestIp}`,
+      p_limit: 120,
+      p_window_seconds: 900,
+    });
+    if (notificationRateError) {
+      console.error('Discord notification rate-limit unavailable:', notificationRateError.message);
+      return reply({ error: 'Protecția anti-abuz este temporar indisponibilă. Încearcă din nou în câteva minute.' }, 503);
+    }
+    if (notificationAllowed === false) return reply({ error: 'Ai atins limita temporară de notificări Discord. Încearcă din nou mai târziu.' }, 429);
+
 
     if (!session?.organization_id) {
 
       throw new Error(
-        'OrganizaÈ›ia activă nu a fost identificată.'
+        'Organizația activă nu a fost identificată.'
       );
 
     }
@@ -282,16 +314,37 @@ if (request.method === 'OPTIONS') {
     ) {
 
       throw new Error(
-        'OrganizaÈ›ia solicitată nu corespunde organizaÈ›iei active.'
+        'Organizația solicitată nu corespunde organizației active.'
       );
 
+    }
+
+    const { data: packageSetting, error: packageError } = await db
+      .from('app_settings')
+      .select('value')
+      .eq('organization_id', sessionOrganizationId)
+      .eq('key', 'organization_package')
+      .maybeSingle();
+    if (packageError) throw packageError;
+    const packageFeatures = resolvePackageFeatures(packageSetting?.value || {});
+    const requiredFeature = finalChannel === 'organization'
+      ? 'announcements_organization'
+      : finalChannel === 'requests_organization'
+        ? 'requests_organization'
+        : finalChannel === 'requests_departments'
+          ? 'requests_departments'
+          : finalChannel === 'illegal_marketplace'
+            ? 'illegal_marketplace'
+            : null;
+    if (requiredFeature && !packageFeatures.includes(requiredFeature)) {
+      return reply({ error: 'Acest canal Discord nu este inclus în pachetul organizației.' }, 403);
     }
 
 
 
     /*
      * ============================================================
-     * CONFIG ORGANIZAÈšIE
+     * CONFIG ORGANIZAȚIE
      * ============================================================
      */
 
@@ -323,7 +376,7 @@ if (request.method === 'OPTIONS') {
       if (!organizationConfig) {
 
       throw new Error(
-        'ConfiguraÈ›ia organizaÈ›iei active nu a fost găsită.'
+        'Configurația organizației active nu a fost găsită.'
       );
 
       }
@@ -349,7 +402,7 @@ let route = null;
  * ============================================================
  *
  * requests:
- *  - primary = cereri organizaÈ›ie
+ *  - primary = cereri organizație
  *  - secondary = cereri departamente
  *
  * Canalele noi:
@@ -375,7 +428,7 @@ if (finalChannel === 'requests_organization') {
   if (!webhooks.length) {
 
     throw new Error(
-      'Webhook-ul requests.primary nu este configurat pentru cereri organizaÈ›ie.'
+      'Webhook-ul requests.primary nu este configurat pentru cereri organizație.'
     );
 
   }
@@ -594,7 +647,7 @@ if (finalChannel === 'illegal_marketplace') {
   if (!webhooks.length) {
 
       throw new Error(
-        `Webhook-ul ${finalChannel} nu este configurat pentru organizaÈ›ia activă.`
+        `Webhook-ul ${finalChannel} nu este configurat pentru organizația activă.`
       );
 
   }
@@ -610,6 +663,29 @@ if (finalChannel === 'illegal_marketplace') {
 
 
     const deliveredMessages: any[] = [];
+    const editExistingPontajMessage = finalChannel === 'pontaj';
+    const pontajMessageKey = requestedMessageKey || 'organization';
+    let storedPontajMessageRefs: Record<string, any> = {};
+    let storedMessageRefs: Record<string, string> = {};
+    if (editExistingPontajMessage) {
+      const { data: messageRefsSetting, error: messageRefsError } = await db
+        .from('app_settings')
+        .select('value')
+        .eq('organization_id', sessionOrganizationId)
+        .eq('key', MESSAGE_REFS_KEY)
+        .maybeSingle();
+      if (messageRefsError) throw messageRefsError;
+      const savedPontajRefs = messageRefsSetting?.value?.pontaj;
+      if (savedPontajRefs && typeof savedPontajRefs === 'object') {
+        storedPontajMessageRefs = savedPontajRefs;
+        const savedForMessage = savedPontajRefs[pontajMessageKey];
+        const isMessageMap = savedForMessage && typeof savedForMessage === 'object' && !Array.isArray(savedForMessage);
+        const isLegacyMap = pontajMessageKey === 'organization' && Object.values(savedPontajRefs).every((value) => typeof value === 'string');
+        if (isMessageMap) storedMessageRefs = savedForMessage;
+        else if (isLegacyMap) storedMessageRefs = savedPontajRefs;
+      }
+    }
+    const updatedMessageRefs = { ...storedMessageRefs };
     for (const webhook of webhooks) {
 
 
@@ -644,16 +720,26 @@ if (finalChannel === 'illegal_marketplace') {
 
 
 
-      const discordUrl = `${webhook}${webhook.includes('?') ? '&' : '?'}wait=true`;
-      const sent =
-        await fetch(
-          discordUrl,
-          {
-            method:'POST',
-            headers:forwardHeaders,
-            body:forwardBody
-          }
-        );
+      let messageId = editExistingPontajMessage ? String(storedMessageRefs[webhook] || '') : '';
+      let sent: Response | null = null;
+      if (messageId) {
+        sent = await fetch(editWebhookMessageUrl(webhook, messageId), {
+          method: 'PATCH',
+          headers: forwardHeaders,
+          body: forwardBody
+        });
+        if (!sent.ok && [400, 404].includes(sent.status)) {
+          messageId = '';
+          sent = null;
+        }
+      }
+      if (!sent) {
+        sent = await fetch(executeWebhookUrl(webhook), {
+          method: 'POST',
+          headers: forwardHeaders,
+          body: forwardBody
+        });
+      }
 
 
 
@@ -664,11 +750,34 @@ if (finalChannel === 'illegal_marketplace') {
         );
 
       }
-      try {
-        const message = await sent.json();
-        if (message?.id) deliveredMessages.push({ webhook, id: String(message.id) });
-      } catch (_) {}
+      if (editExistingPontajMessage) {
+        if (!messageId) {
+          try {
+            const message = await sent.json();
+            messageId = String(message?.id || '');
+          } catch (_) {}
+        }
+        if (messageId) {
+          updatedMessageRefs[webhook] = messageId;
+          deliveredMessages.push({ webhook, id: messageId, action: storedMessageRefs[webhook] ? 'edited' : 'created' });
+        }
+      } else {
+        try {
+          const message = await sent.json();
+          if (message?.id) deliveredMessages.push({ webhook, id: String(message.id), action: 'created' });
+        } catch (_) {}
+      }
 
+    }
+
+    if (editExistingPontajMessage) {
+      const { error: saveMessageRefsError } = await db.from('app_settings').upsert({
+        organization_id: sessionOrganizationId,
+        key: MESSAGE_REFS_KEY,
+        value: { pontaj: { ...storedPontajMessageRefs, [pontajMessageKey]: updatedMessageRefs } },
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'organization_id,key' });
+      if (saveMessageRefsError) throw saveMessageRefsError;
     }
 
 

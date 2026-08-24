@@ -6,12 +6,12 @@
     <title>Status Live - Panel</title>    <!-- Tailwind CSS CDN -->
     <link rel="stylesheet" href="css/tailwind.css">
     <!-- Supabase JS Client -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/supabase-config.js"></script>
-    <script src="js/permissions.js?v=4.5.0"></script>
-    <script src="js/panel-layout.js?v=4.9.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3" integrity="sha384-l8ah+VgaWtk1mvOe9VC+OirC6qHFF4yH7l7mKRidV9MSti3E9F463bMp6ZVN4kuC" crossorigin="anonymous"></script>
+    <script src="js/supabase-config.js?v=20260820-session-date-fix"></script>
+    <script src="js/permissions.js?v=4.6.0"></script>
+    <script src="js/panel-layout.js?v=4.23.0"></script>
     <link rel="stylesheet" href="css/global-footer.css">
-    <script src="js/project-version.js"></script>
+    <script src="js/project-version.js?v=3.11.5"></script>
     <link rel="icon" href="img/favicon.ico">
     <link rel="apple-touch-icon" href="img/logo-180.png">
 </head>
@@ -101,6 +101,7 @@
         let activeShiftsData = [];
         let activeOrganization = null;
         let activeOrganizationId = null;
+        const statusLiveWebhookKey = () => `status_live_webhook:${activeOrganizationId || 'default'}`;
 
         document.addEventListener('DOMContentLoaded', async () => {
             // Autentificare reutilizată din rapoarte.html
@@ -109,23 +110,11 @@
                 window.location.href = 'login.html';
                 return;
             }
-            const cachedActiveOrganization = localStorage.getItem('panel_active_organization');
-
-            if (!cachedActiveOrganization) {
-                console.error(
-                    'Status Live: organizația activă nu există în localStorage.'
-                );
-
-                alert(
-                    'Organizația activă nu a putut fi identificată. Autentifică-te din nou.'
-                );
-
-                window.location.href = 'login.html';
-                return;
-            }
-
             try {
-                activeOrganization = JSON.parse(cachedActiveOrganization);
+                if (typeof window.ensurePanelSession === 'function') await window.ensurePanelSession();
+                const refreshedActiveOrganization = localStorage.getItem('panel_active_organization');
+                if (!refreshedActiveOrganization) throw new Error('Organizația activă nu există în sesiune.');
+                activeOrganization = JSON.parse(refreshedActiveOrganization);
             } catch (error) {
                 console.error(
                     'Status Live: datele organizației active sunt invalide.',
@@ -140,10 +129,7 @@
                 return;
             }
 
-            activeOrganizationId =
-                activeOrganization?.id ||
-                activeOrganization?.organization_id ||
-                null;
+            activeOrganizationId = window.getActiveOrganizationId?.() || null;
 
             if (!activeOrganizationId) {
                 console.error(
@@ -196,7 +182,7 @@
 
 
                 const savedWebhook =
-                    localStorage.getItem('status_live_webhook');
+                    localStorage.getItem(statusLiveWebhookKey());
 
                 if (savedWebhook) {
 
@@ -251,24 +237,12 @@
 
         // Citirea utilizatorilor (reutilizată exact din rapoarte.html)
         async function fetchUsersData() {
-            try {
-                const { data: directory, error } = await supabaseClient.rpc('get_user_directory');
-                if (error) throw error;
-                (directory || []).forEach(user => {
-                    const id = String(user.discord_id || '').trim();
-                    if (id) usersMap[id] = user.display_name || id;
-                });
-                return;
-            } catch (error) {}
-
-            try {
-                const { data: usersData, error } = await supabaseClient.from('users').select('discord_id, display_name, username');
-                if (error) throw error;
-                (usersData || []).forEach(user => {
-                    const id = String(user.discord_id || '').trim();
-                    if (id) usersMap[id] = user.display_name || user.username || id;
-                });
-            } catch (error) {}
+            const result = await window.loadPanelOrganizationDirectory?.(activeOrganizationId);
+            if (result?.error) return;
+            (result?.data || []).forEach(user => {
+                const id = String(user.discord_id || '').trim();
+                if (id) usersMap[id] = user.display_name || user.username || id;
+            });
         }
 
         // Citirea tabelului shifts pentru pontaje active (reutilizată din rapoarte.html)
@@ -356,13 +330,36 @@
             }
 
             localStorage.setItem(
-                'status_live_webhook',
+                statusLiveWebhookKey(),
                 webhook
             );
+            localStorage.removeItem(`status_live_message:${activeOrganizationId || 'default'}`);
 
             alert('Webhook salvat.');
 
         }
+        const statusLiveMessageKey = () => `status_live_message:${activeOrganizationId || 'default'}`;
+        const discordExecuteUrl = (webhook) => { const url = new URL(webhook); url.searchParams.set('wait', 'true'); return url.toString(); };
+        const discordEditMessageUrl = (webhook, messageId) => { const url = new URL(webhook); url.pathname = `${url.pathname.replace(/\/$/, '')}/messages/${encodeURIComponent(messageId)}`; url.searchParams.delete('wait'); return url.toString(); };
+        let statusLiveRequestChain = Promise.resolve();
+        const updateStatusLiveDiscord = (webhook, payload) => {
+            const request = statusLiveRequestChain.then(async () => {
+                let saved = null;
+                try { saved = JSON.parse(localStorage.getItem(statusLiveMessageKey()) || 'null'); } catch (_) {}
+                let messageId = saved?.webhook === webhook ? String(saved.message_id || '') : '';
+                let response = null;
+                if (messageId) {
+                    response = await fetch(discordEditMessageUrl(webhook, messageId), { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!response.ok && [400, 404].includes(response.status)) { messageId = ''; response = null; }
+                }
+                if (!response) response = await fetch(discordExecuteUrl(webhook), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) throw new Error(`Discord a raspuns cu ${response.status}`);
+                if (!messageId) { const message = await response.json().catch(() => null); messageId = String(message?.id || ''); }
+                if (messageId) localStorage.setItem(statusLiveMessageKey(), JSON.stringify({ webhook, message_id: messageId }));
+            });
+            statusLiveRequestChain = request.catch(() => {});
+            return request;
+        };
         async function manualSyncStatusLive() {
             await fetchAndRenderActiveShifts(true);
             alert('Statusul Live a fost trimis/actualizat pe Discord cu succes!');
@@ -416,7 +413,7 @@
         try {
 
         const webhook =
-            localStorage.getItem('status_live_webhook');
+            localStorage.getItem(statusLiveWebhookKey());
 
         if (!webhook) {
 
@@ -426,25 +423,7 @@
 
         }
 
-        const response = await fetch(webhook, {
-
-            method: 'POST',
-
-            headers: {
-                'Content-Type': 'application/json'
-            },
-
-            body: JSON.stringify(payload)
-
-        });
-
-        if (!response.ok) {
-
-            throw new Error(
-                `Discord a raspuns cu ${response.status}`
-            );
-
-        }
+        await updateStatusLiveDiscord(webhook, payload);
 
         } catch (error) {
 

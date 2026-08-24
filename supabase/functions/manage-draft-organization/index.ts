@@ -1,24 +1,34 @@
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient } from 'jsr:@supabase/supabase-js@2.112.3';
+import { getPlatformSecret } from '../_shared/platform-secrets.ts';
 
-const headers = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'authorization,apikey,content-type,x-panel-session', 'Access-Control-Max-Age': '86400', 'Content-Type': 'application/json' };
+const headers = { 'Access-Control-Allow-Origin': 'https://lttlmario.github.io', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'authorization,apikey,content-type,x-panel-session', 'Access-Control-Max-Age': '86400', 'Content-Type': 'application/json' };
 const reply = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers });
 const validGuild = (value: string) => /^\d{15,22}$/.test(value);
-const webhookChannels = new Set(['organization', 'departments', 'pontaj', 'requests', 'requests_organization', 'requests_departments', 'contracts', 'marketplace', 'illegal_marketplace', 'fines_organization', 'fines_departments', 'status_live']);
+const webhookChannels = new Set(['organization', 'departments', 'pontaj', 'requests', 'requests_organization', 'requests_departments', 'contracts', 'contract_identity_weekly', 'marketplace', 'illegal_marketplace', 'fines_organization', 'fines_departments', 'warnings_organization', 'warnings_departments', 'sanctions_organization', 'sanctions_departments', 'status_live', 'organization_expiration']);
+const fullOnlyWebhookChannels = new Set(['organization', 'requests_organization', 'illegal_marketplace', 'fines_organization', 'warnings_organization', 'sanctions_organization']);
+const allowedPages = new Set(['index.html', 'anunturi.html', 'pontaj.html', 'cereri.html', 'calculator.html', 'bucatarie.html', 'contracte.html', 'calculatorilegal.html', 'craftmecanics.html', 'locatiiilegale.html', 'marketplace.html', 'marketplace-ilegal.html', 'minigames.html', 'rapoarte.html', 'status-live.html', 'asistent.html']);
+const fullOnlyPages = new Set(['calculatorilegal.html', 'locatiiilegale.html', 'marketplace-ilegal.html', 'minigames.html']);
 const validWebhook = (value: unknown) => {
   try {
     const url = new URL(String(value || ''));
     return url.protocol === 'https:' && ['discord.com', 'discordapp.com'].includes(url.hostname) && url.pathname.startsWith('/api/webhooks/');
   } catch { return false; }
 };
-const sanitizeWebhookRoutes = (raw: unknown) => {
+const sanitizeWebhookRoutes = (raw: unknown, fullPackage: boolean) => {
   if (!raw || typeof raw !== 'object') return {};
   return Object.fromEntries(Object.entries(raw as Record<string, any>).filter(([channel, route]) => {
-    if (!webhookChannels.has(channel) || !route || typeof route !== 'object') return false;
+    if (!webhookChannels.has(channel) || (!fullPackage && fullOnlyWebhookChannels.has(channel)) || !route || typeof route !== 'object') return false;
     return Boolean(route.primary?.enabled && validWebhook(route.primary.url)) || Boolean(route.secondary?.enabled && validWebhook(route.secondary.url));
   }).map(([channel, route]) => [channel, {
     primary: route.primary?.enabled && validWebhook(route.primary.url) ? { enabled: true, url: String(route.primary.url).trim() } : null,
     secondary: route.secondary?.enabled && validWebhook(route.secondary.url) ? { enabled: true, url: String(route.secondary.url).trim() } : null,
   }]));
+};
+const sanitizePagePermissions = (raw: unknown, fullPackage: boolean) => {
+  if (!raw || typeof raw !== 'object') return {};
+  return Object.fromEntries(Object.entries(raw as Record<string, any>)
+    .filter(([page]) => allowedPages.has(page) && (fullPackage || !fullOnlyPages.has(page)))
+    .map(([page, ids]) => [page, [...new Set((Array.isArray(ids) ? ids : []).map(String).filter((id) => /^\d{15,22}$/.test(id)))]]));
 };
 const allowedContractPlaceholders = new Set(['{{COMPANY}}', '{{ADDRESS}}', '{{MANAGER}}', '{{EMPLOYEE_NAME}}', '{{CNP}}', '{{PHONE}}', '{{POSITION}}', '{{SALARY}}', '{{PROGRAM}}', '{{START_DATE}}', '{{CONTRACT_NUMBER}}']);
 
@@ -39,16 +49,17 @@ Deno.serve(async (req) => {
     const discordId = String(user.id || '');
     const { data: org } = await db.from('organizations').select('id,lifecycle_status').eq('id', id).maybeSingle();
     if (!org || org.lifecycle_status !== 'draft') return reply({ error: 'Organizația nu este în starea Draft.' }, 400);
-    const { data: voucher } = await db.from('organization_vouchers').select('redeemed_by_discord_id,redeemed_organization_id,guild_id').eq('redeemed_organization_id', id).maybeSingle();
+    const { data: voucher } = await db.from('organization_vouchers').select('redeemed_by_discord_id,redeemed_organization_id,guild_id,package_code').eq('redeemed_organization_id', id).maybeSingle();
     if (!voucher || String(voucher.redeemed_by_discord_id) !== discordId) return reply({ error: 'Nu ești creatorul acestei organizații Draft.' }, 403);
-
+    const fullPackage = String(voucher.package_code || 'standard').toLowerCase() === 'full';
     if (action === 'attach_guild' || action === 'attach_secondary_guild') {
       const guildId = String(body.guild_id || '').trim();
       if (!validGuild(guildId)) return reply({ error: 'Guild ID invalid.' }, 400);
       const kind = action === 'attach_secondary_guild' ? 'secondary' : 'primary';
+      if (kind === 'secondary' && !fullPackage) return reply({ error: 'Pachetul Standard permite un singur server Discord.' }, 403);
       if (kind === 'primary' && voucher.guild_id && String(voucher.guild_id) !== guildId) return reply({ error: 'Guild ID-ul nu corespunde voucherului.' }, 400);
       if (kind === 'secondary' && voucher.guild_id && String(voucher.guild_id) === guildId) return reply({ error: 'Serverul secundar trebuie să fie diferit de cel principal.' }, 400);
-      const botToken = String(Deno.env.get('DISCORD_BOT_TOKEN') || '').trim();
+      const botToken = await getPlatformSecret(db, 'discord_bot_token');
       if (!botToken) throw new Error('Botul aplicației nu este configurat în Supabase.');
       const botHeaders = { Authorization: `Bot ${botToken}` };
       const [guildResponse, memberResponse] = await Promise.all([
@@ -72,22 +83,22 @@ Deno.serve(async (req) => {
     }
     if (body.webhook_routes) {
       const { data: currentSettings } = await db.from('organization_settings').select('discord_client_id,panel_public_url').eq('organization_id', id).maybeSingle();
-      const { error } = await db.from('organization_settings').upsert({ organization_id: id, discord_client_id: String(body.discord_client_id || currentSettings?.discord_client_id || ''), panel_public_url: String(body.panel_public_url || currentSettings?.panel_public_url || ''), webhook_routes: sanitizeWebhookRoutes(body.webhook_routes), updated_at: new Date().toISOString() }, { onConflict: 'organization_id' });
+      const { error } = await db.from('organization_settings').upsert({ organization_id: id, discord_client_id: String(body.discord_client_id || currentSettings?.discord_client_id || ''), panel_public_url: String(body.panel_public_url || currentSettings?.panel_public_url || ''), webhook_routes: sanitizeWebhookRoutes(body.webhook_routes, fullPackage), updated_at: new Date().toISOString() }, { onConflict: 'organization_id' });
       if (error) throw error;
     }
     if (body.page_permissions) {
-      const { error } = await db.from('app_settings').upsert({ organization_id: id, key: 'page_permissions', value: body.page_permissions, updated_at: new Date().toISOString() }, { onConflict: 'organization_id,key' });
+      const { error } = await db.from('app_settings').upsert({ organization_id: id, key: 'page_permissions', value: sanitizePagePermissions(body.page_permissions, fullPackage), updated_at: new Date().toISOString() }, { onConflict: 'organization_id,key' });
       if (error) throw error;
     }
     if (body.assistant_page_permissions && typeof body.assistant_page_permissions === 'object') {
-      const allowedPages = new Set(['index.html', 'anunturi.html', 'pontaj.html', 'cereri.html', 'bucatarie.html', 'contracte.html', 'calculatorilegal.html', 'craftmecanics.html', 'locatiiilegale.html', 'marketplace.html', 'marketplace-ilegal.html', 'rapoarte.html', 'asistent.html']);
-      const value = Object.fromEntries(Object.entries(body.assistant_page_permissions).filter(([page]) => allowedPages.has(page)).map(([page, ids]: any) => [page, [...new Set((Array.isArray(ids) ? ids : []).map(String).filter((id) => /^\d{15,22}$/.test(id)))] ]));
+      const value = sanitizePagePermissions(body.assistant_page_permissions, fullPackage);
       const { error } = await db.from('app_settings').upsert({ organization_id: id, key: 'assistant_page_permissions', value, updated_at: new Date().toISOString() }, { onConflict: 'organization_id,key' });
       if (error) throw error;
     }
     if (body.action_permissions && typeof body.action_permissions === 'object') {
       const allowedActions = new Set(['anunturi.publish', 'cereri.organization', 'cereri.departments']);
       const value = Object.fromEntries(Object.entries(body.action_permissions).filter(([action]) => allowedActions.has(action)).map(([action, ids]: any) => [action, [...new Set((Array.isArray(ids) ? ids : []).map(String).filter((id) => /^\d{15,22}$/.test(id)))] ]));
+      if (!fullPackage) value['cereri.organization'] = [];
       const organizationRoles = new Set(value['cereri.organization'] || []);
       if (Array.isArray(value['cereri.departments'])) value['cereri.departments'] = value['cereri.departments'].filter((id: string) => !organizationRoles.has(id));
       const { error } = await db.from('app_settings').upsert({ organization_id: id, key: 'action_permissions', value, updated_at: new Date().toISOString() }, { onConflict: 'organization_id,key' });
@@ -95,8 +106,17 @@ Deno.serve(async (req) => {
     }
     if (body.communication_permissions && typeof body.communication_permissions === 'object') {
       const clean = (audience: string, kind: string) => [...new Set((Array.isArray(body.communication_permissions[audience]?.[kind]) ? body.communication_permissions[audience][kind] : []).map(String).filter((id) => /^\d{15,22}$/.test(id)))];
-      const value = { organization: { read: clean('organization', 'read'), write: clean('organization', 'write') }, departments: { read: clean('departments', 'read'), write: clean('departments', 'write') } };
+      const value = { organization: fullPackage ? { read: clean('organization', 'read'), write: clean('organization', 'write') } : { read: [], write: [] }, departments: { read: clean('departments', 'read'), write: clean('departments', 'write') } };
       const { error } = await db.from('app_settings').upsert({ organization_id: id, key: 'communication_permissions', value, updated_at: new Date().toISOString() }, { onConflict: 'organization_id,key' });
+      if (error) throw error;
+    }
+    if (body.discipline_permissions && typeof body.discipline_permissions === 'object') {
+      const clean = (audience: string, kind: string) => [...new Set((Array.isArray(body.discipline_permissions[audience]?.[kind]) ? body.discipline_permissions[audience][kind] : []).map(String).filter((id) => /^\d{15,22}$/.test(id)))];
+      const value = {
+        organization: fullPackage ? { read: clean('organization', 'read'), write: clean('organization', 'write'), sanction: clean('organization', 'sanction') } : { read: [], write: [], sanction: [] },
+        departments: { read: clean('departments', 'read'), write: clean('departments', 'write'), sanction: clean('departments', 'sanction') }
+      };
+      const { error } = await db.from('app_settings').upsert({ organization_id: id, key: 'discipline_permissions', value, updated_at: new Date().toISOString() }, { onConflict: 'organization_id,key' });
       if (error) throw error;
     }
     if (body.contract_template) {
@@ -105,7 +125,7 @@ Deno.serve(async (req) => {
       if (title.length < 2) return reply({ error: 'Numele contractului este obligatoriu.' }, 400);
       if (template.length < 20) return reply({ error: 'Textul contractului este prea scurt.' }, 400);
       const unknown = [...template.matchAll(/{{[A-Z0-9_]+}}/g)].map((match) => match[0]).filter((value) => !allowedContractPlaceholders.has(value));
-      if (unknown.length) return reply({ error: `C�mpuri necunoscute în contract: ${[...new Set(unknown)].join(', ')}` }, 400);
+      if (unknown.length) return reply({ error: `Câmpuri necunoscute în contract: ${[...new Set(unknown)].join(', ')}` }, 400);
       const defaults = body.contract_template.defaults && typeof body.contract_template.defaults === 'object' ? body.contract_template.defaults : {};
       const { error } = await db.from('app_settings').upsert({ organization_id: id, key: 'contract_template', value: {
         title, template, defaults: { salary: String(defaults.salary || '').trim() || null },

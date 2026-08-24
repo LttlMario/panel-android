@@ -1,7 +1,9 @@
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient } from 'jsr:@supabase/supabase-js@2.112.3';
+import { getPlatformSecret } from '../_shared/platform-secrets.ts';
 
-const headers = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'authorization,apikey,content-type,x-panel-session', 'Access-Control-Max-Age': '86400', 'Content-Type': 'application/json' };
+const headers = { 'Access-Control-Allow-Origin': 'https://lttlmario.github.io', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'authorization,apikey,content-type,x-panel-session', 'Access-Control-Max-Age': '86400', 'Content-Type': 'application/json' };
 const reply = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers });
+const discordBotHeaders = (bot: string) => ({ Authorization: `Bot ${bot}`, 'User-Agent': 'PanelManagement/1.0 (+https://panel-management.netlify.app)' });
 
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers });
@@ -18,13 +20,14 @@ Deno.serve(async (request) => {
     const meResponse = await fetch('https://discord.com/api/v10/users/@me', { headers: { Authorization: `Bearer ${token}` } });
     if (!meResponse.ok) return reply({ error: 'Sesiunea Discord a expirat.' }, 401);
     const user = await meResponse.json();
-    const { data: voucher } = await db.from('organization_vouchers').select('redeemed_by_discord_id,redeemed_organization_id,guild_id').eq('code', code).maybeSingle();
+    const { data: voucher } = await db.from('organization_vouchers').select('redeemed_by_discord_id,redeemed_organization_id,guild_id,package_code').eq('code', code).maybeSingle();
     if (!voucher || String(voucher.redeemed_by_discord_id) !== String(user.id)) return reply({ error: 'Voucherul nu aparține contului autentificat.' }, 403);
+    if (kind === 'secondary' && String(voucher.package_code || 'standard').toLowerCase() !== 'full') return reply({ error: 'Pachetul Standard permite un singur server Discord.' }, 403);
     if (kind === 'primary' && voucher.guild_id && String(voucher.guild_id) !== guildId) return reply({ error: 'Guild ID-ul nu corespunde voucherului.' }, 403);
 
-    const bot = String(Deno.env.get('DISCORD_BOT_TOKEN') || '').trim();
+    const bot = await getPlatformSecret(db, 'discord_bot_token');
     if (!bot) return reply({ error: 'Botul Discord nu este configurat în Supabase.' }, 500);
-    const botHeaders = { Authorization: `Bot ${bot}` };
+    const botHeaders = discordBotHeaders(bot);
     const [guildResponse, rolesResponse] = await Promise.all([
       fetch(`https://discord.com/api/v10/guilds/${guildId}`, { headers: botHeaders }),
       fetch(`https://discord.com/api/v10/guilds/${guildId}/roles`, { headers: botHeaders })

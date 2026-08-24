@@ -6,11 +6,11 @@
     androidUrl: "descarca-android.html",
     changelogUrl: "changelog.html",
     thankYouUrl: "thank-you.html",
-    iosUrl: "https://lttlmario.github.io/panel-ios/instalare-ios.html"
+    iosUrl: "instalare-ios.html"
   });
 
   function getReleaseVersion() {
-    return window.PANEL_RELEASE?.version || "3.5.0";
+    return window.PANEL_RELEASE?.version || "3.10.0";
   }
 
   function removeLegacySupportElements() {
@@ -192,7 +192,7 @@
     setDialog(
       `<p>Panelul este dezvoltat și întreținut în timpul liber. Donațiile sunt complet opționale, iar orice contribuție ajută la continuarea dezvoltării.</p>
        <p class="psd-note">Plata se deschide pe pagina oficială Revolut într-un tab nou.</p>`,
-      `<button class="psd-button psd-secondary" type="button" data-action="cancel">Mai t�rziu</button>
+      `<button class="psd-button psd-secondary" type="button" data-action="cancel">Mai târziu</button>
        <button class="psd-button psd-primary" type="button" data-action="open-revolut">💳 Continuă către Revolut</button>`
     );
   }
@@ -249,7 +249,7 @@
     if (location.pathname.endsWith('administrare-organizatie.html') && !localStorage.getItem('panel_session_token')) { location.href='login.html'; return; }
     if (location.pathname.endsWith('creare-organizatie-voucher.html')) {
       const draftFetch=window.fetch;window.fetch=async(...args)=>{const response=await draftFetch(...args);if(String(args[0]).includes('create-voucher-organization')){try{const copy=response.clone(),json=await copy.json();if(json.organization?.id){window.draftOrganizationId=json.organization.id;window.setDraftOrganizationId?.(json.organization.id);}}catch(_){}}return response;};
-      const draftScript=document.createElement('script');draftScript.src='js/draft-config-ui.js?v=4.0.0';document.head.appendChild(draftScript);
+      const draftScript=document.createElement('script');draftScript.src='js/draft-config-ui.js?v=20260818-voucher-flow';document.head.appendChild(draftScript);
       if (!document.querySelector('[data-voucher-extra-fields]')) { const form=document.querySelector('#create'), address=document.querySelector('#address'); const box=document.createElement('div'); box.dataset.voucherExtraFields='true'; box.className='space-y-4'; box.innerHTML='<label class="block text-sm">Logo organizație (link, opțional)<input id="draft-logo" type="url" class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 p-3" placeholder="https://..."></label>'; if(form) form.insertBefore(box,address?.parentElement?.nextElementSibling||form.lastElementChild); const originalFetch=window.fetch; window.fetch=(url,options)=>{try{if(String(url).includes('create-voucher-organization')&&options?.body){const body=JSON.parse(options.body);body.logo_url=document.getElementById('draft-logo')?.value.trim()||null;options.body=JSON.stringify(body);}}catch(_){}return originalFetch(url,options)}; }
       if (!document.getElementById('panel-header-host')) {
         const headerHost = document.createElement('div'); headerHost.id = 'panel-header-host'; document.body.prepend(headerHost);

@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Black Market / Ilegal - Panel</title>
+    <title>Black Market - Panel</title>
     <!-- Tailwind CSS CDN -->
     <link rel="stylesheet" href="css/tailwind.css">
     <!-- Supabase JS Client -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/supabase-config.js"></script>
-    <script src="js/permissions.js"></script>
-    <script src="js/panel-layout.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3" integrity="sha384-l8ah+VgaWtk1mvOe9VC+OirC6qHFF4yH7l7mKRidV9MSti3E9F463bMp6ZVN4kuC" crossorigin="anonymous"></script>
+    <script src="js/supabase-config.js?v=20260820-session-date-fix"></script>
+    <script src="js/permissions.js?v=4.6.0"></script>
+    <script src="js/panel-layout.js?v=4.23.0"></script>
     <link rel="stylesheet" href="css/global-footer.css">
-    <script src="js/project-version.js"></script>
+    <script src="js/project-version.js?v=3.11.5"></script>
     <link rel="icon" href="img/favicon.ico">
     <link rel="apple-touch-icon" href="img/logo-180.png">
 </head>
@@ -23,11 +23,9 @@
 
         <!-- Sidebar / Meniu Lateral preluat direct din layout-ul standard al proiectului -->
 
-            <div class="p-8 space-y-6 max-w-7xl mx-auto w-full">
-        
-
         <!-- Conținut Principal Black Market -->
         <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+            <div class="p-8 space-y-6 max-w-7xl mx-auto w-full">
             <section class="panel-action-bar"><div><button onclick="incarcaAnunturi()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 transition cursor-pointer flex items-center space-x-1.5"><span>🔄</span><span>Reîmprospătare</span></button></div></section>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
@@ -186,9 +184,8 @@
         currentUser = {
             discord_id: '',
             username: '',
-            display_name: 'Mecanic',
-            role: 'Ilegal',
-            panel_level: 0,
+            display_name: '',
+            role: '',
             organization_id: '',
             organization_name: '',
             illegal_organization_name: ''
@@ -196,8 +193,32 @@
 
         let editingMarketplaceId = null;
         let marketplaceItems = [];
+        let marketplaceDeleteAccess = false;
         const MARKETPLACE_PANEL_URL = 'https://lttlmario.github.io/panel-pro/marketplace-ilegal.html';
         let marketplaceFocusHandled = false;
+
+        async function incarcaAccesStergereMarketplace() {
+            try {
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/manage-community-posts`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        apikey: SUPABASE_KEY,
+                        authorization: `Bearer ${SUPABASE_KEY}`,
+                        'x-panel-session': localStorage.getItem('panel_session_token') || ''
+                    },
+                    body: JSON.stringify({
+                        action: 'marketplace_access',
+                        access_token: window.getPanelDiscordAccessToken?.()
+                    })
+                });
+                if (!response.ok) return;
+                const result = await response.json();
+                marketplaceDeleteAccess = result.can_delete === true;
+            } catch (_) {
+                marketplaceDeleteAccess = false;
+            }
+        }
 
         function normalizeBlackMarketName(value) {
             return String(value || '')
@@ -375,6 +396,7 @@
             }
 
             try {
+                if (typeof window.ensurePanelSession === 'function') await window.ensurePanelSession();
                 const localData = JSON.parse(cachedUser);
                 if (!localData || !localData.discord_id) {
                     window.location.href = 'login.html';
@@ -383,27 +405,19 @@
 
                 let { data: dbUser, error: dbError } = await supabaseClient
                     .from('users')
-                    .select('discord_id, username, display_name, email, avatar, role, default_role')
+                    .select('discord_id,username,display_name,avatar,role,default_role')
                     .eq('discord_id', localData.discord_id)
                     .maybeSingle();
 
-                let activeUser = dbUser || localData;
+                let activeUser = dbUser ? { ...localData, ...dbUser } : localData;
 
                 currentUser.discord_id = activeUser.discord_id;
                 currentUser.username = activeUser.username || '';
-                currentUser.display_name = activeUser.display_name || activeUser.username || 'Mecanic';
-                currentUser.role = activeUser.role || activeUser.default_role || 'Ilegal';
-                currentUser.panel_level = Number(
-                    activeUser.permission_level ||
-                    activeUser.panel_level ||
-                    localData.permission_level ||
-                    localData.panel_level ||
-                    0
-                );
+                currentUser.display_name = activeUser.display_name || activeUser.username || 'Utilizator Discord';
+                currentUser.role = activeUser.role || activeUser.default_role || '';
 
-                currentUser.organization_id =
-                    localData.organization_id ||
-                    '';
+                currentUser.organization_id = window.getActiveOrganizationId?.() || '';
+                if (!currentUser.organization_id) throw new Error('Organizația activă nu are un UUID valid.');
                 window.PANEL_ACTIVE_ORGANIZATION_ID = currentUser.organization_id;
                 if (currentUser.organization_id) {
                     const { data: organizationData, error: organizationError } =
@@ -422,19 +436,10 @@
                     }
                 }
 
-                const userAvatar = activeUser.avatar || 'img/logo-192.png';
-
-                document.getElementById('user-display-name').textContent = currentUser.display_name;
-                document.getElementById('user-role').textContent = currentUser.role;
-                document.getElementById('user-avatar').src = userAvatar;
-
                 const numeDeCompletat = currentUser.display_name || currentUser.username || '';
                 document.getElementById('nume').value = normalizeBlackMarketName(numeDeCompletat);
 
-                const roleLower = currentUser.role.toLowerCase();
-                const isPrivileged = roleLower.includes('sef') || roleLower.includes('șef') || roleLower.includes('manager') || roleLower.includes('admin') || roleLower.includes('owner');
-
-                if (isPrivileged) {
+                if (typeof isPlatformAdmin === 'function' && isPlatformAdmin()) {
                     const navLogs = document.getElementById('nav-logs');
                     if (navLogs) navLogs.classList.remove('hidden');
                 }
@@ -460,6 +465,7 @@
             }
             toggleTipActiune();
             toggleCategorie();
+            await incarcaAccesStergereMarketplace();
             incarcaAnunturi();
             aboneazaLaMarketplaceRealtime();
         });
@@ -542,14 +548,14 @@
                 let subBadge = item.subcategorie ? ` / ${item.subcategorie}` : '';
                 let textCurat = item.produse || '';
                 const numeAfisat = normalizeBlackMarketName(item.nume);
-                const poateAdministra =
-                    Number(currentUser.panel_level || 0) >= 99 ||
-                    (typeof isPlatformAdmin === 'function' && isPlatformAdmin());
+                const poateAdministra = typeof isPlatformAdmin === 'function' && isPlatformAdmin();
                 const poateEdita =
                     poateAdministra ||
                     String(item.created_by_discord_id || '') === String(currentUser.discord_id || '');
                 const poateSterge =
-                    poateEdita;
+                    poateAdministra ||
+                    marketplaceDeleteAccess ||
+                    String(item.created_by_discord_id || '') === String(currentUser.discord_id || '');
 
                 let imaginiHtml = '';
                 let listaImaginiFinala = [];
@@ -639,7 +645,7 @@
 
         async function stergeAnuntMarketplace(id) {
             if (!confirm('Ștergi definitiv acest anunț?')) return;
-            const token = localStorage.getItem('discord_access_token');
+            const token = window.getPanelDiscordAccessToken?.();
             const response = await fetch(`${SUPABASE_URL}/functions/v1/manage-community-posts`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}` },
@@ -654,9 +660,7 @@
             const item = marketplaceItems.find(entry => String(entry.id) === String(id));
             if (!item) return;
 
-            const poateAdministra =
-                Number(currentUser.panel_level || 0) >= 99 ||
-                (typeof isPlatformAdmin === 'function' && isPlatformAdmin());
+            const poateAdministra = typeof isPlatformAdmin === 'function' && isPlatformAdmin();
             const poateEdita =
                 poateAdministra ||
                 String(item.created_by_discord_id || '') === String(currentUser.discord_id || '');
@@ -803,7 +807,7 @@
                     }
                     pretValoare += '$';
                 } else {
-                    const contineLitere = /[a-zA-Za��??AA�??]/i.test(pretValoare);
+                    const contineLitere = /[a-zA-ZăâîșțĂÂÎȘȚ]/i.test(pretValoare);
                     if (!contineLitere && !pretValoare.includes('$')) {
                         pretValoare += '$';
                     }
@@ -830,11 +834,12 @@
                 imagini_json: imaginiJsonValoare,
                 imagine_url: imagineUrlDirectValoare !== '' ? imagineUrlDirectValoare : null,
                 created_by_discord_id: currentUser.discord_id,
-                organization_id: currentUser.organization_id
+                // Anunțurile blackmarket sunt globale; accesul la pagină este controlat de rolurile organizației.
+                organization_id: null
             };
 
             if (editingMarketplaceId) {
-                const token = localStorage.getItem('discord_access_token');
+                const token = window.getPanelDiscordAccessToken?.();
                 const response = await fetch(`${SUPABASE_URL}/functions/v1/manage-community-posts`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}` },
@@ -870,7 +875,7 @@
                 const discordResponse = await trimitePeDiscord({ ...nouAnunt, id: savedAnunt.id });
                 if (discordResponse?.ok) {
                     const discordResult = await discordResponse.json();
-                    await supabaseClient.from('marketplace_ilegal').update({ discord_message_ids: discordResult.messages || [] }).eq('id', savedAnunt.id);
+                    await supabaseClient.from('marketplace_ilegal').update({ discord_message_ids: discordResult.messages || [] }).eq('id', savedAnunt.id).is('organization_id', null);
                 }
 
                 alert('Anunț publicat cu succes!');

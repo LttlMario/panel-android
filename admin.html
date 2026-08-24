@@ -2,18 +2,20 @@
 <html lang="ro" class="dark">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' https: data: blob:; connect-src 'self' https://vkvsabbbawyiurnaiugo.supabase.co wss://vkvsabbbawyiurnaiugo.supabase.co https://discord.com; font-src 'self' https: data:; form-action 'self';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panou Admin - Workforce Management</title>
+    <title>Panou Admin - Panel</title>
     <!-- Tailwind CSS CDN -->
     <link rel="stylesheet" href="css/tailwind.css">
     <!-- Supabase JS Client -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/supabase-config.js"></script>
-    <script src="js/permissions.js"></script>
-    <script src="js/panel-layout.js"></script>
-    <script src="js/panel-operations.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3" integrity="sha384-l8ah+VgaWtk1mvOe9VC+OirC6qHFF4yH7l7mKRidV9MSti3E9F463bMp6ZVN4kuC" crossorigin="anonymous"></script>
+    <script src="js/supabase-config.js?v=20260820-session-date-fix"></script>
+    <script src="js/permissions.js?v=4.6.0"></script>
+    <script src="js/panel-layout.js?v=4.23.0"></script>
+    <script src="js/panel-operations.js?v=20260820-profile-menu"></script>
+    <script src="js/platform-admin-controls.js?v=20260820-platform-admin"></script>
     <link rel="stylesheet" href="css/global-footer.css">
-    <script src="js/project-version.js"></script>
+    <script src="js/project-version.js?v=3.11.5"></script>
     <link rel="icon" href="img/favicon.ico">
     <link rel="apple-touch-icon" href="img/logo-180.png">
 </head>
@@ -35,7 +37,7 @@
                     <div>
                         <p class="text-[10px] font-black uppercase tracking-widest text-indigo-300">Relocare rapidă</p>
                         <h3 class="text-lg font-black text-slate-100 mt-1">Configurare server Discord</h3>
-                        <p class="text-xs text-slate-400 mt-1 max-w-2xl">Schimbă aplicația, serverul, cele șapte roluri, webhook-urile și adresa panelului dintr-un singur formular securizat.</p>
+                        <p class="text-xs text-slate-400 mt-1 max-w-2xl">Schimbă aplicația, serverul, rolurile Discord, webhook-urile și adresa panelului dintr-un singur formular securizat.</p>
                     </div>
                     <a href="discord-configurare.html" class="shrink-0 inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-400/40 bg-indigo-500/15 px-5 py-3 text-xs font-black text-indigo-200 hover:bg-indigo-500/25 transition">⚙️ Deschide configuratorul</a>
                 </div>
@@ -44,8 +46,8 @@
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-lg overflow-hidden flex flex-col">
                     <div class="p-6 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
-                            <h3 class="text-base font-bold text-slate-100">Gestionare Roluri Echipă & Administrare Utilizatori</h3>
-                            <p class="text-xs text-slate-400 mt-0.5">Setează rolul dorit sau aplică sancțiuni de tip Kick pentru utilizatori.</p>
+                            <h3 class="text-base font-bold text-slate-100">Membri și administrare utilizatori</h3>
+                            <p class="text-xs text-slate-400 mt-0.5">Rolurile se sincronizează automat din Discord și se configurează la nivel de organizație.</p>
                         </div>
                         <div class="flex items-center space-x-3">
                             <span id="users-count-badge" class="text-xs bg-slate-800 text-slate-300 px-3 py-1.5 rounded-xl border border-slate-700">0 utilizatori</span>
@@ -65,7 +67,7 @@
                             <input type="text" id="search-id" oninput="renderUsersTable()" placeholder="🆔 Caută după Discord ID..." class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2 focus:outline-none focus:border-emerald-500">
                         </div>
                         <div>
-                            <input id="filter-role" type="number" min="1" max="99" step="1" placeholder="Grad numeric" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-1.5 w-32">
+                            <input id="filter-role" type="text" placeholder="Filtrează după rol Discord" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-1.5 w-48">
                         </div>
                         <div>
                             <button onclick="resetFilters()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold py-2 px-3 rounded-xl border border-slate-700 transition cursor-pointer">
@@ -82,13 +84,12 @@
                                     <th class="p-4 bg-slate-950">Discord ID</th>
                                     <th class="p-4 bg-slate-950">Nume / Utilizator</th>
                                     <th class="p-4 bg-slate-950">Rol Curent</th>
-                                    <th class="p-4 bg-slate-950">Setează Rol Nou</th>
-                                    <th class="p-4 bg-slate-950 text-right">Acțiuni Administrative (Kick / Salvare)</th>
+                                    <th class="p-4 bg-slate-950 text-right">Acțiuni Administrative</th>
                                 </tr>
                             </thead>
                             <tbody id="admin-users-table-body" class="divide-y divide-slate-800 text-slate-300">
                                 <tr>
-                                    <td colspan="5" class="p-6 text-center text-slate-500">Se încarcă utilizatorii...</td>
+                                    <td colspan="4" class="p-6 text-center text-slate-500">Se încarcă utilizatorii...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -118,68 +119,34 @@
                     </div>
                 </div>
 
-                <!-- Secțiunea 2: Setări Dedicate pentru Fiecare Pagină în Parte -->
-                <div id="legacy-page-settings" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-6">
-                    <div>
-                        <h3 class="text-base font-bold text-slate-100">Configurare Pagini Web</h3>
-                        <p class="text-xs text-slate-400 mt-0.5">Activează sau dezactivează funcționalități specifice pentru fiecare pagină a aplicației.</p>
+                <!-- Secțiunea 2: Configurarea reală a paginilor pe organizație și rol Discord -->
+                <div id="page-settings-center" class="bg-slate-900 border border-indigo-800/60 rounded-2xl p-6 shadow-lg space-y-5">
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-100">Configurare Pagini Web</h3>
+                            <p class="text-xs text-slate-400 mt-1 max-w-3xl">Accesul nu se mai configurează prin bifări locale. Fiecare pagină este controlată server-side, pentru organizația aleasă și rolurile Discord selectate.</p>
+                        </div>
+                        <a href="organizatii.html" class="shrink-0 inline-flex items-center justify-center rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 text-xs font-bold transition">Deschide configurarea organizațiilor</a>
                     </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <!-- Dashboard -->
-                        <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-3">
-                            <div class="flex items-center justify-between">
-                                <span class="font-semibold text-slate-200 text-sm">📊 Dashboard</span>
-                                <input type="checkbox" id="page-setting-dashboard" class="w-4 h-4 accent-emerald-600 rounded cursor-pointer" checked>
-                            </div>
-                            <p class="text-[11px] text-slate-400">Afișează widget-urile de statistici generale și starea rapidă a turelor.</p>
-                        </div>
-
-                        <!-- Pontaj -->
-                        <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-3">
-                            <div class="flex items-center justify-between">
-                                <span class="font-semibold text-slate-200 text-sm">⏱️ Pontaj</span>
-                                <input type="checkbox" id="page-setting-pontaj" class="w-4 h-4 accent-emerald-600 rounded cursor-pointer" checked>
-                            </div>
-                            <p class="text-[11px] text-slate-400">Permite utilizatorilor să pornească/oprească cronometrul de tură.</p>
-                        </div>
-
-                        <!-- Cereri / Absențe -->
-                        <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-3">
-                            <div class="flex items-center justify-between">
-                                <span class="font-semibold text-slate-200 text-sm">📋 Cereri / Absențe</span>
-                                <input type="checkbox" id="page-setting-cereri" class="w-4 h-4 accent-emerald-600 rounded cursor-pointer" checked>
-                            </div>
-                            <p class="text-[11px] text-slate-400">Permite trimiterea și gestionarea cererilor de învoire/demisie.</p>
-                        </div>
-
-                        <!-- Rapoarte -->
-                        <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-3">
-                            <div class="flex items-center justify-between">
-                                <span class="font-semibold text-slate-200 text-sm">📈 Rapoarte & CSV</span>
-                                <input type="checkbox" id="page-setting-rapoarte" class="w-4 h-4 accent-emerald-600 rounded cursor-pointer" checked>
-                            </div>
-                            <p class="text-[11px] text-slate-400">Activează centralizatorul de ture, filtrele rapide și exportul CSV.</p>
-                        </div>
-
-                        <!-- Contracte -->
-                        <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-3">
-                            <div class="flex items-center justify-between">
-                                <span class="font-semibold text-slate-200 text-sm">📜 Contracte</span>
-                                <input type="checkbox" id="page-setting-contracte" class="w-4 h-4 accent-emerald-600 rounded cursor-pointer" checked>
-                            </div>
-                            <p class="text-[11px] text-slate-400">Activează generatorul de contracte pentru clienți și istoric.</p>
-                        </div>
-
-                        <!-- Marketplace -->
-                        <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-3">
-                            <div class="flex items-center justify-between">
-                                <span class="font-semibold text-slate-200 text-sm">🛒 Marketplace</span>
-                                <input type="checkbox" id="page-setting-marketplace" class="w-4 h-4 accent-emerald-600 rounded cursor-pointer" checked>
-                            </div>
-                            <p class="text-[11px] text-slate-400">Activează secțiunea de comerț și anunțuri publice.</p>
-                        </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 text-xs">
+                        <span class="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-slate-300">Dashboard</span>
+                        <span class="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-slate-300">Anunțuri</span>
+                        <span class="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-slate-300">Pontaj</span>
+                        <span class="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-slate-300">Cereri</span>
+                        <span class="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-slate-300">Bucătărie</span>
+                        <span class="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-slate-300">Contracte</span>
+                        <span class="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-slate-300">Calculator legal</span>
+                        <span class="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-slate-300">Calculator ilegal</span>
+                        <span class="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-slate-300">Craft Mechanics</span>
+                        <span class="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-slate-300">Locații ilegale</span>
+                        <span class="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-slate-300">Marketplace</span>
+                        <span class="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-slate-300">Marketplace ilegal</span>
+                        <span class="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-slate-300">Minigames ilegale</span>
+                        <span class="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-slate-300">Rapoarte</span>
+                        <span class="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-slate-300">Status live</span>
+                        <span class="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-slate-300">Asistent</span>
                     </div>
+                    <p class="text-[11px] text-indigo-200/80">Modificările se salvează în configurația organizației și se aplică la următoarea sincronizare a sesiunii Discord.</p>
                 </div>
 
                 <!-- Secțiunea 3: Setări Foarte Bine Structurate pentru Pontaje -->
@@ -211,13 +178,13 @@
                         <div class="space-y-2">
                             <label class="text-xs font-medium text-slate-300">Închidere automată – Tură de zi</label>
                             <input type="time" id="pontaj-day-end-time" value="19:59" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-emerald-500">
-                            <p class="text-[10px] text-slate-500">Ora Rom�niei la care toate turele de zi sunt închise automat.</p>
+                            <p class="text-[10px] text-slate-500">Ora României la care toate turele de zi sunt închise automat.</p>
                         </div>
 
                         <div class="space-y-2">
                             <label class="text-xs font-medium text-slate-300">Închidere automată – Tură de noapte</label>
                             <input type="time" id="pontaj-night-end-time" value="23:00" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-emerald-500">
-                            <p class="text-[10px] text-slate-500">Ora Rom�niei la care toate turele de noapte sunt închise automat.</p>
+                            <p class="text-[10px] text-slate-500">Ora României la care toate turele de noapte sunt închise automat.</p>
                         </div>
 
                         <label class="flex items-center gap-3 bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-300 cursor-pointer">
@@ -228,7 +195,7 @@
                         <div class="space-y-2">
                             <label class="text-xs font-medium text-slate-300">Mod Funcționare Pontaj</label>
                             <select id="pontaj-mode" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-emerald-500">
-                                <option value="normal">Standard (Permit oric�nd pont nou)</option>
+                                <option value="normal">Standard (Permit oricând pont nou)</option>
                                 <option value="strict">Strict (O singură tură activă simultan pe utilizator)</option>
                             </select>
                             <p class="text-[10px] text-slate-500">Controlează dacă un utilizator poate deschide mai multe ture în paralel.</p>
@@ -247,12 +214,8 @@
 
     <!-- Scriptul Logicii & Setări Pagină -->
     <script>
-        const SUPABASE_URL = window.PANEL_SUPABASE_CONFIG.url;
-        const SUPABASE_KEY = window.PANEL_SUPABASE_CONFIG.publishableKey;
-        const supabaseClient = window.createPanelSupabaseClient();
-
         let allUsersData = [];
-        let adminRoleOptions = [];
+        const escapeAdminHtml = (value) => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
         document.addEventListener('DOMContentLoaded', async () => {
             // Evidențiere link activ în sidebar
             const currentPage = window.location.pathname.split("/").pop() || "index.html";
@@ -277,35 +240,14 @@
                     return;
                 }
 
-                let { data: dbUser } = await supabaseClient
-                    .from('users')
-                    .select('*')
-                    .eq('discord_id', localData.discord_id)
-                    .maybeSingle();
+                const activeUser = localData;
 
-                let activeUser = dbUser || localData;
-
-                const PLATFORM_ADMIN_DISCORD_ID = '247012210021236738';
-
-                if (String(activeUser.discord_id) !== PLATFORM_ADMIN_DISCORD_ID) {
+                if (activeUser.platform_admin !== true && activeUser.is_platform_admin !== true) {
                     window.location.href = 'index.html';
                     return;
                 }
 
-                activeUser.permission_level = 99;
-
-                const displayName = activeUser.display_name || activeUser.username || 'Mecanic';
-                const role = '99';
-                const userAvatar = activeUser.avatar || 'img/logo-192.png';
-
-                document.getElementById('user-display-name').textContent = displayName;
-                document.getElementById('user-role').textContent = role;
-                document.getElementById('user-avatar').src = userAvatar;
-
-                // Afișare tab loguri pentru roluri privilegiate
-                const roleLower = role.toLowerCase();
-                const isPrivileged = roleLower.includes('sef') || roleLower.includes('șef') || roleLower.includes('manager') || roleLower.includes('admin') || roleLower.includes('owner');
-                if (isPrivileged) {
+                if (typeof isPlatformAdmin === 'function' && isPlatformAdmin()) {
                     const navLogs = document.getElementById('nav-logs');
                     if (navLogs) navLogs.classList.remove('hidden');
                 }
@@ -320,8 +262,8 @@
             const logoutBtn = document.getElementById('logout-btn');
             if (logoutBtn) {
                 logoutBtn.addEventListener('click', () => {
-                    localStorage.clear();
-                    window.location.href = 'login.html';
+                    if (typeof logout === 'function') logout();
+                    else { localStorage.clear(); window.location.href = 'login.html'; }
                 });
             }
 
@@ -339,67 +281,13 @@
                     throw new Error('Modulul de administrare nu s-a încărcat. Reîncarcă pagina.');
                 }
                 const result = await window.panelAdminInvoke('members');
-                let data = result.members, error = null;
+                allUsersData = Array.isArray(result.members) ? result.members : [];
 
-                if (error || !data || data.length === 0) {
-                    allUsersData = [
-                        {
-                            discord_id: '247012210021236738',
-                            display_name: 'Little Mario',
-                            role: '99',
-                            permission_level: 99
-                        }
-                    ];
-                } else {
-                    allUsersData = data;
-                }
-
-                await loadAdminRoleOptions();
                 renderUsersTable();
             } catch (err) {
                 console.error('Erore preluare utilizatori:', err);
-                try {
-                    const organizationId = window.getActiveOrganizationId?.();
-                    const [usersResult, membersResult] = await Promise.all([
-                        supabaseClient.from('users').select('discord_id,username,display_name,avatar,avatar_url,role,default_role').order('display_name'),
-                        organizationId
-                            ? supabaseClient.from('organization_members').select('discord_id,panel_role,permission_level,active').eq('organization_id', organizationId).eq('active', true)
-                            : Promise.resolve({ data: [], error: null })
-                    ]);
-                    if (usersResult.error) throw usersResult.error;
-                    if (membersResult.error) throw membersResult.error;
-                    const memberships = new Map((membersResult.data || []).map(member => [String(member.discord_id), member]));
-                    allUsersData = (usersResult.data || []).map(user => ({
-                        ...user,
-                        ...(memberships.get(String(user.discord_id)) || {}),
-                        role: memberships.get(String(user.discord_id))?.panel_role || user.role || user.default_role || 'Mecanic',
-                        permission_level: memberships.get(String(user.discord_id))?.permission_level ?? 1
-                    }));
-                    await loadAdminRoleOptions();
-                    renderUsersTable();
-                } catch (fallbackError) {
-                    console.error('Erore fallback utilizatori:', fallbackError);
-                    if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-rose-300">Utilizatorii nu au putut fi încărcați: ${String(fallbackError?.message || err?.message || 'eroare necunoscută').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]))}</td></tr>`;
-                }
+                if (tbody) tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-rose-300">Utilizatorii nu au putut fi încărcați: ${String(err?.message || 'eroare necunoscută').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]))}</td></tr>`;
             }
-        }
-
-        async function loadAdminRoleOptions() {
-            const organizationId = window.getActiveOrganizationId?.();
-            if (!organizationId) return;
-            const { data, error } = await supabaseClient
-                .from('organization_role_mappings')
-                .select('permission_level,panel_role,discord_role_name,discord_role_id')
-                .eq('organization_id', organizationId)
-                .eq('enabled', true)
-                .order('permission_level', { ascending: true });
-            if (error) throw error;
-            adminRoleOptions = (data || [])
-                .filter(row => Number(row.permission_level) >= 1 && Number(row.permission_level) <= 98)
-                .map(row => ({
-                    level: Number(row.permission_level),
-                    name: String(row.panel_role || row.discord_role_name || `Grad ${row.permission_level}`).trim()
-                }));
         }
 
         function resetFilters() {
@@ -419,11 +307,11 @@
             const filteredUsers = allUsersData.filter(u => {
                 const name = (u.display_name || u.username || '').toLowerCase();
                 const id = String(u.discord_id || u.id || '').toLowerCase();
-                const role = String(Number(u.permission_level ?? u.role ?? 0));
+                const role = String(u.panel_role || u.role || u.default_role || '').toLowerCase();
 
                 const matchesName = name.includes(searchName);
                 const matchesId = id.includes(searchId);
-                const matchesRole = filterRole === '' || role === filterRole;
+                const matchesRole = filterRole === '' || role.includes(filterRole);
 
                 return matchesName && matchesId && matchesRole;
             });
@@ -431,41 +319,32 @@
             document.getElementById('users-count-badge').textContent = `${filteredUsers.length} / ${allUsersData.length} utilizatori`;
 
             if (filteredUsers.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-500">Nu a fost găsit niciun utilizator conform filtrelor aplicate.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-500">Nu a fost găsit niciun utilizator conform filtrelor aplicate.</td></tr>`;
                 return;
             }
 
             let html = '';
             filteredUsers.forEach((u) => {
                 const currentRole = String(u.panel_role || u.role || u.default_role || 'Rol neconfigurat');
-                const uId = u.discord_id || u.id;
-                const selectedLevel = Number(u.permission_level) || 1;
-                const roleOptions = adminRoleOptions.length
-                    ? [...adminRoleOptions, { level: 99, name: 'Administrator global' }]
-                    : [{ level: selectedLevel, name: currentRole }];
-
+                const uId = String(u.discord_id || u.id || '');
+                const userName = String(u.display_name || u.username || 'Utilizator');
                 html += `
                     <tr class="hover:bg-slate-800/40 transition">
-                        <td class="p-4 font-mono text-slate-400">${uId || 'N/A'}</td>
-                        <td class="p-4 font-semibold text-slate-200">${u.display_name || u.username || 'Utilizator'}</td>
+                        <td class="p-4 font-mono text-slate-400">${escapeAdminHtml(uId || 'N/A')}</td>
+                        <td class="p-4 font-semibold text-slate-200">${escapeAdminHtml(userName)}</td>
                         <td class="p-4">
                             <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border bg-slate-800 text-slate-300 border-slate-700">
-                                ${currentRole}
+                                ${escapeAdminHtml(currentRole)}
                             </span>
                         </td>
-                        <td class="p-4">
-                            <select id="role-select-${uId}" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-1.5 min-w-32 focus:outline-none focus:border-emerald-500">
-                                ${roleOptions.map(option => `<option value="${option.level}" data-role-name="${String(option.name).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}" ${option.level === selectedLevel ? 'selected' : ''}>${option.name}</option>`).join('')}
-                            </select>
-                        </td>
                         <td class="p-4 text-right space-x-2">
-                            <button onclick="updateUserRole('${uId}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer shadow">
-                                Salvează Rol
-                            </button>
-                            <button onclick="kickUser('${uId}', '${u.display_name || u.username || 'Utilizator'}')" class="bg-rose-600/20 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-500/30 px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer shadow">
+                            <button type="button" data-admin-action="kick" data-discord-id="${escapeAdminHtml(uId)}" data-user-name="${escapeAdminHtml(userName)}" class="bg-rose-600/20 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-500/30 px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer shadow">
                                 🚪 Kick / Forțează Logout
                             </button>
-                            <button onclick="deleteWebUser('${uId}', '${u.display_name || u.username || 'Utilizator'}')" class="bg-red-700/20 hover:bg-red-700 text-red-300 hover:text-white border border-red-500/30 px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer shadow">
+                            <button type="button" data-admin-action="ban" data-discord-id="${escapeAdminHtml(uId)}" data-user-name="${escapeAdminHtml(userName)}" class="bg-orange-600/20 hover:bg-orange-600 text-orange-300 hover:text-white border border-orange-500/30 px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer shadow">
+                                ⛔ Ban panel
+                            </button>
+                            <button type="button" data-admin-action="delete" data-discord-id="${escapeAdminHtml(uId)}" data-user-name="${escapeAdminHtml(userName)}" class="bg-red-700/20 hover:bg-red-700 text-red-300 hover:text-white border border-red-500/30 px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer shadow">
                                 🗑️ Șterge din web
                             </button>
                         </td>
@@ -474,49 +353,16 @@
             });
 
             tbody.innerHTML = html;
-        }
-
-        async function updateUserRole(discordId) {
-            const PLATFORM_ADMIN_DISCORD_ID = '247012210021236738';
-
-            const selectEl = document.getElementById(`role-select-${discordId}`);
-            if (!selectEl) return;
-
-            let permissionLevel = Number(selectEl.value) || 1;
-
-            if (String(discordId) === PLATFORM_ADMIN_DISCORD_ID) {
-                permissionLevel = 99;
-            } else if (permissionLevel >= 99) {
-                permissionLevel = 98;
-            }
-
-            permissionLevel = Math.max(1, Math.min(99, permissionLevel));
-
-            const newRole = String(selectEl.selectedOptions?.[0]?.dataset.roleName || selectEl.selectedOptions?.[0]?.textContent || `Grad ${permissionLevel}`).trim();
-            selectEl.value = String(permissionLevel);
-
-            const userObj = allUsersData.find(
-                u => String(u.discord_id || u.id) === String(discordId)
-            );
-
-            if (userObj) {
-                userObj.role = newRole;
-                userObj.permission_level = permissionLevel;
-            }
-
-            try {
-                await window.panelAdminInvoke('member_role', {
-                    discord_id: discordId,
-                    role: newRole,
-                    permission_level: permissionLevel
+            tbody.querySelectorAll('[data-admin-action]').forEach(button => {
+                button.addEventListener('click', () => {
+                    const action = button.dataset.adminAction;
+                    const discordId = button.dataset.discordId || '';
+                    const userName = button.dataset.userName || 'Utilizator';
+                    if (action === 'kick') kickUser(discordId, userName);
+                    if (action === 'ban') banUser(discordId, userName);
+                    if (action === 'delete') deleteWebUser(discordId, userName);
                 });
-
-                alert(`Rolul utilizatorului a fost actualizat cu succes la: ${newRole}`);
-                renderUsersTable();
-            } catch (err) {
-                console.error('Erore actualizare rol:', err);
-                alert('Erore la actualizarea rolului.');
-            }
+            });
         }
 
         async function kickUser(discordId, userName) {
@@ -544,6 +390,20 @@
             }
         }
 
+        async function banUser(discordId, userName) {
+            const reason = prompt(`Motivul ban-ului pentru "${userName}" (opțional):`, 'Blocat de administrator') || 'Blocat de administrator';
+            if (!confirm(`Blochezi accesul utilizatorului "${userName}" (ID: ${discordId})? Va fi delogat și nu se va mai putea autentifica până la unban.`)) return;
+            try {
+                await window.panelAdminInvoke('member_ban', { discord_id: discordId, reason });
+                allUsersData = allUsersData.filter(user => String(user.discord_id || user.id) !== String(discordId));
+                renderUsersTable();
+                alert(`Utilizatorul ${userName} a fost blocat în panel.`);
+            } catch (err) {
+                console.error('Eroare la acțiunea de ban:', err);
+                alert(`Ban-ul nu a putut fi aplicat: ${err?.message || 'eroare necunoscută'}`);
+            }
+        }
+
         async function deleteWebUser(discordId, userName) {
             if (!confirm(`Ștergi definitiv contul web al utilizatorului "${userName}" (ID: ${discordId})? Această acțiune elimină accesul din organizație și nu poate fi anulată.`)) return;
             try {
@@ -566,44 +426,28 @@
                 const users = result.online_members || [];
                 if (badge) badge.textContent = `${users.length} online`;
                 tbody.innerHTML = users.length
-                    ? users.map(user => `<tr><td class="p-4 font-semibold text-slate-200">${user.display_name || user.username || user.discord_id}</td><td class="p-4 text-emerald-300">${user.panel_role || user.role || 'Rol neconfigurat'}</td><td class="p-4 text-slate-400">${user.last_seen_at ? new Date(user.last_seen_at).toLocaleString('ro-RO') : 'Activ acum'}</td></tr>`).join('')
+                    ? users.map(user => `<tr><td class="p-4 font-semibold text-slate-200">${escapeAdminHtml(user.display_name || user.username || user.discord_id)}</td><td class="p-4 text-emerald-300">${escapeAdminHtml(user.panel_role || user.role || 'Rol neconfigurat')}</td><td class="p-4 text-slate-400">${escapeAdminHtml(user.last_seen_at ? new Date(user.last_seen_at).toLocaleString('ro-RO') : 'Activ acum')}</td></tr>`).join('')
                     : '<tr><td colspan="3" class="p-6 text-center text-slate-500">Nu există utilizatori online momentan.</td></tr>';
             } catch (error) {
                 if (badge) badge.textContent = 'Indisponibil';
-                tbody.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-rose-300">Lista online nu a putut fi încărcată: ${String(error?.message || 'eroare necunoscută')}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-rose-300">Lista online nu a putut fi încărcată: ${escapeAdminHtml(error?.message || 'eroare necunoscută')}</td></tr>`;
             }
         }
 
         async function refreshAdminOperations() {
             try {
-                const [shiftsResult, absencesResult] = await Promise.all([
-                    supabaseClient.from('shifts').select('id, status').in('status', ['active', 'paused']),
-                    supabaseClient.from('absences').select('id, end_at').gte('end_at', new Date().toISOString())
-                ]);
-                if (shiftsResult.error) throw shiftsResult.error;
-                const shifts = shiftsResult.data || [];
-                document.getElementById('admin-active-shifts').textContent = shifts.filter(shift => shift.status === 'active').length;
-                document.getElementById('admin-paused-shifts').textContent = shifts.filter(shift => shift.status === 'paused').length;
-                document.getElementById('admin-active-absences').textContent = absencesResult.data?.length ?? 0;
+                const result = await window.panelAdminInvoke('operations');
+                document.getElementById('admin-active-shifts').textContent = result.active_shifts ?? 0;
+                document.getElementById('admin-paused-shifts').textContent = result.paused_shifts ?? 0;
+                document.getElementById('admin-active-absences').textContent = result.active_absences ?? 0;
             } catch (error) { console.error('Eroare încărcare control operațional:', error); }
         }
 
         async function stopAllActiveShifts() {
             if (!confirm('Confirmi oprirea tuturor turelor active și în pauză? Acțiunea nu poate fi anulată.')) return;
             try {
-                const { data: shifts, error } = await supabaseClient.from('shifts').select('*').in('status', ['active', 'paused']);
-                if (error) throw error;
-                const now = new Date();
-                await Promise.all((shifts || []).map(async shift => {
-                    let paused = Number(shift.paused_seconds) || 0;
-                    if (shift.status === 'paused' && shift.paused_at) paused += Math.max(0, Math.floor((now - new Date(shift.paused_at)) / 1000));
-                    const seconds = Math.max(0, Math.floor((now - new Date(shift.started_at)) / 1000) - paused);
-                    const duration = `${Math.floor(seconds / 3600).toString().padStart(2, '0')}:${Math.floor((seconds % 3600) / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
-                    const endTime = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Bucharest', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }).format(now);
-                    return supabaseClient.from('shifts').update({ status: 'completed', ended_at: now.toISOString(), end_time: endTime, duration, duration_ms: seconds * 1000, stop_reason: 'Încheiere de urgență – acțiune administrator' }).eq('id', shift.id).in('status', ['active', 'paused']);
-                }));
-                alert(`${shifts?.length || 0} ture au fost închise.`);
-                await window.panelAudit?.('shifts_emergency_stop', 'shifts', null, { count: shifts?.length || 0 });
+                const result = await window.panelAdminInvoke('force_close_shifts');
+                alert(`${result.closed || 0} ture au fost închise.`);
                 refreshAdminOperations();
             } catch (error) { console.error('Eroare oprire de urgență:', error); alert('Nu s-au putut opri toate turele.'); }
         }
@@ -617,14 +461,6 @@
                 return;
             }
             const settings = {
-                pages: {
-                    dashboard: document.getElementById('page-setting-dashboard').checked,
-                    pontaj: document.getElementById('page-setting-pontaj').checked,
-                    cereri: document.getElementById('page-setting-cereri').checked,
-                    rapoarte: document.getElementById('page-setting-rapoarte').checked,
-                    contracte: document.getElementById('page-setting-contracte').checked,
-                    marketplace: document.getElementById('page-setting-marketplace').checked,
-                },
                 pontajConfig: {
                     maxHours: maxHoursValue,
                     mode: document.getElementById('pontaj-mode').value,
@@ -637,29 +473,17 @@
 
             localStorage.setItem('workforce_admin_settings', JSON.stringify(settings));
             try {
-                const { error } = await supabaseClient.from('app_settings').upsert({ organization_id:window.getActiveOrganizationId(), key:'pontaj_config', value:settings.pontajConfig, updated_at:new Date().toISOString() }, { onConflict:'organization_id,key' });
-                if (error) throw error;
-                await window.panelAudit?.('pontaj_config_update', 'app_settings', 'pontaj_config', settings.pontajConfig);
+                await window.panelAdminInvoke('save_pontaj_config', { value: settings.pontajConfig });
                 alert('Setările globale de pontaj au fost publicate pentru toți utilizatorii.');
             } catch (error) {
-                console.warn('Tabelul app_settings nu este configurat încă:', error);
-                alert('Setările au fost salvate local. Creează tabelul app_settings pentru aplicare globală.');
+                console.error('Setările globale nu au putut fi publicate:', error);
+                alert(`Setările nu au putut fi publicate: ${error?.message || 'eroare necunoscută'}`);
             }
         }
 
         function loadSavedSettings() {
             const saved = JSON.parse(localStorage.getItem('workforce_admin_settings'));
             if (!saved) return;
-
-            if (saved.pages) {
-                document.getElementById('page-setting-dashboard').checked = saved.pages.dashboard ?? true;
-                document.getElementById('page-setting-pontaj').checked = saved.pages.pontaj ?? true;
-                document.getElementById('page-setting-cereri').checked = saved.pages.cereri ?? true;
-                document.getElementById('page-setting-rapoarte').checked = saved.pages.rapoarte ?? true;
-                document.getElementById('page-setting-contracte').checked = saved.pages.contracte ?? true;
-                const mkElem = document.getElementById('page-setting-marketplace');
-                if (mkElem) mkElem.checked = saved.pages.marketplace ?? true;
-            }
 
             if (saved.pontajConfig) {
                 document.getElementById('pontaj-max-hours').value = saved.pontajConfig.maxHours || 12;

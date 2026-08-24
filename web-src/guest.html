@@ -7,12 +7,12 @@
     <!-- Tailwind CSS CDN -->
     <link rel="stylesheet" href="css/tailwind.css">
     <!-- Supabase JS Client -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/supabase-config.js"></script>
-    <script src="js/permissions.js?v=4.5.0"></script>
-    <script src="js/panel-layout.js?v=4.9.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3" integrity="sha384-l8ah+VgaWtk1mvOe9VC+OirC6qHFF4yH7l7mKRidV9MSti3E9F463bMp6ZVN4kuC" crossorigin="anonymous"></script>
+    <script src="js/supabase-config.js?v=20260820-session-date-fix"></script>
+    <script src="js/permissions.js?v=4.6.0"></script>
+    <script src="js/panel-layout.js?v=4.23.0"></script>
     <link rel="stylesheet" href="css/global-footer.css">
-    <script src="js/project-version.js"></script>
+    <script src="js/project-version.js?v=3.11.5"></script>
     <link rel="icon" href="img/favicon.ico">
     <link rel="apple-touch-icon" href="img/logo-180.png">
 </head>
@@ -241,16 +241,13 @@
 
                 let { data: dbUser } = await supabaseClient
                     .from('users')
-                    .select('*')
+                    .select('discord_id,username,display_name,avatar,role,default_role')
                     .eq('discord_id', localData.discord_id)
                     .maybeSingle();
 
                 let activeUser = dbUser ? { ...localData, ...dbUser } : localData;
 
-                const role = activeUser.role || activeUser.default_role || 'Vizitator';
-
-                const roleLower = role.toLowerCase();
-                const isPrivileged = roleLower.includes('sef') || roleLower.includes('șef') || roleLower.includes('manager') || roleLower.includes('admin') || roleLower.includes('owner');
+                const isPrivileged = typeof isPlatformAdmin === 'function' && isPlatformAdmin();
 
                 if (isPrivileged) {
                     const navLogs = document.getElementById('nav-logs');

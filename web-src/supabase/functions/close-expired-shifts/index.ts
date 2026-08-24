@@ -1,8 +1,9 @@
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient } from 'jsr:@supabase/supabase-js@2.112.3';
+import { getPlatformSecret } from '../_shared/platform-secrets.ts';
 
 const corsHeaders = {
   'Content-Type': 'application/json',
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://lttlmario.github.io',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cron-secret',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
@@ -44,12 +45,12 @@ Deno.serve(async (request) => {
     return new Response(null, { status: 204, headers: corsHeaders });
   }
 
-  const cronSecret = Deno.env.get('CRON_SECRET');
-  if (cronSecret && request.headers.get('x-cron-secret') !== cronSecret) {
+  const supabase = createClient(Deno.env.get('SUPABASE_URL')!, getSecretKey());
+  const cronSecret = await getPlatformSecret(supabase, 'cron_secret');
+  if (!cronSecret || request.headers.get('x-cron-secret') !== cronSecret) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
   }
-
-  const supabase = createClient(Deno.env.get('SUPABASE_URL')!, getSecretKey());
+  const fallbackPontajWebhook = await getPlatformSecret(supabase, 'discord_pontaj_webhook_url');
   const now = new Date();
   const { data: accessRows } = await supabase.from('app_settings').select('organization_id,value').eq('key', 'organization_access');
   const expiredOrganizationIds = (accessRows || []).filter((row: any) => row.value?.expires_at && Date.parse(String(row.value.expires_at)) <= now.getTime()).map((row: any) => row.organization_id);
@@ -65,7 +66,10 @@ Deno.serve(async (request) => {
 
   const results = await Promise.all((expired ?? []).map(async (shift) => {
     const { data: panelConfig } = await supabase.from('organization_settings').select('webhook_routes,pontaj_webhook_url').eq('organization_id', shift.organization_id).maybeSingle();
-    const webhookUrl = panelConfig?.webhook_routes?.pontaj?.url || panelConfig?.pontaj_webhook_url || Deno.env.get('DISCORD_PONTAJ_WEBHOOK_URL');
+    const webhookUrl = panelConfig?.webhook_routes?.pontaj?.primary?.url
+      || panelConfig?.webhook_routes?.pontaj?.secondary?.url
+      || panelConfig?.pontaj_webhook_url
+      || fallbackPontajWebhook;
     const alreadyClosed = shift.status === 'auto_completed';
     const finishedAt = alreadyClosed && shift.ended_at ? new Date(String(shift.ended_at)) : now;
     const seconds = alreadyClosed && Number(shift.duration_ms) >= 0

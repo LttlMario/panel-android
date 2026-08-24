@@ -4,12 +4,29 @@
   if (!location.pathname.endsWith('organizatii.html')) return;
 
   const $ = (id) => document.getElementById(id);
+  const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
   const config = window.PANEL_SUPABASE_CONFIG;
   const statusChannel = 'status_live';
   let communicationPermissions = { organization: { read: [], write: [] }, departments: { read: [], write: [] } };
+  let disciplinePermissions = { organization: { read: [], write: [], sanction: [] }, departments: { read: [], write: [], sanction: [] } };
+  let packageCode = 'standard';
+  const fullOnlyWebhookKeys = new Set(['organization', 'requests_organization', 'illegal_marketplace', 'fines_organization', 'warnings_organization', 'sanctions_organization']);
+  const organizationScopeEnabled = () => packageCode === 'full';
 
   function communicationRoles(audience, kind) {
     return Array.isArray(communicationPermissions[audience]?.[kind]) ? communicationPermissions[audience][kind].map(String) : [];
+  }
+
+  function disciplineRoles(audience, kind) {
+    return Array.isArray(disciplinePermissions[audience]?.[kind]) ? disciplinePermissions[audience][kind].map(String) : [];
+  }
+
+  function applyPackageVisibility() {
+    document.querySelectorAll('[id^="wh_primary_url_"], [id^="wh_secondary_url_"]').forEach((input) => {
+      const key = input.id.replace(/^wh_(?:primary|secondary)_url_/, '');
+      const fieldset = input.closest('fieldset');
+      if (fieldset) fieldset.hidden = !organizationScopeEnabled() && fullOnlyWebhookKeys.has(key);
+    });
   }
 
   function addAnnouncementPermissions() {
@@ -26,13 +43,14 @@
     const card = document.createElement('div');
     card.dataset.communicationPermission = 'true';
     card.className = 'rounded-xl border border-amber-700/60 bg-amber-950/10 p-3';
-    card.innerHTML = '<b class="text-sm">Anunțuri și Amenzi</b><p class="mt-1 text-xs text-slate-400">Aceeași selecție controlează citirea și publicarea pentru ambele pagini, separat pentru Organizație și Birouri / Angajați.</p><div class="mt-3 grid gap-3 md:grid-cols-2">' + ['organization','departments'].map(audience => `<div class="rounded-lg border border-slate-700 p-3"><b class="text-xs">${audience === 'organization' ? 'Organizație' : 'Birouri / Angajați'}</b><div class="mt-2 text-[11px] text-slate-400">Cine poate citi</div><div data-communication-audience="${audience}" data-communication-kind="read" class="mt-1 flex flex-wrap gap-2"></div><div class="mt-2 text-[11px] text-slate-400">Cine poate scrie</div><div data-communication-audience="${audience}" data-communication-kind="write" class="mt-1 flex flex-wrap gap-2"></div></div>`).join('') + '</div>';
-    ['organization','departments'].forEach((audience) => ['read', 'write'].forEach((kind) => {
+    const audiences = organizationScopeEnabled() ? ['organization', 'departments'] : ['departments'];
+    card.innerHTML = '<b class="text-sm">Anunțuri și disciplină</b><p class="mt-1 text-xs text-slate-400">Standard: partea firmei și angajaților. Full: adaugă separat partea organizației/mafiei.</p><div class="mt-3 grid gap-3 md:grid-cols-2">' + audiences.map(audience => `<div class="rounded-lg border border-slate-700 p-3"><b class="text-xs">${audience === 'organization' ? 'Organizație / Mafia · Full' : 'Birouri / Angajați · Standard'}</b><div class="mt-2 text-[11px] text-slate-400">Cine poate citi comunicările</div><div data-communication-audience="${audience}" data-communication-kind="read" class="mt-1 flex flex-wrap gap-2"></div><div class="mt-2 text-[11px] text-slate-400">Cine poate scrie comunicări</div><div data-communication-audience="${audience}" data-communication-kind="write" class="mt-1 flex flex-wrap gap-2"></div></div>`).join('') + '</div><div class="mt-4 rounded-lg border border-amber-700/40 bg-amber-950/10 p-3"><b class="text-xs text-amber-200">Disciplină pe pachet</b><p class="mt-1 text-[11px] text-slate-400">Avertismentele și sancțiunile pentru angajați sunt Standard; cele pentru organizație/mafia apar numai la Full.</p><div data-discipline-permissions class="mt-3 grid gap-3 md:grid-cols-2"></div></div>';
+    audiences.forEach((audience) => ['read', 'write'].forEach((kind) => {
       const target = card.querySelector(`[data-communication-audience="${audience}"][data-communication-kind="${kind}"]`);
       roles.forEach((label, id) => {
         const wrapper = document.createElement('label');
         wrapper.className = 'flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-xs';
-        wrapper.innerHTML = `<input type="checkbox" data-communication-audience="${audience}" data-communication-kind="${kind}" data-communication-role="${id}"><span>${label}</span>`;
+        wrapper.innerHTML = `<input type="checkbox" data-communication-audience="${escapeHtml(audience)}" data-communication-kind="${escapeHtml(kind)}" data-communication-role="${escapeHtml(id)}"><span>${escapeHtml(label)}</span>`;
         const checkbox = wrapper.querySelector('input');
         checkbox.checked = communicationRoles(audience, kind).includes(id);
         checkbox.addEventListener('change', () => {
@@ -43,6 +61,34 @@
         target.appendChild(wrapper);
       });
     }));
+    const disciplineHost = card.querySelector('[data-discipline-permissions]');
+    audiences.forEach((audience) => {
+      const label = audience === 'organization' ? 'Organizație / Mafia · Full' : 'Birouri / Angajați · Standard';
+      const block = document.createElement('div');
+      block.className = 'rounded-lg border border-slate-700 p-3';
+      block.innerHTML = `<b class="text-xs">${label}</b>`;
+      [['read', 'Poate vedea'], ['write', 'Poate emite avertismente'], ['sanction', 'Poate aplica sancțiuni']].forEach(([kind, kindLabel]) => {
+        const group = document.createElement('div');
+        group.className = 'mt-2';
+        group.innerHTML = `<div class="text-[11px] text-slate-400">${kindLabel}</div><div class="mt-1 flex flex-wrap gap-2"></div>`;
+        const target = group.querySelector('div:last-child');
+        roles.forEach((labelValue, id) => {
+          const wrapper = document.createElement('label');
+          wrapper.className = 'flex items-center gap-2 rounded-lg bg-slate-900 px-2 py-1 text-[11px]';
+          wrapper.innerHTML = `<input type="checkbox"><span>${escapeHtml(labelValue)}</span>`;
+          const checkbox = wrapper.querySelector('input');
+          checkbox.checked = disciplineRoles(audience, kind).includes(id);
+          checkbox.addEventListener('change', () => {
+            const current = new Set(disciplineRoles(audience, kind));
+            checkbox.checked ? current.add(id) : current.delete(id);
+            disciplinePermissions[audience][kind] = [...current];
+          });
+          target.appendChild(wrapper);
+        });
+        block.appendChild(group);
+      });
+      disciplineHost.appendChild(block);
+    });
     host.appendChild(card);
   }
 
@@ -112,7 +158,7 @@
     roles.forEach((label, roleId) => {
       const wrapper = document.createElement('label');
       wrapper.className = 'flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2';
-      wrapper.innerHTML = `<input type="checkbox" data-status-live-role="${roleId}"><span>${label}</span>`;
+      wrapper.innerHTML = `<input type="checkbox" data-status-live-role="${escapeHtml(roleId)}"><span>${escapeHtml(label)}</span>`;
       const checkbox = wrapper.querySelector('input');
       checkbox.checked = Array.isArray(pagePermissions['status-live.html']) && pagePermissions['status-live.html'].includes(roleId);
       checkbox.addEventListener('change', () => {
@@ -148,9 +194,10 @@
           body.settings.webhook_routes = body.settings.webhook_routes || {};
           body.settings.webhook_routes[statusChannel] = { primary: routeValue('primary'), secondary: routeValue('secondary') };
           body.communication_permissions = communicationPermissions;
+          body.discipline_permissions = disciplinePermissions;
           options.body = JSON.stringify(body);
         }
-      } catch (_) { /* Cererile care nu sunt JSON răm�n nemodificate. */ }
+      } catch (_) { /* Cererile care nu sunt JSON rămân nemodificate. */ }
     }
     return originalFetch(url, options);
   };
@@ -162,12 +209,19 @@
   editOrganization = async (...args) => {
     await originalEditOrganization(...args);
     const organization = (typeof organizations !== 'undefined' ? organizations : []).find((item) => item.id === args[0]);
+    packageCode = organization?.package?.code === 'full' || organization?.platform_settings?.organization_package?.code === 'full' ? 'full' : 'standard';
+    applyPackageVisibility();
     const saved = organization?.platform_settings?.communication_permissions || {};
+    const savedDiscipline = organization?.platform_settings?.discipline_permissions || {};
     const legacyRead = Array.isArray(pagePermissions?.['anunturi.html']) ? pagePermissions['anunturi.html'].map(String) : [];
     const legacyWrite = Array.isArray(actionPermissions?.['anunturi.publish']) ? actionPermissions['anunturi.publish'].map(String) : [];
     communicationPermissions = {
       organization: { read: Array.isArray(saved.organization?.read) ? saved.organization.read.map(String) : legacyRead, write: Array.isArray(saved.organization?.write) ? saved.organization.write.map(String) : legacyWrite },
       departments: { read: Array.isArray(saved.departments?.read) ? saved.departments.read.map(String) : legacyRead, write: Array.isArray(saved.departments?.write) ? saved.departments.write.map(String) : legacyWrite }
+    };
+    disciplinePermissions = {
+      organization: { read: Array.isArray(savedDiscipline.organization?.read) ? savedDiscipline.organization.read.map(String) : [], write: Array.isArray(savedDiscipline.organization?.write) ? savedDiscipline.organization.write.map(String) : [], sanction: Array.isArray(savedDiscipline.organization?.sanction) ? savedDiscipline.organization.sanction.map(String) : [] },
+      departments: { read: Array.isArray(savedDiscipline.departments?.read) ? savedDiscipline.departments.read.map(String) : [], write: Array.isArray(savedDiscipline.departments?.write) ? savedDiscipline.departments.write.map(String) : [], sanction: Array.isArray(savedDiscipline.departments?.sanction) ? savedDiscipline.departments.sanction.map(String) : [] }
     };
     document.querySelector('[data-communication-permission]')?.remove();
     if (typeof renderActionPermissions === 'function') renderActionPermissions();
@@ -177,15 +231,20 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     $('new')?.addEventListener('click', () => {
+      packageCode = $('package-code')?.value === 'full' ? 'full' : 'standard';
+      applyPackageVisibility();
       communicationPermissions = { organization: { read: [], write: [] }, departments: { read: [], write: [] } };
+      disciplinePermissions = { organization: { read: [], write: [], sanction: [] }, departments: { read: [], write: [], sanction: [] } };
       if (typeof renderActionPermissions === 'function') renderActionPermissions();
     });
+    $('package-code')?.addEventListener('change', () => { packageCode = $('package-code').value === 'full' ? 'full' : 'standard'; applyPackageVisibility(); document.querySelector('[data-communication-permission]')?.remove(); addAnnouncementPermissions(); });
     document.addEventListener('click', (event) => {
       document.querySelectorAll('#list details[open]').forEach((details) => {
         if (!details.contains(event.target)) details.open = false;
       });
     });
     injectStatusWebhookFields();
+    applyPackageVisibility();
     addStatusLivePagePermission();
     addAnnouncementPermissions();
     const observer = new MutationObserver(() => { injectStatusWebhookFields(); addStatusLivePagePermission(); addAnnouncementPermissions(); });

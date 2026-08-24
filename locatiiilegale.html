@@ -3,16 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hărți & Locații Ilegale - Panel Management</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' https: data: blob:; connect-src 'self' https://vkvsabbbawyiurnaiugo.supabase.co wss://vkvsabbbawyiurnaiugo.supabase.co https://discord.com; font-src 'self' https: data:; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:;">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <title>Hărți & Locații Ilegale - Panel</title>
     <link rel="stylesheet" href="css/tailwind.css">
     <!-- Leaflet CSS for Pan & Zoom map engine -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <link rel="stylesheet" href="vendor/leaflet/leaflet.css?v=1.9.4-panel">
     <!-- Supabase JS Client -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/supabase-config.js"></script>
-    <script src="js/permissions.js"></script>
-    <script src="js/panel-layout.js"></script>
-    <script src="js/global-header.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3" integrity="sha384-l8ah+VgaWtk1mvOe9VC+OirC6qHFF4yH7l7mKRidV9MSti3E9F463bMp6ZVN4kuC" crossorigin="anonymous"></script>
+    <script src="js/supabase-config.js?v=20260820-session-date-fix"></script>
+    <script src="js/permissions.js?v=4.6.0"></script>
+    <script src="js/panel-layout.js?v=4.23.0"></script>
+    <script src="js/global-header.js?v=4.4.0"></script>
     <style>
         /* ==========================================
            CSS CONFIGURATION & THEME VARIABLES
@@ -427,6 +429,13 @@
             width: 100%;
             height: 100%;
             background: var(--bg-main) !important;
+        }
+
+        /* panel-layout.js aplică global max-width imaginilor; Leaflet are nevoie
+           de dimensiunea exactă a imaginii pentru poziționarea hărții. */
+        #map-container-wrapper .leaflet-image-layer {
+            max-width: none !important;
+            max-height: none !important;
         }
 
         .control-sidebar {
@@ -951,7 +960,7 @@
         }
     </style>
     <link rel="stylesheet" href="css/global-footer.css">
-    <script src="js/project-version.js"></script>
+    <script src="js/project-version.js?v=3.11.5"></script>
     <link rel="icon" href="img/favicon.ico">
     <link rel="apple-touch-icon" href="img/logo-180.png">
 </head>
@@ -1154,13 +1163,13 @@
 
     <div id="toast-container"></div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="vendor/leaflet/leaflet.js?v=1.9.4-panel"></script>
 
     <script>
         // Configurare Supabase - aceeași sesiune ca în dashboard
         const SUPABASE_URL = window.PANEL_SUPABASE_CONFIG.url;
         const SUPABASE_KEY = window.PANEL_SUPABASE_CONFIG.publishableKey;
-        const supabaseClient = window.createPanelSupabaseClient();
+        let supabaseClient = window.createPanelSupabaseClient();
 
         async function fetchUserData() {
             const cachedUser = localStorage.getItem('discord_user');
@@ -1178,7 +1187,7 @@
 
                 const { data: dbUser, error } = await supabaseClient
                     .from('users')
-                    .select('*')
+                    .select('discord_id,username,display_name,avatar,role,default_role')
                     .eq('discord_id', localData.discord_id)
                     .maybeSingle();
 
@@ -1186,18 +1195,8 @@
                     console.error('Eroare la preluarea datelor din users:', error.message);
                 }
 
-                const activeUser = dbUser || localData;
-                const displayName = activeUser.display_name || activeUser.username || 'Mecanic';
-                const role = activeUser.role || activeUser.default_role || 'Mecanic';
-                const userAvatar = activeUser.avatar || 'img/logo-192.png';
-
-                const nameEl = document.getElementById('user-display-name');
-                const roleEl = document.getElementById('user-role');
-                const avatarEl = document.getElementById('user-avatar');
-
-                if (nameEl) nameEl.textContent = displayName;
-                if (roleEl) roleEl.textContent = role;
-                if (avatarEl) avatarEl.src = userAvatar;
+                const activeUser = dbUser ? { ...localData, ...dbUser } : localData;
+                const role = activeUser.role || activeUser.default_role || 'Rol Discord';
 
 
             } catch (err) {
@@ -1422,7 +1421,7 @@
                 id: "vanzare-seminte",
                 map: "ls",
                 category: "suppliers",
-                title: "V�nzare Semințe Coca & Canabis",
+                title: "Vânzare Semințe Coca & Canabis",
                 description: "Punct de achiziție semințe pentru cultură situat în zona de nord / Procopio Beach.",
                 images: ["image_6e5081.jpg"],
                 x: 57.8, y: 16,
@@ -1461,6 +1460,37 @@
 
         let DATA = [];
 
+        function normalizeLocationImages(value) {
+            if (Array.isArray(value)) {
+                return value
+                    .map(item => String(item || '').trim())
+                    .filter(Boolean);
+            }
+
+            if (typeof value === 'string') {
+                const raw = value.trim();
+                if (!raw) return [];
+
+                try {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed)) {
+                        return parsed
+                            .map(item => String(item || '').trim())
+                            .filter(Boolean);
+                    }
+                } catch (_) {
+                    // Compatibilitate cu înregistrările vechi salvate ca text.
+                }
+
+                return raw
+                    .split(/[,\n]/)
+                    .map(item => item.trim().replace(/^['"]|['"]$/g, ''))
+                    .filter(Boolean);
+            }
+
+            return [];
+        }
+
         function mapDatabaseLocation(row) {
             const title = row.title || '';
             const storedCategory = row.category || '';
@@ -1470,7 +1500,7 @@
                     ? 'hospitals'
                     : storedCategory;
 
-            return { id: row.id, map: row.map_key, category, title, description: row.description || '', images: Array.isArray(row.images) ? row.images : [], x: Number(row.x), y: Number(row.y), notes: row.notes || '', requirements: row.requirements || '', rewards: row.rewards || '', lastUpdated: row.last_updated };
+            return { id: row.id, map: row.map_key, category, title, description: row.description || '', images: normalizeLocationImages(row.images), x: Number(row.x), y: Number(row.y), notes: row.notes || '', requirements: row.requirements || '', rewards: row.rewards || '', lastUpdated: row.last_updated };
         }
 
         function mapLocationForDatabase(loc) {
@@ -1490,7 +1520,7 @@
                     loc.lastUpdated ||
                     new Date().toISOString().slice(0, 10),
 
-                // Locațiile ilegale sunt globale pentru întreaga platformă.
+                // Locațiile ilegale sunt globale; accesul la pagină rămâne controlat de rolurile organizației.
                 organization_id: null
             };
         }
@@ -1793,7 +1823,7 @@
                 const div = document.createElement('label');
                 div.className = 'filter-item';
                 div.innerHTML = `
-                    <input type="checkbox" class="filter-checkbox" value="${key}" ${isChecked ? 'checked' : ''}>
+                    <input id="location-filter-${key}" name="location_category" type="checkbox" class="filter-checkbox" value="${key}" ${isChecked ? 'checked' : ''}>
                     <span style="color: ${cat.color}">${cat.icon}</span>
                     <span>${cat.name}</span>
                 `;
@@ -2215,18 +2245,36 @@
             }, 300);
         }
 
+        // CSP-ul proiectului nu permite WebSocket-ul Supabase Realtime.
+        // Reîmprospătăm datele prin REST, fără erori în consolă.
+        let illegalLocationsPollingTimer = null;
+        let illegalLocationsPollingInFlight = false;
+
+        function startIllegalLocationsPolling() {
+            if (illegalLocationsPollingTimer) return;
+
+            illegalLocationsPollingTimer = window.setInterval(async () => {
+                if (illegalLocationsPollingInFlight || document.hidden) return;
+
+                illegalLocationsPollingInFlight = true;
+                try {
+                    await loadLocationsFromDatabase();
+                    renderMarkers();
+                } catch (_) {
+                    // Eșecurile temporare nu întrerup pagina; următoarea verificare va reîncerca.
+                } finally {
+                    illegalLocationsPollingInFlight = false;
+                }
+            }, 30_000);
+        }
+
         function setupSearch() {
             const searchInput = document.getElementById('search-input');
             const resultsBox = document.getElementById('search-results');
 
             // Header-ul global poate să nu conțină căutarea locală.
             // În acest caz nu avem nimic de inițializat.
-            if (!searchInput || !resultsBox) {
-                console.log(
-                    '[Locații Ilegale] Căutarea locală nu există în header-ul global.'
-                );
-                return;
-            }
+            if (!searchInput || !resultsBox) return;
 
             searchInput.addEventListener('input', (e) => {
                 const query = e.target.value
@@ -2332,6 +2380,17 @@
 
             try {
 
+                // Revalidăm sesiunea înainte de interogarea RLS pentru locațiile globale.
+                const sessionToken = localStorage.getItem('panel_session_token');
+                const sessionExpiresAt = Number(localStorage.getItem('panel_session_expires_at') || 0);
+                if (
+                    (!sessionToken || sessionExpiresAt <= Date.now() + 30_000) &&
+                    typeof window.ensurePanelSession === 'function'
+                ) {
+                    await window.ensurePanelSession();
+                    supabaseClient = window.createPanelSupabaseClient();
+                }
+
                 // 1. Încărcăm starea actuală din baza de date.
                 await loadLocationsFromDatabase();
 
@@ -2350,8 +2409,8 @@
             // 2. Construim hărțile și markerele.
             initMaps();
 
-            // 3. Pornim sincronizarea live cu Supabase.
-            subscribeToIllegalLocationsRealtime();
+            // 3. Pornim sincronizarea periodică prin REST.
+            startIllegalLocationsPolling();
 
             // Aplicăm din nou drepturile după construirea interfeței.
             actualizeazaAccesAdministratorLocatii();

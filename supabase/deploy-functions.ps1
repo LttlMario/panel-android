@@ -25,14 +25,36 @@ $functions = @(
     'manage-community-posts',
     'send-discord-notification',
     'close-expired-shifts',
+    'send-weekly-shift-report',
+    'send-weekly-contract-export',
+    'send-organization-expiry-notifications',
     'manage-admin-center',
+    'manage-platform-secrets',
     'manage-organizations',
-    'manage-owned-organization'
+    'manage-owned-organization',
+    'manage-contracts',
+    'redeem-organization-voucher',
+    'status-live-sync',
+    'create-voucher-organization',
+    'get-organization-status',
+    'finalize-organization',
+    'manage-draft-organization',
+    'discover-draft-roles',
+    'save-draft-roles',
+    'touch-panel-session',
+    'mark-tutorial-read',
+    'link-discord-account',
+    'link-email-discord-guild',
+    'list-email-discord-guilds',
+    'manage-email-account',
+    'manage-discord-account',
+    'update-user-account-settings',
+    'username-login'
 )
 
 foreach ($functionName in $functions) {
     Write-Host "Deploy: $functionName"
-    Invoke-SupabaseCli functions deploy $functionName --project-ref $ProjectRef --no-verify-jwt --use-api
+    Invoke-SupabaseCli functions deploy $functionName --project-ref $ProjectRef --use-api
 }
 
 Write-Host 'Funcțiile au fost publicate. Configurează acum secretele din Supabase Dashboard.'

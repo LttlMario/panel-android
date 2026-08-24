@@ -7,12 +7,12 @@
     <!-- Tailwind CSS CDN -->
     <link rel="stylesheet" href="css/tailwind.css">
     <!-- Supabase JS Client -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/supabase-config.js"></script>
-    <script src="js/permissions.js?v=4.5.0"></script>
-    <script src="js/panel-layout.js?v=4.9.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3" integrity="sha384-l8ah+VgaWtk1mvOe9VC+OirC6qHFF4yH7l7mKRidV9MSti3E9F463bMp6ZVN4kuC" crossorigin="anonymous"></script>
+    <script src="js/supabase-config.js?v=20260820-session-date-fix"></script>
+    <script src="js/permissions.js?v=4.6.0"></script>
+    <script src="js/panel-layout.js?v=4.23.0"></script>
     <link rel="stylesheet" href="css/global-footer.css">
-    <script src="js/project-version.js"></script>
+    <script src="js/project-version.js?v=3.11.5"></script>
     <link rel="icon" href="img/favicon.ico">
     <link rel="apple-touch-icon" href="img/logo-180.png">
 </head>
@@ -180,6 +180,11 @@
 
                 activeOrganization =
                     JSON.parse(storedOrganization);
+                const activeId = window.getActiveOrganizationId?.();
+                if (!activeId || activeId !== String(activeOrganization?.id || activeOrganization?.organization_id || '').trim()) {
+                    throw new Error('Organizația activă nu are un UUID valid.');
+                }
+                activeOrganization = { ...activeOrganization, id: activeId };
                     console.log(
                     'ACTIVE ORGANIZATION FULL:',
                     activeOrganization
@@ -206,7 +211,7 @@
                 organizationActionPermissions =
                     activeOrganization.platform_settings?.action_permissions ||
                     activeOrganization.action_permissions ||
-                    (cachedUser.organization_id === activeOrganization.id
+                    (window.isPanelOrganizationId?.(cachedUser.organization_id) && cachedUser.organization_id === activeOrganization.id
                         ? cachedUser.action_permissions
                         : null) ||
                     {};
@@ -346,8 +351,7 @@ console.log(
         2
     )
 );
-    
-                return true;
+            return true;
 
             } catch (err) {
                 console.error(
@@ -376,6 +380,16 @@ console.log(
         function formatNoticeDate(value) {
             if (!value) return '—';
             return new Date(value).toLocaleDateString('ro-RO');
+        }
+
+        function getAbsenceEndAt(item) {
+            if (item?.end_at) return item.end_at;
+            const start = item?.start_at || item?.start_date;
+            const days = Math.max(1, Number(item?.days) || 1);
+            if (!start) return null;
+            const end = new Date(start);
+            end.setDate(end.getDate() + days - 1);
+            return end.toISOString();
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
@@ -413,7 +427,7 @@ console.log(
                 // 3. Citire live din tabelul `users` din Supabase
                 let { data: dbUser, error } = await supabaseClient
                     .from('users')
-                    .select('*')
+                    .select('discord_id,username,display_name,avatar,role,default_role')
                     .eq('discord_id', localData.discord_id)
                     .maybeSingle();
 
@@ -535,8 +549,8 @@ console.log(
             const startDate = startAt;
             const days = Math.max(1, Math.floor((getNoticeDateTime(endAt) - getNoticeDateTime(startAt)) / 86400000) + 1);
 
-            const activeName = currentUser.display_name || currentUser.username || 'Mecanic';
-            const activeRole = currentUser.role || currentUser.default_role || 'Mecanic';
+            const activeName = currentUser.display_name || currentUser.username || 'Utilizator Discord';
+            const activeRole = currentUser.role || currentUser.default_role || 'Rol Discord';
 
             if (!activeOrganization?.id) {
                 alert('Nu există o organizație activă.');
@@ -656,7 +670,7 @@ fetchAbsences();
                 absences.forEach(item => {
                     const createdAtFormatted = new Date(item.created_at).toLocaleString('ro-RO', { dateStyle: 'short', timeStyle: 'short' });
                     const startFormatted = formatNoticeDate(item.start_at || item.start_date);
-                    const endFormatted = item.end_at ? formatNoticeDate(item.end_at) : `${item.days || 1} zi(le)`;
+                    const endFormatted = formatNoticeDate(getAbsenceEndAt(item));
                     const noticeType = item.notice_type || 'Înștiințare';
                     const proofHtml = item.proof_url
                         ? `<a href="${item.proof_url}" target="_blank" rel="noopener noreferrer" class="text-emerald-400 hover:text-emerald-300 underline">Deschide</a>`
@@ -801,6 +815,8 @@ fetchAbsences();
                     title: `📋 ${actionTitle} (Sediu)`,
                     color: 16753920,
                     fields: [
+                        { name: 'Începe', value: formatNoticeDate(data.start_at || data.start_date), inline: true },
+                        { name: 'Se termină', value: formatNoticeDate(getAbsenceEndAt(data)), inline: true },
                         { name: "👤 Membru / Funcție", value: data.colleague_name, inline: true },
                         { name: "🛠️ Rol în Bază", value: role, inline: true },
                         { name: "📌 Tip", value: data.notice_type || 'Înștiințare', inline: true },

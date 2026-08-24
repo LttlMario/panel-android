@@ -3,25 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loguri - Workforce Management</title>
+    <title>Loguri - Panel</title>
     <link rel="stylesheet" href="css/tailwind.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/supabase-config.js"></script>
-    <script src="js/permissions.js"></script>
-    <script src="js/panel-layout.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3" integrity="sha384-l8ah+VgaWtk1mvOe9VC+OirC6qHFF4yH7l7mKRidV9MSti3E9F463bMp6ZVN4kuC" crossorigin="anonymous"></script>
+    <script src="js/supabase-config.js?v=20260820-session-date-fix"></script>
+    <script src="js/panel-operations.js?v=20260820-profile-menu"></script>
+    <script src="js/permissions.js?v=4.6.0"></script>
+    <script src="js/panel-layout.js?v=4.23.0"></script>
     <link rel="stylesheet" href="css/global-footer.css">
-    <script src="js/project-version.js"></script>
+    <script src="js/project-version.js?v=3.11.5"></script>
     <link rel="icon" href="img/favicon.ico">
     <link rel="apple-touch-icon" href="img/logo-180.png">
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen text-sm">
-    <div class="flex min-h-screen w-full">
-            <div class="p-5 md:p-8 max-w-7xl mx-auto space-y-6">
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        
-
-        <main class="flex-1 md:ml-72 min-w-0">
+        <main class="w-full min-w-0">
+            <div class="p-8 space-y-8 max-w-7xl mx-auto w-full">
             <section class="panel-action-bar"><div><button onclick="loadLogs()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-2 rounded-xl text-xs font-semibold">↻ Reîmprospătează</button></div></section>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5"><p class="text-[10px] uppercase tracking-wider text-slate-500">Evenimente afișate</p><p id="count-all" class="text-3xl font-black mt-1">0</p></div>
                     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5"><p class="text-[10px] uppercase tracking-wider text-slate-500">Pontaje active</p><p id="count-active" class="text-3xl font-black mt-1 text-emerald-400">0</p></div>
                     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5"><p class="text-[10px] uppercase tracking-wider text-slate-500">Învoiri active</p><p id="count-absences" class="text-3xl font-black mt-1 text-indigo-400">0</p></div>
@@ -34,70 +32,22 @@
                 <section class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden"><div class="px-5 py-4 border-b border-slate-800 flex justify-between"><h3 class="font-bold">Evenimente</h3><span id="visible-count" class="text-xs text-slate-500">0 rezultate</span></div><div id="logs-list" class="max-h-[62vh] overflow-y-auto divide-y divide-slate-800"><p class="p-8 text-center text-slate-500">Se încarcă logurile...</p></div></section>
             </div>
         </main>
-    </div>
 
     <script>
-        const SUPABASE_URL = window.PANEL_SUPABASE_CONFIG.url;
-        const SUPABASE_KEY = window.PANEL_SUPABASE_CONFIG.publishableKey;
-        const supabaseClient = window.createPanelSupabaseClient();
         let events = [], usersMap = {};
         const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
         const dateText = value => value ? new Date(value).toLocaleString('ro-RO', {dateStyle:'medium',timeStyle:'medium'}) : 'Dată necunoscută';
 
         document.addEventListener('DOMContentLoaded', async () => {
-            const user = getUser();
-            if (!user) return;
-
-            const { data: dbUser } = await supabaseClient
-                .from('users')
-                .select('*')
-                .eq('discord_id', user.discord_id || user.id)
-                .maybeSingle();
-
-            const activeUser = dbUser || user;
-
-            document.getElementById('user-display-name').textContent =
-                activeUser.display_name || activeUser.username || 'Manager';
-
-            document.getElementById('user-role').textContent =
-                activeUser.role || activeUser.default_role || 'Manager';
-
-            document.getElementById('user-avatar').src =
-                activeUser.avatar ||
-                activeUser.avatar_url ||
-                'img/logo-192.png';
-
             await loadLogs();
-
-            supabaseClient
-                .channel('logs-live')
-                .on('postgres_changes', {
-                    event: '*',
-                    schema: 'public',
-                    table: 'shifts'
-                }, loadLogs)
-                .on('postgres_changes', {
-                    event: '*',
-                    schema: 'public',
-                    table: 'absences'
-                }, loadLogs)
-                .on('postgres_changes', {
-                    event: '*',
-                    schema: 'public',
-                    table: 'marketplace'
-                }, loadLogs)
-                .on('postgres_changes', {
-                    event: '*',
-                    schema: 'public',
-                    table: 'marketplace_ilegal'
-                }, loadLogs)
-                .subscribe();
         });
 
-        async function safeQuery(table, limit=200) { const {data,error}=await supabaseClient.from(table).select('*').order('created_at',{ascending:false}).limit(limit); return error ? [] : (data || []); }
         async function loadLogs() {
             const list=document.getElementById('logs-list'); list.innerHTML='<p class="p-8 text-center text-slate-500">Se actualizează logurile...</p>';
-            const [users,shifts,absences,market,blackMarket,audit] = await Promise.all([safeQuery('users',500),safeQuery('shifts',350),safeQuery('absences',250),safeQuery('marketplace',150),safeQuery('marketplace_ilegal',150),safeQuery('admin_audit_log',300)]);
+            let result;
+            try { result = await window.panelAdminInvoke('logs'); }
+            catch (error) { list.innerHTML=`<p class="p-8 text-center text-rose-300">Logurile nu au putut fi încărcate: ${escapeHtml(error?.message || 'eroare necunoscută')}</p>`; return; }
+            const users=result.users||[], shifts=result.shifts||[], absences=result.absences||[], market=result.marketplace||[], blackMarket=result.marketplace_ilegal||[], audit=result.audit||[];
             usersMap=Object.fromEntries(users.map(user=>[user.discord_id,user.display_name || user.username || user.discord_id]));
             events=[
                 ...shifts.map(shift=>({type:'pontaj',at:shift.ended_at || shift.started_at || shift.created_at,person:usersMap[shift.discord_id] || shift.discord_id,title:shift.status==='active'?'Pontaj pornit':shift.status==='paused'?'Pontaj în pauză':shift.status==='auto_completed'?'Pontaj încheiat automat':'Pontaj încheiat',detail:`Tură ${(shift.shift_type||'').toUpperCase()} · ${shift.duration || '00:00:00'}${shift.stop_reason ? ' · '+shift.stop_reason : ''}`,state:shift.status})),
