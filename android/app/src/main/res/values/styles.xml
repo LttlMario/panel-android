@@ -18,6 +18,8 @@
         <item name="android:statusBarColor">#020617</item>
         <item name="android:windowLightNavigationBar">false</item>
         <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">never</item>
     </style>
 
 
@@ -25,5 +27,9 @@
         <item name="android:background">@drawable/splash</item>
         <item name="android:navigationBarColor">#020617</item>
         <item name="android:statusBarColor">#020617</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">never</item>
     </style>
 </resources>
