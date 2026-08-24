@@ -280,13 +280,15 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
                 footer { padding-left:12px !important; padding-right:12px !important; padding-bottom:max(18px,env(safe-area-inset-bottom)) !important; }
                 #panel-save-reminder { right:10px; bottom:82px; max-width:calc(100vw - 20px); }
             }
-            /* Pe ecrane înguste păstrăm sidebarul compact, fără să forțăm o lățime de desktop. */
+            /* Pe ecrane înguste sidebarul este un drawer ascuns, deschis doar prin buton. */
             @media (max-width:767px) {
                 body.panel-global-shell { min-width:0 !important; overflow-x:hidden !important; }
-                body.panel-shared-sidebar-page { padding-left:84px !important; }
+                body.panel-shared-sidebar-page { padding-left:0 !important; }
                 body.panel-shared-sidebar-page > #panel-shared-sidebar,
-                body.panel-shared-sidebar-page > #panel-shared-sidebar.is-collapsed { display:flex !important; position:fixed !important; inset:0 auto 0 0 !important; width:84px !important; min-width:84px !important; flex-basis:84px !important; z-index:60 !important; }
-                #panel-mobile-menu, #panel-mobile-backdrop, .panel-mobile-toggle, #global-header-mobile-btn, #mobile-menu-toggle { display:none !important; }
+                body.panel-shared-sidebar-page > #panel-shared-sidebar.is-collapsed { display:none !important; }
+                #panel-mobile-menu { display:block !important; }
+                #panel-mobile-backdrop { display:none !important; }
+                .panel-mobile-toggle { display:flex !important; }
                 body.panel-global-shell main { max-width:none !important; }
             }
             /* Sidebar-ul este același și pe paginile calculatorului, care au stiluri proprii. */
@@ -377,18 +379,19 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         const originalSidebarWidth = sidebar.style.width || '';
 
         const applyCollapsedState = (collapsed) => {
-            const effectiveCollapsed = collapsed;
+            const isMobileViewport = window.innerWidth <= 767;
+            const effectiveCollapsed = !isMobileViewport && collapsed;
             const sidebarWidth = effectiveCollapsed ? '5.25rem' : (originalSidebarWidth || '245px');
-            sidebar.style.width = sidebarWidth;
-            sidebar.style.flexBasis = sidebarWidth;
+            sidebar.style.width = isMobileViewport ? '' : sidebarWidth;
+            sidebar.style.flexBasis = isMobileViewport ? '' : sidebarWidth;
             sidebar.classList.toggle('is-collapsed', effectiveCollapsed);
-            if (main?.classList.contains('ml-72')) main.style.marginLeft = effectiveCollapsed ? '5.25rem' : originalMainMargin;
+            if (main?.classList.contains('ml-72')) main.style.marginLeft = isMobileViewport ? '' : (effectiveCollapsed ? '5.25rem' : originalMainMargin);
             if (document.body.classList.contains('panel-shared-sidebar-page')) {
-                document.body.style.paddingLeft = effectiveCollapsed ? '5.25rem' : '245px';
+                document.body.style.paddingLeft = isMobileViewport ? '' : (effectiveCollapsed ? '5.25rem' : '245px');
             }
             const mapApp = document.getElementById('app');
             if (mapApp && document.getElementById('map-container-wrapper')) {
-                mapApp.style.gridTemplateColumns = effectiveCollapsed ? '5.25rem 1fr' : '245px 1fr';
+                mapApp.style.gridTemplateColumns = isMobileViewport ? '1fr' : (effectiveCollapsed ? '5.25rem 1fr' : '245px 1fr');
             }
 
             navigation.querySelectorAll('a').forEach((link) => {
