@@ -230,7 +230,7 @@ begin
 exception when duplicate_object then null;
 end $$;
 
--- RLS răm�ne activ. Cheia de server folosită de Edge Function îl ocolește;
+-- RLS rămâne activ. Cheia de server folosită de Edge Function îl ocolește;
 -- nu adăuga politici "public all" într-un proiect pus online.
 alter table public.users enable row level security;
 alter table public.shifts enable row level security;
@@ -244,6 +244,6 @@ drop policy if exists "authenticated users can read app settings" on public.app_
 create policy "authenticated users can read app settings"
 on public.app_settings for select to authenticated using (true);
 
--- Pentru închiderea automată: deploy-ul Edge Function răm�ne separat.
+-- Pentru închiderea automată: deploy-ul Edge Function rămâne separat.
 -- După deploy, rulează și conținutul din:
 -- supabase/migrations/20260728_schedule_close_expired_shifts.sql
