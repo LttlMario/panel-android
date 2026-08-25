@@ -8,8 +8,8 @@
   <link rel="stylesheet" href="css/tailwind.css">
   <link rel="stylesheet" href="css/global-footer.css">
   <script src="js/supabase-config.js?v=20260820-session-date-fix"></script>
-    <script src="js/permissions.js?v=4.6.1"></script>
-    <script src="js/panel-layout.js?v=4.26.0"></script>
+    <script src="js/permissions.js?v=4.6.2"></script>
+    <script src="js/panel-layout.js?v=4.27.0"></script>
   <script src="js/global-footer.js"></script>
   <style>
     #organization-owner-main { width: 100%; min-height: calc(100vh - 96px); padding: 24px; }
@@ -124,7 +124,7 @@
       const webhookDefinitions = [
         ['organization', 'Anunțuri organizație'], ['departments', 'Anunțuri Birouri / Angajați'], ['pontaj', 'Pontaj și ture'], ['weekly_reports', 'Rapoarte săptămânale'], ['status_live', 'Status Live'],
         ['requests_organization', 'Cereri / Învoiri · Organizație'], ['requests_departments', 'Cereri / Învoiri · Birouri / Angajați'],
-        ['contracts', 'Contracte'], ['contract_identity_weekly', 'Export săptămânal: nume + CNP'], ['marketplace', 'Marketplace legal'], ['illegal_marketplace', 'Marketplace ilegal'],
+        ['contracts', 'Contracte'], ['contract_identity_weekly', 'Export săptămânal: nume + CNP'], ['marketplace', 'Marketplace legal'], ['illegal_marketplace', 'Marketplace ilegal'], ['stash', 'Stash organizație'], ['stash_requests', 'Cereri Stash'], ['stash_donations', 'Donații Stash'],
         ['fines_organization', 'Amenzi organizație'], ['fines_departments', 'Amenzi Birouri / Angajați'],
         ['warnings_organization', 'Avertismente organizație'], ['warnings_departments', 'Avertismente Birouri / Angajați'],
         ['sanctions_organization', 'Sancțiuni financiare organizație'], ['sanctions_departments', 'Sancțiuni financiare Birouri / Angajați'],
@@ -134,7 +134,7 @@
         ['index.html', 'Dashboard'], ['anunturi.html', 'Anunțuri și sondaje'], ['pontaj.html', 'Pontaj'], ['cereri.html', 'Cereri / Învoiri'],
         ['calculator.html', 'Calculator'], ['bucatarie.html', 'Bucătărie'], ['contracte.html', 'Contracte'], ['calculatorilegal.html', 'Calculator ilegal'],
         ['craftmecanics.html', 'Craft Mecanic'], ['locatiiilegale.html', 'Locații ilegale'], ['marketplace.html', 'Marketplace'],
-        ['marketplace-ilegal.html', 'Marketplace ilegal'], ['minigames.html', 'Minigames'], ['rapoarte.html', 'Rapoarte'], ['status-live.html', 'Status Live'], ['asistent.html', 'Asistent Panel']
+        ['marketplace-ilegal.html', 'Marketplace ilegal'], ['minigames.html', 'Minigames'], ['rapoarte.html', 'Rapoarte'], ['status-live.html', 'Status Live'], ['asistent.html', 'Asistent Panel'], ['stash.html', 'Stash organizație']
       ];
       const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
       let discoveredDiscordRoles = [];
@@ -147,7 +147,7 @@
       let ownerPackageCode = 'standard';
       const standardPackageFeatures = new Set(['core', 'announcements', 'requests', 'contracts', 'reports', 'legal_marketplace', 'legal_tools', 'assistant', 'status_live', 'announcements_departments', 'requests_departments', 'discipline_departments']);
       const fullOnlyWebhookKeys = new Set(['organization', 'requests_organization', 'illegal_marketplace', 'fines_organization', 'warnings_organization', 'sanctions_organization']);
-      const fullOnlyPageFeatures = new Map([['calculatorilegal.html', 'illegal_calculator'], ['locatiiilegale.html', 'illegal_locations'], ['marketplace-ilegal.html', 'illegal_marketplace'], ['minigames.html', 'illegal_minigames']]);
+      const fullOnlyPageFeatures = new Map([['calculatorilegal.html', 'illegal_calculator'], ['locatiiilegale.html', 'illegal_locations'], ['marketplace-ilegal.html', 'illegal_marketplace'], ['minigames.html', 'illegal_minigames'], ['stash.html', 'stash']]);
       const ownerAllowsFeature = (feature) => ownerPackageCode === 'full' || standardPackageFeatures.has(feature);
       const ownerAllowsPage = (page) => !fullOnlyPageFeatures.has(page) || ownerAllowsFeature(fullOnlyPageFeatures.get(page));
 
@@ -183,12 +183,13 @@
         const date = new Date(value);
         return Number.isNaN(date.getTime()) ? 'Dată invalidă' : date.toLocaleString('ro-RO', { dateStyle: 'medium', timeStyle: 'short' });
       };
-      const renderAccess = (access, packageState, active) => {
-        const expiresAt = access?.expires_at || packageState?.expires_at || '';
+      const renderAccess = (access, packageState, active, deactivationReason) => {
+        const expiresAt = access?.expires_at || '';
         const expired = expiresAt && Date.parse(expiresAt) <= Date.now();
         ownerPackageCode = String(packageState?.code || 'standard').toLowerCase();
         $('owner-package-status').textContent = String(packageState?.code || 'standard').toUpperCase();
-        $('owner-access-status').textContent = expired ? 'Expirat — aplică voucher' : (active === false ? 'Dezactivat' : 'Activ');
+        const statusLabel = expired ? 'Expirat — aplică voucher' : active === false ? (deactivationReason === 'expired' ? 'Expirat' : deactivationReason === 'manual' ? 'Dezactivat manual' : 'Dezactivat') : 'Activ';
+        $('owner-access-status').textContent = statusLabel;
         $('owner-access-status').className = `mt-1 block text-sm ${expired || active === false ? 'text-rose-300' : 'text-emerald-300'}`;
         $('owner-expires-status').textContent = formatExpiry(expiresAt);
         document.querySelectorAll('[data-owner-webhook-fieldset]').forEach((fieldset) => { fieldset.hidden = ownerPackageCode !== 'full' && fullOnlyWebhookKeys.has(fieldset.dataset.ownerWebhookFieldset); });
@@ -270,7 +271,7 @@
       const renderOwnerActionPermissions = () => {
         const host = $('owner-action-permissions'), roles = permissionRoles();
         if (!roles.length) { host.innerHTML = '<div class="owner-permission-card text-xs text-slate-400">Alege mai întâi rolurile Discord.</div>'; return; }
-        const groups = [['anunturi.publish', 'Publicare anunțuri și sondaje', 'Cine poate scrie, modifica sau șterge anunțuri.'], ['marketplace.delete', 'Ștergere anunțuri Marketplace', 'Cine poate șterge anunțuri din Marketplace legal și Black Market.'], ...(ownerAllowsFeature('requests_organization') ? [['cereri.organization', 'Cereri → Organizație', 'Cine trimite cererile către organizație.']] : []), ['cereri.departments', 'Cereri → Birouri / Angajați', 'Cine trimite cererile către birouri și angajați.']];
+      const groups = [['anunturi.publish', 'Publicare anunțuri și sondaje', 'Cine poate scrie, modifica sau șterge anunțuri.'], ['marketplace.delete', 'Ștergere anunțuri Marketplace', 'Cine poate șterge anunțuri din Marketplace legal și Black Market.'], ['stash.write', 'Stash — postează și gestionează', 'Cine poate adăuga, modifica și arhiva articole din stash.'], ['stash.request', 'Stash — trimite cereri', 'Cine poate trimite cereri pentru articole din stash.'], ['stash.manage_requests', 'Stash — aprobă cereri', 'Cine poate aproba, respinge și finaliza cererile.'], ['stash.donate', 'Stash — donează', 'Cine poate trimite donații către stash.'], ['stash.approve_donation', 'Stash — aprobă donații', 'Cine verifică donațiile și le postează în stash.'], ['stash.log', 'Stash — jurnal arhive', 'Cine poate vedea articolele arhivate din jurnalul Stash.'], ...(ownerAllowsFeature('requests_organization') ? [['cereri.organization', 'Cereri → Organizație', 'Cine trimite cererile către organizație.']] : []), ['cereri.departments', 'Cereri → Birouri / Angajați', 'Cine trimite cererile către birouri și angajați.']];
         host.innerHTML = groups.map(([key, title, help]) => `<div class="owner-permission-card"><b class="text-sm">${esc(title)}</b><p class="mt-1 text-xs text-slate-400">${esc(help)}</p><div class="mt-3 flex flex-wrap gap-2" data-owner-action-host="${esc(key)}"></div></div>`).join('');
         groups.forEach(([key]) => checkboxList(host.querySelector(`[data-owner-action-host="${key}"]`), actionPermissions, key, roles, 'action'));
       };
@@ -291,7 +292,7 @@
       const renderOwnerAssistantPermissions = () => {
         const host = $('owner-assistant-permissions'), roles = permissionRoles();
         if (!roles.length) { host.innerHTML = '<div class="owner-permission-card text-xs text-slate-400">Alege mai întâi rolurile Discord.</div>'; return; }
-        const groups = [['general', 'Generale', [['index.html', 'Dashboard'], ['pontaj.html', 'Pontaj'], ['cereri.html', 'Cereri și absențe'], ['bucatarie.html', 'Bucătărie'], ['asistent.html', 'Asistent']]], ['legal', 'Legale', [['anunturi.html', 'Anunțuri și sondaje'], ['contracte.html', 'Contracte'], ['marketplace.html', 'Marketplace legal'], ['rapoarte.html', 'Rapoarte']]], ['illegal', 'Ilegale', [['calculatorilegal.html', 'Calculator ilegal'], ['craftmecanics.html', 'Craft Mecanic'], ['locatiiilegale.html', 'Locații ilegale'], ['marketplace-ilegal.html', 'Marketplace ilegal'], ['minigames.html', 'Minigames']].filter(([page]) => ownerAllowsPage(page))]].filter(([, , pages]) => pages.length);
+        const groups = [['general', 'Generale', [['index.html', 'Dashboard'], ['pontaj.html', 'Pontaj'], ['cereri.html', 'Cereri și absențe'], ['bucatarie.html', 'Bucătărie'], ['asistent.html', 'Asistent']]], ['legal', 'Legale', [['anunturi.html', 'Anunțuri și sondaje'], ['contracte.html', 'Contracte'], ['marketplace.html', 'Marketplace legal'], ['rapoarte.html', 'Rapoarte']]], ['illegal', 'Ilegale', [['calculatorilegal.html', 'Calculator ilegal'], ['craftmecanics.html', 'Craft Mecanic'], ['locatiiilegale.html', 'Locații ilegale'], ['marketplace-ilegal.html', 'Marketplace ilegal'], ['minigames.html', 'Minigames'], ['stash.html', 'Stash organizație']].filter(([page]) => ownerAllowsPage(page))]].filter(([, , pages]) => pages.length);
         host.innerHTML = groups.map(([key, label, pages]) => `<div class="owner-permission-card"><div class="flex items-center justify-between gap-2"><b class="text-sm">${esc(label)}</b><button type="button" class="rounded-lg border border-violet-700 px-2 py-1 text-[11px] font-bold text-violet-200" data-owner-assistant-all="${key}">Toate rolurile</button></div><div class="mt-2 space-y-2">${pages.map(([page, pageLabel]) => `<div class="rounded-lg border border-slate-800 bg-slate-900 p-2"><div class="text-xs font-bold text-slate-200">${esc(pageLabel)}</div><div class="mt-2 flex flex-wrap gap-2" data-owner-assistant-host="${page}"></div></div>`).join('')}</div></div>`).join('');
         groups.flatMap(([, , pages]) => pages).forEach(([page]) => checkboxList(host.querySelector(`[data-owner-assistant-host="${page}"]`), assistantPagePermissions, page, roles, 'assistant'));
         host.querySelectorAll('[data-owner-assistant-all]').forEach((button) => { button.onclick = () => { const group = groups.find(([key]) => key === button.dataset.ownerAssistantAll); (group?.[2] || []).forEach(([page]) => { assistantPagePermissions[page] = roles.map((role) => role.id); }); renderOwnerAssistantPermissions(); }; });
@@ -318,7 +319,7 @@
           $('owner-org-description').value = org.description || '';
           $('owner-panel-url').value = data.settings?.panel_public_url || '';
           $('owner-org-logo').value = org.logo_url || '';
-          renderAccess(data.access, data.package, org.active);
+          renderAccess(data.access, data.package, org.active, org.deactivation_reason);
           const contract = data.contract_template || {};
           $('owner-contract-title').value = contract.title || '';
           $('owner-contract-salary').value = contract.defaults?.salary || '';
@@ -366,7 +367,7 @@
            const updatedDiscipline = data.discipline_permissions && typeof data.discipline_permissions === 'object' ? data.discipline_permissions : {};
            disciplinePermissions = { organization: { read: Array.isArray(updatedDiscipline.organization?.read) ? updatedDiscipline.organization.read.map(String) : [], write: Array.isArray(updatedDiscipline.organization?.write) ? updatedDiscipline.organization.write.map(String) : [], sanction: Array.isArray(updatedDiscipline.organization?.sanction) ? updatedDiscipline.organization.sanction.map(String) : [] }, departments: { read: Array.isArray(updatedDiscipline.departments?.read) ? updatedDiscipline.departments.read.map(String) : [], write: Array.isArray(updatedDiscipline.departments?.write) ? updatedDiscipline.departments.write.map(String) : [], sanction: Array.isArray(updatedDiscipline.departments?.sanction) ? updatedDiscipline.departments.sanction.map(String) : [] } };
            renderAllPermissions();
-           renderAccess(data.access, data.package, data.organization?.active);
+           renderAccess(data.access, data.package, data.organization?.active, data.organization?.deactivation_reason);
            saveOwnerDraft();
            $('owner-status').textContent = 'Modificările au fost salvate.';
           localStorage.setItem('panel_active_organization', JSON.stringify(data.organization || {}));

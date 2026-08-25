@@ -1,5 +1,5 @@
 <!doctype html><html lang="ro" class="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Organizații · Platformă</title>
-<link rel="stylesheet" href="css/tailwind.css"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3" integrity="sha384-l8ah+VgaWtk1mvOe9VC+OirC6qHFF4yH7l7mKRidV9MSti3E9F463bMp6ZVN4kuC" crossorigin="anonymous"></script><script src="js/supabase-config.js?v=20260820-session-date-fix"></script><script src="js/permissions.js?v=4.6.0"></script><script src="js/panel-layout.js?v=4.26.0"></script><link rel="stylesheet" href="css/global-footer.css">    <link rel="icon" href="img/favicon.ico">
+<link rel="stylesheet" href="css/tailwind.css"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3" integrity="sha384-l8ah+VgaWtk1mvOe9VC+OirC6qHFF4yH7l7mKRidV9MSti3E9F463bMp6ZVN4kuC" crossorigin="anonymous"></script><script src="js/supabase-config.js?v=20260820-session-date-fix"></script><script src="js/permissions.js?v=4.6.2"></script><script src="js/panel-layout.js?v=4.27.0"></script><link rel="stylesheet" href="css/global-footer.css">    <link rel="icon" href="img/favicon.ico">
     <link rel="apple-touch-icon" href="img/logo-180.png">
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen">
@@ -362,7 +362,7 @@ let organizations=[],
     periodOrganizationId='';
 const pagePermissionGroups=[
     {key:'dashboard',label:'Dashboard',mode:'all',pages:[['index.html','Dashboard']]},
-    {key:'illegal',label:'Ilegale',description:'Calculator ilegal, locații ilegale, marketplace ilegal și minigames.',mode:'group',pages:[['calculatorilegal.html','Calculator ilegal'],['locatiiilegale.html','Locații ilegale'],['marketplace-ilegal.html','Marketplace ilegal'],['minigames.html','Minigames']]},
+    {key:'illegal',label:'Ilegale',description:'Calculator ilegal, locații ilegale, marketplace ilegal, minigames și stash.',mode:'group',pages:[['calculatorilegal.html','Calculator ilegal'],['locatiiilegale.html','Locații ilegale'],['marketplace-ilegal.html','Marketplace ilegal'],['minigames.html','Minigames'],['stash.html','Stash organizație']]},
     {key:'resources',label:'Resurse',description:'Marketplace, calculator, bucătărie și Craft Mecanic.',mode:'group',pages:[['marketplace.html','Marketplace'],['calculator.html','Calculator'],['bucatarie.html','Bucătărie'],['craftmecanics.html','Craft Mecanic']]},
     {key:'management',label:'Management',description:'Contracte și rapoarte.',mode:'group',pages:[['contracte.html','Contracte'],['rapoarte.html','Rapoarte']]},
     {key:'individual',label:'Pagini individuale',mode:'individual',pages:[['anunturi.html','Anunțuri și sondaje'],['pontaj.html','Pontaj'],['cereri.html','Cereri și absențe'],['asistent.html','Asistent']]}
@@ -371,7 +371,7 @@ const configurablePages=pagePermissionGroups.flatMap(group=>group.pages);
 const assistantPageGroups=[
     {key:'general',label:'Generale',pages:[['index.html','Dashboard'],['pontaj.html','Pontaj'],['cereri.html','Cereri și absențe'],['bucatarie.html','Bucătărie'],['asistent.html','Asistent']]},
     {key:'legal',label:'Legale',pages:[['anunturi.html','Anunțuri și sondaje'],['contracte.html','Contracte'],['marketplace.html','Marketplace legal'],['rapoarte.html','Rapoarte']]},
-    {key:'illegal',label:'Ilegale',pages:[['calculatorilegal.html','Calculator ilegal'],['craftmecanics.html','Craft Mecanic'],['locatiiilegale.html','Locații ilegale'],['marketplace-ilegal.html','Marketplace ilegal'],['minigames.html','Minigames']]}
+    {key:'illegal',label:'Ilegale',pages:[['calculatorilegal.html','Calculator ilegal'],['craftmecanics.html','Craft Mecanic'],['locatiiilegale.html','Locații ilegale'],['marketplace-ilegal.html','Marketplace ilegal'],['minigames.html','Minigames'],['stash.html','Stash organizație']]}
 ];
 const webhookDefinitions={
     organization:{
@@ -417,6 +417,18 @@ const webhookDefinitions={
     illegal_marketplace:{
         label:'Marketplace ilegal',
         help:'Anunțurile publicate în marketplace-ul ilegal.'
+    },
+    stash:{
+        label:'Stash organizație',
+        help:'Articolele, cererile și donațiile gestionate în stash-ul organizației.'
+    },
+    stash_requests:{
+        label:'Cereri Stash',
+        help:'Cereri noi și actualizări de status din pagina Stash.'
+    },
+    stash_donations:{
+        label:'Donații Stash',
+        help:'Donații trimise și aprobate pentru stash.'
     },
     fines_organization:{
         label:'Amenzi organizație',
@@ -1264,6 +1276,43 @@ function renderActionPermissions() {
             color: 'rose'
         },
 
+        {
+            key: 'stash.write',
+            title: 'Stash — postează și gestionează',
+            description: 'Cine poate adăuga, modifica și arhiva articole din stash.',
+            color: 'emerald'
+        },
+        {
+            key: 'stash.request',
+            title: 'Stash — trimite cereri',
+            description: 'Cine poate trimite cereri pentru articole din stash.',
+            color: 'cyan'
+        },
+        {
+            key: 'stash.manage_requests',
+            title: 'Stash — aprobă cereri',
+            description: 'Cine poate aproba, respinge și finaliza cererile.',
+            color: 'amber'
+        },
+        {
+            key: 'stash.donate',
+            title: 'Stash — donează',
+            description: 'Cine poate trimite donații către stash.',
+            color: 'violet'
+        },
+        {
+            key: 'stash.approve_donation',
+            title: 'Stash — aprobă donații',
+            description: 'Cine verifică donațiile și le postează în stash.',
+            color: 'emerald'
+        },
+        {
+            key: 'stash.log',
+            title: 'Stash — jurnal arhive',
+            description: 'Cine poate vedea articolele arhivate din jurnalul Stash.',
+            color: 'slate'
+        },
+
 
         {
             key: 'cereri.organization',
@@ -1506,13 +1555,6 @@ $('status').textContent=`Organizația a fost salvată cu ${roles.length} roluri 
   $('client').required=false; $('url').required=false;
   $('client').closest('label')?.classList.add('hidden'); $('url').closest('label')?.classList.add('hidden');
   const inheritedNote=document.createElement('p'); inheritedNote.className='mt-3 rounded-lg border border-slate-700 bg-slate-950 p-3 text-xs text-slate-400'; inheritedNote.textContent='Discord Client ID și URL-ul panelului sunt moștenite din configurarea platformei. Organizația are nevoie doar de servere, roluri și webhook-uri Discord.'; $('guild').closest('.rounded-xl')?.before(inheritedNote);
-  const originalLoad = load;
-  form.addEventListener('submit', () => { form.dataset.skipNextLoad = 'true'; }, true);
-  load = async () => {
-    if (form.dataset.skipNextLoad) { delete form.dataset.skipNextLoad; return; }
-    return originalLoad();
-  };
-
   // La alegerea unui rol Discord, folosește automat numele rolului ca nume inițial în panel.
 const originalRenderRoles = renderRoles;
 

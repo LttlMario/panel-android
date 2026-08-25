@@ -21,6 +21,18 @@ const AdministrativePages = new Set([
     'secrete-platforma.html'
 ]);
 
+// Aceste două pagini sunt publice la nivelul platformei: orice membru cu o
+// sesiune validă le poate vedea, indiferent de organizația activă și de rolul
+// configurat pentru paginile organizației.
+const GlobalPublicPages = new Set([
+    'suggestii.html',
+    'rate-panel.html'
+]);
+
+const OrganizationHubPages = new Set([
+    'organizatie-centru.html'
+]);
+
 
 // ============================================================
 // UTILIZATOR
@@ -178,6 +190,14 @@ function canAccessPage(page) {
     // Orice membru autentificat poate deschide pagina de prelungire;
     // funcția Supabase verifică apartenența la organizație și voucherul.
     if (page === 'prelungire-voucher.html') {
+        return isLogged();
+    }
+
+    if (GlobalPublicPages.has(page)) {
+        return isLogged();
+    }
+
+    if (OrganizationHubPages.has(page)) {
         return isLogged();
     }
 
@@ -547,6 +567,17 @@ function getDefaultAllowedPage() {
         return;
     }
 
+
+    // --------------------------------------------------------
+    // PAGINI GLOBALE / CENTRUL ORGANIZAȚIEI
+    // --------------------------------------------------------
+
+    // Aceste pagini nu depind de lista allowed_pages a organizației.
+    // Verificarea de sesiune de mai sus rămâne obligatorie, dar un rol Discord
+    // fără pagini configurate nu trebuie să le facă invizibile sau inaccesibile.
+    if (GlobalPublicPages.has(currentPage) || OrganizationHubPages.has(currentPage)) {
+        return;
+    }
 
     // --------------------------------------------------------
     // UTILIZATOR FĂRĂ PAGINI
