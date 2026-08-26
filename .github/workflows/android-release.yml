@@ -52,7 +52,9 @@ jobs:
 
       - name: Build signed APK and AAB
         working-directory: android
-        run: ./gradlew assembleRelease bundleRelease --no-daemon
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease bundleRelease --no-daemon
 
       - name: Upload signed Android artifacts
         uses: actions/upload-artifact@v4
