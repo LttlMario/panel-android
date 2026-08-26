@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const source = join(root, 'web-src');
 const output = join(root, 'www');
-const sourceDirectories = ['css', 'img', 'js', 'supabase'];
+const sourceDirectories = ['css', 'img', 'js', 'supabase', 'minigames'];
 const androidRuntime = join(root, 'js', 'android-oauth-runtime.js');
 
 await rm(output, { recursive: true, force: true });
