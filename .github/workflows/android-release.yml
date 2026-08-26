@@ -38,6 +38,7 @@ jobs:
         run: |
           npm ci
           npm run build:web
+          npx cap sync android
           rm -rf android/app/src/main/assets/public
           mkdir -p android/app/src/main/assets/public
           cp -R www/. android/app/src/main/assets/public/
