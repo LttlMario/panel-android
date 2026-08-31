@@ -1,4 +1,43 @@
 // Navigare comună pentru panel: meniu mobil și sidebar pliabil pe desktop.
+/* Aplică preferințele memorate înainte de primul paint, astfel încât tema
+   panelului și tema organizației să nu apară cu întârziere după navigare. */
+(() => {
+    const allowedSeasonal = new Set(['none', 'winter', 'christmas', 'easter', 'autumn', 'halloween', 'summer', 'spring']);
+    const panelTheme = localStorage.getItem('panel_theme') === 'dark' ? 'dark' : 'panel';
+    document.documentElement.dataset.panelTheme = panelTheme;
+    document.documentElement.dataset.theme = 'dark';
+    document.documentElement.classList.add('dark');
+    try {
+        const active = JSON.parse(localStorage.getItem('panel_active_organization') || 'null');
+        const seasonal = active?.seasonal_theme || active?.theme || {};
+        const code = seasonal.enabled === true && allowedSeasonal.has(String(seasonal.code || '')) ? String(seasonal.code) : 'none';
+        const intensity = ['discreet', 'normal', 'intense'].includes(String(seasonal.intensity || '')) ? String(seasonal.intensity) : 'normal';
+        document.documentElement.dataset.seasonalTheme = code;
+        document.documentElement.dataset.seasonalIntensity = intensity;
+    } catch (_) {
+        document.documentElement.dataset.seasonalTheme = 'none';
+        document.documentElement.dataset.seasonalIntensity = 'normal';
+    }
+})();
+
+/* Stilurile sezoniere sunt introduse în head în timpul parsării, nu după
+   încărcarea conținutului, pentru a elimina flash-ul temei originale. */
+if (document.readyState === 'loading' && document.head && !document.head.querySelector('link[data-panel-seasonal-theme]')) {
+    document.write('<link rel="stylesheet" href="css/seasonal-themes.css?v=3.0.0" data-panel-seasonal-theme="true">');
+}
+
+const panelNativeAndroid = /Android/i.test(navigator.userAgent || '') && (
+    window.Capacitor?.isNativePlatform?.() === true || /;\s*wv\)/i.test(navigator.userAgent || '')
+);
+if (panelNativeAndroid) document.documentElement.classList.add('panel-android-native');
+const panelNativeIOS = /iPad|iPhone|iPod/i.test(navigator.userAgent || '') || (
+    navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1
+);
+if (panelNativeIOS) document.documentElement.classList.add('panel-ios-device');
+window.panelCloseLegacyMobileMenu = window.panelCloseLegacyMobileMenu || function panelCloseLegacyMobileMenu() {
+    document.getElementById('mobile-menu')?.classList.add('-translate-x-full');
+    document.getElementById('mobile-menu-backdrop')?.classList.add('hidden');
+};
 if (document.head && !document.head.querySelector('meta[http-equiv="Content-Security-Policy"]')) {
     const panelCsp = document.createElement('meta');
     panelCsp.httpEquiv = 'Content-Security-Policy';
@@ -232,6 +271,10 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             #panel-mobile-backdrop { display:none; position:fixed; inset:0; z-index:4000; background:rgba(2,6,23,.78); backdrop-filter:blur(3px); }
             #panel-mobile-menu { position:fixed; inset:0 auto 0 0; z-index:4001; width:min(288px,86vw); background:#0f172a; border-right:1px solid #1e293b; transform:translateX(-102%); transition:transform .2s ease; box-shadow:16px 0 40px rgba(0,0,0,.45); overflow:auto; }
             #panel-mobile-menu.is-open { transform:translateX(0); }
+            html.panel-ios-device body.panel-shared-sidebar-page { padding-left:0 !important; }
+            html.panel-ios-device body.panel-shared-sidebar-page > #panel-shared-sidebar { display:none !important; }
+            html.panel-ios-device body.panel-global-shell > div:has(main) { width:100% !important; max-width:100% !important; margin-left:0 !important; padding-left:0 !important; }
+            html.panel-ios-device body.panel-global-shell > div:has(main) > main { width:100% !important; max-width:none !important; margin-left:0 !important; }
             #panel-mobile-menu .panel-mobile-top { height:64px; padding:0 18px; border-bottom:1px solid #1e293b; display:flex; align-items:center; justify-content:space-between; }
             #panel-mobile-menu .panel-mobile-nav { padding:16px; }
             .panel-mobile-toggle { display:none; position:relative; z-index:40; width:40px; height:40px; flex:none; align-items:center; justify-content:center; border:1px solid #334155; border-radius:12px; background:#020617; color:#e2e8f0; font-size:18px; cursor:pointer; }
@@ -279,7 +322,7 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
                 footer { padding-left:12px !important; padding-right:12px !important; padding-bottom:max(18px,env(safe-area-inset-bottom)) !important; }
                 #panel-save-reminder { right:10px; bottom:82px; max-width:calc(100vw - 20px); }
             }
-            /* Pe ecrane înguste sidebarul este un drawer ascuns, deschis doar prin buton. */
+            /* Pe ecrane înguste păstrăm sidebarul compact, fără să forțăm o lățime de desktop. */
             @media (max-width:767px) {
                 body.panel-global-shell { min-width:0 !important; overflow-x:hidden !important; }
                 body.panel-shared-sidebar-page { padding-left:0 !important; }
@@ -288,7 +331,43 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
                 #panel-mobile-menu { display:block !important; }
                 #panel-mobile-backdrop { display:none !important; }
                 .panel-mobile-toggle { display:flex !important; }
+                body.panel-global-shell > div:has(main) {
+                    width:100% !important;
+                    max-width:100% !important;
+                    margin-left:0 !important;
+                    padding-left:0 !important;
+                }
+                body.panel-global-shell > div:has(main) > main {
+                    width:100% !important;
+                    max-width:none !important;
+                    margin-left:0 !important;
+                }
                 body.panel-global-shell main { max-width:none !important; }
+            }
+            html.panel-android-native body.panel-global-shell { min-width:0 !important; overflow-x:hidden !important; }
+            html.panel-android-native body.panel-shared-sidebar-page { padding-left:0 !important; }
+            html.panel-android-native .panel-responsive-sidebar,
+            html.panel-android-native #panel-shared-sidebar { display:none !important; }
+            html.panel-android-native body.panel-shared-sidebar-page > #panel-shared-sidebar,
+            html.panel-android-native body.panel-shared-sidebar-page > #panel-shared-sidebar.is-collapsed { display:none !important; }
+            html.panel-android-native #panel-mobile-menu { display:block !important; }
+            html.panel-android-native #panel-mobile-backdrop { display:none !important; }
+            html.panel-android-native #panel-mobile-menu:not(.is-open) { transform:translateX(-102%) !important; }
+            html.panel-android-native .panel-mobile-toggle { display:flex !important; }
+            html.panel-android-native #app .main-sidebar { display:none !important; }
+            html.panel-android-native #map-container-wrapper .control-sidebar { display:none !important; }
+            html.panel-android-native #map-container-wrapper .control-sidebar.mobile-open { display:flex !important; }
+            html.panel-android-native #map-container-wrapper .sidebar:not(.open) { right:-420px !important; }
+            html.panel-android-native body.panel-global-shell > div:has(main) {
+                width:100% !important;
+                max-width:100% !important;
+                margin-left:0 !important;
+                padding-left:0 !important;
+            }
+            html.panel-android-native body.panel-global-shell > div:has(main) > main {
+                width:100% !important;
+                max-width:none !important;
+                margin-left:0 !important;
             }
             /* Sidebar-ul este același și pe paginile calculatorului, care au stiluri proprii. */
             #panel-shared-sidebar .nav-link,
@@ -340,8 +419,16 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         const currentPage = window.location.pathname.split('/').pop() || 'index.html';
         document.body.classList.add('panel-global-shell');
         document.body.dataset.panelPage = currentPage;
+        setupPanelResilience();
         addStyles();
         ensurePanelVisualTheme();
+        ensureSeasonalThemeStyles();
+        try {
+            const cached = JSON.parse(localStorage.getItem('panel_active_organization') || 'null');
+            applySeasonalTheme(cached?.seasonal_theme || cached?.theme || {});
+        } catch (_) {
+            applySeasonalTheme({});
+        }
         ensureTextNormalizer();
         ensureBrandAssets();
         ensureGlobalHeader();
@@ -351,6 +438,7 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         const sidebar = navigation?.closest('aside');
         if (!navigation || !sidebar) return;
         ensureBrandLogo(sidebar);
+        runWhenIdle(loadOrganizationBranding, 450);
         runWhenIdle(loadPanelProfileStats, 1000);
         refreshActualRoleLabel();
         sidebar.querySelector(':scope > div:last-child')?.remove();
@@ -368,6 +456,7 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         relocateHeaderActions(currentPage);
         setupAdminSaveArea();
         const main = document.querySelector('main');
+        const pageShell = main?.closest('body > div');
         if (main) {
             main.style.minHeight = '100vh';
             // Paginile istorice aveau un offset propriu pentru sidebar.
@@ -378,7 +467,7 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         const originalSidebarWidth = sidebar.style.width || '';
 
         const applyCollapsedState = (collapsed) => {
-            const isMobileViewport = window.innerWidth <= 767;
+            const isMobileViewport = window.innerWidth <= 767 || document.documentElement.classList.contains('panel-android-native');
             const effectiveCollapsed = !isMobileViewport && collapsed;
             const sidebarWidth = effectiveCollapsed ? '5.25rem' : (originalSidebarWidth || '245px');
             sidebar.style.width = isMobileViewport ? '' : sidebarWidth;
@@ -386,7 +475,16 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             sidebar.classList.toggle('is-collapsed', effectiveCollapsed);
             if (main?.classList.contains('ml-72')) main.style.marginLeft = isMobileViewport ? '' : (effectiveCollapsed ? '5.25rem' : originalMainMargin);
             if (document.body.classList.contains('panel-shared-sidebar-page')) {
-                document.body.style.paddingLeft = isMobileViewport ? '' : (effectiveCollapsed ? '5.25rem' : '245px');
+                document.body.style.setProperty('padding-left', isMobileViewport ? '0px' : (effectiveCollapsed ? '5.25rem' : '245px'), isMobileViewport ? 'important' : '');
+            }
+            if (isMobileViewport) {
+                main?.style.setProperty('margin-left', '0px', 'important');
+                main?.style.setProperty('width', '100%', 'important');
+                main?.style.setProperty('max-width', 'none', 'important');
+                pageShell?.style.setProperty('margin-left', '0px', 'important');
+                pageShell?.style.setProperty('padding-left', '0px', 'important');
+                pageShell?.style.setProperty('width', '100%', 'important');
+                pageShell?.style.setProperty('max-width', '100%', 'important');
             }
             const mapApp = document.getElementById('app');
             if (mapApp && document.getElementById('map-container-wrapper')) {
@@ -416,6 +514,7 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
 
         // Dashboard are deja propriul meniu mobil, păstrat pentru compatibilitate.
         if (document.getElementById('mobile-menu')) {
+            window.panelCloseLegacyMobileMenu();
             resolveOrganizationAdminVisibility(navigation);
             return;
         }
@@ -436,10 +535,7 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         const closeMobileMenu = () => {
             mobileMenu.classList.remove('is-open');
             backdrop.style.display = 'none';
-            const legacyMenu = document.getElementById('mobile-menu');
-            const legacyBackdrop = document.getElementById('mobile-menu-backdrop');
-            legacyMenu?.classList.add('-translate-x-full');
-            legacyBackdrop?.classList.add('hidden');
+            window.panelCloseLegacyMobileMenu();
             document.body.classList.remove('panel-mobile-menu-open');
             document.body.style.overflow = '';
         };
@@ -462,6 +558,14 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         });
         mobileMenu.querySelector('button').addEventListener('click', closeMobileMenu);
         backdrop.addEventListener('click', closeMobileMenu);
+        const closeOnOutsideInteraction = (event) => {
+            if (!mobileMenu.classList.contains('is-open')) return;
+            const target = event.target;
+            if (target instanceof Node && (mobileMenu.contains(target) || target.closest?.('.panel-mobile-toggle'))) return;
+            closeMobileMenu();
+        };
+        document.addEventListener('pointerdown', closeOnOutsideInteraction, true);
+        document.addEventListener('touchstart', closeOnOutsideInteraction, { capture: true, passive: true });
         mobileNav.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeMobileMenu));
 
         const header = document.querySelector('header');
@@ -501,6 +605,33 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         link.dataset.panelVisualTheme = 'true';
         document.head.appendChild(link);
     }
+
+    function ensureSeasonalThemeStyles() {
+        const existing = document.querySelector('link[data-panel-seasonal-theme]');
+        if (existing) {
+            /* Linkul este introdus în head înainte de primul paint. După ce
+               stilurile comune au fost adăugate, îl mutăm la final pentru ca
+               tema activă să nu fie suprascrisă de stiluri generice. */
+            document.head.appendChild(existing);
+            return;
+        }
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'css/seasonal-themes.css?v=3.0.0';
+        link.dataset.panelSeasonalTheme = 'true';
+        document.head.appendChild(link);
+    }
+
+    function applySeasonalTheme(value) {
+        const allowed = new Set(['none', 'winter', 'christmas', 'easter', 'autumn', 'halloween', 'summer', 'spring']);
+        const code = value?.enabled === true && allowed.has(String(value.code || '')) ? String(value.code) : 'none';
+        const intensity = ['discreet', 'normal', 'intense'].includes(String(value?.intensity || '')) ? String(value.intensity) : 'normal';
+        document.documentElement.dataset.seasonalTheme = code;
+        document.documentElement.dataset.seasonalIntensity = intensity;
+        document.documentElement.dataset.seasonalReady = 'true';
+    }
+
+    window.panelApplySeasonalThemePreview = window.panelApplySeasonalThemePreview || applySeasonalTheme;
 
     function ensureTextNormalizer() {
         if (document.querySelector('script[data-panel-text-normalizer]')) return;
@@ -845,6 +976,34 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         }
     }
 
+    function setupPanelResilience() {
+        if (!document.getElementById('panel-offline-notice')) {
+            const notice = document.createElement('aside');
+            notice.id = 'panel-offline-notice';
+            notice.hidden = true;
+            notice.setAttribute('role', 'status');
+            notice.innerHTML = '<span class="panel-offline-dot" aria-hidden="true"></span><span>Conexiunea a fost întreruptă. Datele salvate local rămân disponibile.</span><button type="button">Reîncearcă</button>';
+            Object.assign(notice.style, {
+                position: 'fixed', top: '14px', right: '14px', zIndex: '100', display: 'flex', alignItems: 'center', gap: '9px', maxWidth: 'min(420px, calc(100vw - 28px))', padding: '10px 12px', border: '1px solid rgba(248,113,113,.42)', borderRadius: '12px', background: 'rgba(15,23,42,.96)', color: '#fecaca', boxShadow: '0 14px 34px rgba(2,6,23,.38)', font: '600 11px/1.35 Inter,system-ui,sans-serif'
+            });
+            const button = notice.querySelector('button');
+            Object.assign(button.style, { marginLeft: 'auto', padding: '5px 8px', border: '1px solid rgba(248,113,113,.5)', borderRadius: '7px', background: 'transparent', color: '#fecaca', cursor: 'pointer', font: 'inherit', whiteSpace: 'nowrap' });
+            notice.querySelector('.panel-offline-dot').style.cssText = 'width:8px;height:8px;flex:none;border-radius:50%;background:#f87171;box-shadow:0 0 10px rgba(248,113,113,.7)';
+            button.addEventListener('click', () => window.location.reload());
+            document.body.appendChild(notice);
+        }
+        const notice = document.getElementById('panel-offline-notice');
+        const sync = () => { if (notice) notice.hidden = navigator.onLine !== false; };
+        window.addEventListener('online', sync, { passive: true });
+        window.addEventListener('offline', sync, { passive: true });
+        sync();
+        if (!window.panelNotificationRefreshTimer) {
+            window.panelNotificationRefreshTimer = window.setInterval(() => {
+                if (document.visibilityState === 'visible') loadPanelProfileNotifications(false);
+            }, 120000);
+        }
+    }
+
     function renderProfileNotifications(notifications = [], readIds = new Set()) {
         document.querySelectorAll('[data-profile-notification-list]').forEach((list) => {
             list.replaceChildren();
@@ -965,6 +1124,46 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         }
     }
 
+    async function loadOrganizationBranding() {
+        const user = typeof getUser === 'function' ? getUser() : null;
+        const config = window.PANEL_SUPABASE_CONFIG;
+        if (!user || !config?.url || !config?.publishableKey || typeof window.ensurePanelSession !== 'function') return;
+        try {
+            const panelSession = await window.ensurePanelSession();
+            const response = await fetch(`${config.url}/functions/v1/manage-admin-center`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', apikey: config.publishableKey, Authorization: `Bearer ${config.publishableKey}`, 'x-panel-session': panelSession },
+                body: JSON.stringify({ action: 'org_hub' })
+            });
+            if (!response.ok) return;
+            const result = await response.json();
+            const organization = result.organization || {};
+            /* Păstrăm tema memorată până când serverul livrează o configurație
+               validă. Un răspuns fără tema organizației nu trebuie să șteargă
+               tema afișată deja la primul paint. */
+            if (result.seasonal_theme && typeof result.seasonal_theme === 'object') {
+                applySeasonalTheme(result.seasonal_theme);
+            }
+            const accent = /^#[0-9a-f]{6}$/i.test(String(result.branding?.accent || '')) ? String(result.branding.accent) : '';
+            if (accent) {
+                document.documentElement.style.setProperty('--accent', accent);
+                document.documentElement.style.setProperty('--panel-org-accent', accent);
+            }
+            const active = window.getActiveOrganization?.();
+            if (active && organization.id === active.id) {
+                const merged = { ...active, ...organization, seasonal_theme: result.seasonal_theme || active.seasonal_theme || active.theme || {} };
+                localStorage.setItem('panel_active_organization', JSON.stringify(merged));
+                const organizations = JSON.parse(localStorage.getItem('panel_organizations') || '[]');
+                localStorage.setItem('panel_organizations', JSON.stringify(organizations.map((item) => item.id === merged.id ? { ...item, ...merged } : item)));
+            }
+            document.querySelectorAll('.panel-org-name').forEach((element) => { element.textContent = organization.name || element.textContent; });
+            if (organization.logo_url) document.querySelectorAll('.panel-brand-logo').forEach((element) => { element.src = window.panelSafeAssetUrl(organization.logo_url); });
+            if (organization.banner_url) document.querySelectorAll('.panel-global-header').forEach((element) => { element.style.backgroundImage = `linear-gradient(90deg, rgba(2,6,23,.96), rgba(2,6,23,.68)), url("${window.panelSafeAssetUrl(organization.banner_url)}")`; element.style.backgroundSize = 'cover'; });
+        } catch (_) {
+            // Personalizarea este opțională; pagina funcționează și dacă serviciul este indisponibil.
+        }
+    }
+
     function ensureSharedSidebar() {
         let existing = document.getElementById('panel-shared-sidebar');
         if (existing) return {navigation: existing.querySelector('nav')};
@@ -1006,22 +1205,10 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             header = null;
         }
 
-        if (!header && currentPage !== 'anunturi.html') return;
+        const communityPages = new Set(['anunturi.html', 'anunturi-angajati.html', 'anunturi-organizatie.html']);
+        if (!header && !communityPages.has(currentPage)) return;
 
-        if (currentPage === 'anunturi.html') {
-            const hero = main.querySelector('.community-hero');
-            hero?.querySelector(':scope > div')?.remove();
-            hero?.classList.add('community-toolbar');
-            return;
-        }
-
-        if (currentPage === 'anunturi.html') {
-            if (!header) {
-                header = document.createElement('header');
-                header.innerHTML = '<div class="panel-global-title"><h2>📣 Anunțuri & Sondaje</h2><p>Comunicare pentru Familie și Mecanici.</p></div>';
-                main.prepend(header);
-            }
-            header.className = 'panel-global-header';
+        if (communityPages.has(currentPage)) {
             const hero = main.querySelector('.community-hero');
             hero?.querySelector(':scope > div')?.remove();
             hero?.classList.add('community-toolbar');
@@ -1172,7 +1359,8 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         const sections = [
             ['management', 'Operațiuni', [
                 ['index.html', '📊', 'Dashboard'],
-                ['anunturi.html', '📣', 'Anunțuri & Sondaje'],
+                ['anunturi-angajati.html', '📣', 'Anunțuri angajați'],
+                ['anunturi-organizatie.html', '🏢', 'Anunțuri organizație'],
                 ['pontaj.html', '⏱️', 'Pontaj'],
                 ['cereri.html', '📋', 'Cereri / Absențe'],
                 ['contracte.html', '📜', 'Contracte'],
@@ -1181,14 +1369,14 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             ['resurse', 'Resurse', [
                 ['marketplace.html', '🛒', 'Marketplace'],
                 ['calculator.html', '🧮', 'Calculator'],
-                ['bucatarie.html', '🍳', 'Bucătărie'],
-                ['craftmecanics.html', '🔨', 'Craft Mecanic']
+                ['bucatarie.html', '🍳', 'Bucătărie']
             ]],
             ['ilegal', 'Resurse ilegale', [
                 ['calculatorilegal.html', '🧮', 'Calculator Ilegal'],
                 ['locatiiilegale.html', '🗺️', 'Locații Ilegale'],
                 ['marketplace-ilegal.html', '🚨', 'Black Market'],
-                ['minigames.html', '🎮', 'Minigames']
+                ['minigames.html', '🎮', 'Minigames'],
+                ['stash.html', '📦', 'Stash organizație']
             ]],
             ['administratie', 'Administrație', [
                 ['logs.html', '🧾', 'Loguri'],
@@ -1200,7 +1388,12 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
                 ['developer.html', '🛠️', 'Developer'],
                 ['admin.html', '👑', 'Panou Admin'],
                 ['administrare-organizatie.html', '🏢', 'Administrare organizație'],
-                ['prelungire-voucher.html', '🎟️', 'Prelungire prin voucher']
+                ['prelungire-voucher.html', '🎟️', 'Prelungire prin voucher'],
+                ['organizatie-centru.html', '🧭', 'Centru organizație']
+            ]],
+            ['feedback', 'Feedback', [
+                ['suggestii.html', '💡', 'Sugestii'],
+                ['rate-panel.html', '⭐', 'Recenzii Panel']
             ]]
         ];
         const renderLink = ([href, icon, label]) => {
@@ -1331,9 +1524,11 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         // este filtrat separat de motor după rol și paginile organizației.
         if (currentPage === 'asistent.html' || document.getElementById('panel-assistant-widget')) return;
         try {
-            await loadAssistantScript('panel-assistant-data-script', 'js/asistent-data.js?v=4.8.0', () => Array.isArray(window.PANEL_ASSISTANT_KNOWLEDGE));
-            await loadAssistantScript('panel-assistant-core-script', 'js/asistent-core.js?v=4.8.0', () => Boolean(window.PanelAssistantCore));
-            await loadAssistantScript('panel-assistant-widget-script', 'js/asistent-widget.js?v=4.8.0', () => Boolean(window.__panelAssistantWidgetLoaded));
+            await loadAssistantScript('panel-assistant-craft-recipes-script', 'js/craft-mechanic-recipes.js?v=4.9.2', () => Array.isArray(window.PANEL_CRAFT_MECHANIC_RECIPES));
+            await loadAssistantScript('panel-assistant-data-script', 'js/asistent-data.js?v=4.9.2', () => Array.isArray(window.PANEL_ASSISTANT_KNOWLEDGE));
+            await loadAssistantScript('panel-assistant-calculator-data-script', 'js/asistent-calculator-data.js?v=4.9.2', () => Boolean(window.PANEL_ASSISTANT_CALCULATOR_DATA));
+            await loadAssistantScript('panel-assistant-core-script', 'js/asistent-core.js?v=4.9.2', () => Boolean(window.PanelAssistantCore));
+            await loadAssistantScript('panel-assistant-widget-script', 'js/asistent-widget.js?v=4.9.2', () => Boolean(window.__panelAssistantWidgetLoaded));
         } catch (error) {
             console.warn('Asistentul plutitor nu a putut fi inițializat.', error);
         }
@@ -1587,7 +1782,7 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
 })();
 
 // În pagina Anunțuri, toate citirile comunității sunt limitate la organizația activă.
-if (window.location.pathname.endsWith('anunturi.html') && window.createPanelSupabaseClient) {
+if (['anunturi.html', 'anunturi-angajati.html', 'anunturi-organizatie.html'].includes(window.location.pathname.split('/').pop()) && window.createPanelSupabaseClient) {
     const createClient = window.createPanelSupabaseClient;
     window.createPanelSupabaseClient = function scopedPanelSupabaseClient() {
         const client = createClient();
@@ -1661,4 +1856,14 @@ document.addEventListener('DOMContentLoaded', () => {
         wrapper.appendChild(badge);
     }
     header.appendChild(wrapper);
+});
+
+// Păstrează pachetul Operations disponibil în generatorul de vouchere, inclusiv în copiile mai vechi ale paginii.
+document.addEventListener('DOMContentLoaded', () => {
+    const packageSelect = document.getElementById('package');
+    if (!packageSelect || packageSelect.querySelector('option[value="operations"]')) return;
+    const operationsOption = document.createElement('option');
+    operationsOption.value = 'operations';
+    operationsOption.textContent = 'Operations';
+    packageSelect.insertBefore(operationsOption, packageSelect.querySelector('option[value="full"]'));
 });
