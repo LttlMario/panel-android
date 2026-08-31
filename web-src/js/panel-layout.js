@@ -1,4 +1,31 @@
 // Navigare comună pentru panel: meniu mobil și sidebar pliabil pe desktop.
+/* Aplică preferințele memorate înainte de primul paint, astfel încât tema
+   panelului și tema organizației să nu apară cu întârziere după navigare. */
+(() => {
+    const allowedSeasonal = new Set(['none', 'winter', 'christmas', 'easter', 'autumn', 'halloween', 'summer', 'spring']);
+    const panelTheme = localStorage.getItem('panel_theme') === 'dark' ? 'dark' : 'panel';
+    document.documentElement.dataset.panelTheme = panelTheme;
+    document.documentElement.dataset.theme = 'dark';
+    document.documentElement.classList.add('dark');
+    try {
+        const active = JSON.parse(localStorage.getItem('panel_active_organization') || 'null');
+        const seasonal = active?.seasonal_theme || active?.theme || {};
+        const code = seasonal.enabled === true && allowedSeasonal.has(String(seasonal.code || '')) ? String(seasonal.code) : 'none';
+        const intensity = ['discreet', 'normal', 'intense'].includes(String(seasonal.intensity || '')) ? String(seasonal.intensity) : 'normal';
+        document.documentElement.dataset.seasonalTheme = code;
+        document.documentElement.dataset.seasonalIntensity = intensity;
+    } catch (_) {
+        document.documentElement.dataset.seasonalTheme = 'none';
+        document.documentElement.dataset.seasonalIntensity = 'normal';
+    }
+})();
+
+/* Stilurile sezoniere sunt introduse în head în timpul parsării, nu după
+   încărcarea conținutului, pentru a elimina flash-ul temei originale. */
+if (document.readyState === 'loading' && document.head && !document.head.querySelector('link[data-panel-seasonal-theme]')) {
+    document.write('<link rel="stylesheet" href="css/seasonal-themes.css?v=3.0.0" data-panel-seasonal-theme="true">');
+}
+
 const panelNativeAndroid = /Android/i.test(navigator.userAgent || '') && (
     window.Capacitor?.isNativePlatform?.() === true || /;\s*wv\)/i.test(navigator.userAgent || '')
 );
@@ -392,8 +419,16 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         const currentPage = window.location.pathname.split('/').pop() || 'index.html';
         document.body.classList.add('panel-global-shell');
         document.body.dataset.panelPage = currentPage;
+        setupPanelResilience();
         addStyles();
         ensurePanelVisualTheme();
+        ensureSeasonalThemeStyles();
+        try {
+            const cached = JSON.parse(localStorage.getItem('panel_active_organization') || 'null');
+            applySeasonalTheme(cached?.seasonal_theme || cached?.theme || {});
+        } catch (_) {
+            applySeasonalTheme({});
+        }
         ensureTextNormalizer();
         ensureBrandAssets();
         ensureGlobalHeader();
@@ -570,6 +605,26 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         link.dataset.panelVisualTheme = 'true';
         document.head.appendChild(link);
     }
+
+    function ensureSeasonalThemeStyles() {
+        if (document.querySelector('link[data-panel-seasonal-theme]')) return;
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'css/seasonal-themes.css?v=3.0.0';
+        link.dataset.panelSeasonalTheme = 'true';
+        document.head.appendChild(link);
+    }
+
+    function applySeasonalTheme(value) {
+        const allowed = new Set(['none', 'winter', 'christmas', 'easter', 'autumn', 'halloween', 'summer', 'spring']);
+        const code = value?.enabled === true && allowed.has(String(value.code || '')) ? String(value.code) : 'none';
+        const intensity = ['discreet', 'normal', 'intense'].includes(String(value?.intensity || '')) ? String(value.intensity) : 'normal';
+        document.documentElement.dataset.seasonalTheme = code;
+        document.documentElement.dataset.seasonalIntensity = intensity;
+        document.documentElement.dataset.seasonalReady = 'true';
+    }
+
+    window.panelApplySeasonalThemePreview = window.panelApplySeasonalThemePreview || applySeasonalTheme;
 
     function ensureTextNormalizer() {
         if (document.querySelector('script[data-panel-text-normalizer]')) return;
@@ -914,6 +969,34 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         }
     }
 
+    function setupPanelResilience() {
+        if (!document.getElementById('panel-offline-notice')) {
+            const notice = document.createElement('aside');
+            notice.id = 'panel-offline-notice';
+            notice.hidden = true;
+            notice.setAttribute('role', 'status');
+            notice.innerHTML = '<span class="panel-offline-dot" aria-hidden="true"></span><span>Conexiunea a fost întreruptă. Datele salvate local rămân disponibile.</span><button type="button">Reîncearcă</button>';
+            Object.assign(notice.style, {
+                position: 'fixed', top: '14px', right: '14px', zIndex: '100', display: 'flex', alignItems: 'center', gap: '9px', maxWidth: 'min(420px, calc(100vw - 28px))', padding: '10px 12px', border: '1px solid rgba(248,113,113,.42)', borderRadius: '12px', background: 'rgba(15,23,42,.96)', color: '#fecaca', boxShadow: '0 14px 34px rgba(2,6,23,.38)', font: '600 11px/1.35 Inter,system-ui,sans-serif'
+            });
+            const button = notice.querySelector('button');
+            Object.assign(button.style, { marginLeft: 'auto', padding: '5px 8px', border: '1px solid rgba(248,113,113,.5)', borderRadius: '7px', background: 'transparent', color: '#fecaca', cursor: 'pointer', font: 'inherit', whiteSpace: 'nowrap' });
+            notice.querySelector('.panel-offline-dot').style.cssText = 'width:8px;height:8px;flex:none;border-radius:50%;background:#f87171;box-shadow:0 0 10px rgba(248,113,113,.7)';
+            button.addEventListener('click', () => window.location.reload());
+            document.body.appendChild(notice);
+        }
+        const notice = document.getElementById('panel-offline-notice');
+        const sync = () => { if (notice) notice.hidden = navigator.onLine !== false; };
+        window.addEventListener('online', sync, { passive: true });
+        window.addEventListener('offline', sync, { passive: true });
+        sync();
+        if (!window.panelNotificationRefreshTimer) {
+            window.panelNotificationRefreshTimer = window.setInterval(() => {
+                if (document.visibilityState === 'visible') loadPanelProfileNotifications(false);
+            }, 120000);
+        }
+    }
+
     function renderProfileNotifications(notifications = [], readIds = new Set()) {
         document.querySelectorAll('[data-profile-notification-list]').forEach((list) => {
             list.replaceChildren();
@@ -1048,6 +1131,12 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             if (!response.ok) return;
             const result = await response.json();
             const organization = result.organization || {};
+            /* Păstrăm tema memorată până când serverul livrează o configurație
+               validă. Un răspuns fără tema organizației nu trebuie să șteargă
+               tema afișată deja la primul paint. */
+            if (result.seasonal_theme && typeof result.seasonal_theme === 'object') {
+                applySeasonalTheme(result.seasonal_theme);
+            }
             const accent = /^#[0-9a-f]{6}$/i.test(String(result.branding?.accent || '')) ? String(result.branding.accent) : '';
             if (accent) {
                 document.documentElement.style.setProperty('--accent', accent);
@@ -1055,7 +1144,7 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             }
             const active = window.getActiveOrganization?.();
             if (active && organization.id === active.id) {
-                const merged = { ...active, ...organization };
+                const merged = { ...active, ...organization, seasonal_theme: result.seasonal_theme || active.seasonal_theme || active.theme || {} };
                 localStorage.setItem('panel_active_organization', JSON.stringify(merged));
                 const organizations = JSON.parse(localStorage.getItem('panel_organizations') || '[]');
                 localStorage.setItem('panel_organizations', JSON.stringify(organizations.map((item) => item.id === merged.id ? { ...item, ...merged } : item)));
@@ -1439,9 +1528,11 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         // este filtrat separat de motor după rol și paginile organizației.
         if (currentPage === 'asistent.html' || document.getElementById('panel-assistant-widget')) return;
         try {
-            await loadAssistantScript('panel-assistant-data-script', 'js/asistent-data.js?v=4.8.0', () => Array.isArray(window.PANEL_ASSISTANT_KNOWLEDGE));
-            await loadAssistantScript('panel-assistant-core-script', 'js/asistent-core.js?v=4.8.0', () => Boolean(window.PanelAssistantCore));
-            await loadAssistantScript('panel-assistant-widget-script', 'js/asistent-widget.js?v=4.8.0', () => Boolean(window.__panelAssistantWidgetLoaded));
+            await loadAssistantScript('panel-assistant-craft-recipes-script', 'js/craft-mechanic-recipes.js?v=4.9.2', () => Array.isArray(window.PANEL_CRAFT_MECHANIC_RECIPES));
+            await loadAssistantScript('panel-assistant-data-script', 'js/asistent-data.js?v=4.9.2', () => Array.isArray(window.PANEL_ASSISTANT_KNOWLEDGE));
+            await loadAssistantScript('panel-assistant-calculator-data-script', 'js/asistent-calculator-data.js?v=4.9.2', () => Boolean(window.PANEL_ASSISTANT_CALCULATOR_DATA));
+            await loadAssistantScript('panel-assistant-core-script', 'js/asistent-core.js?v=4.9.2', () => Boolean(window.PanelAssistantCore));
+            await loadAssistantScript('panel-assistant-widget-script', 'js/asistent-widget.js?v=4.9.2', () => Boolean(window.__panelAssistantWidgetLoaded));
         } catch (error) {
             console.warn('Asistentul plutitor nu a putut fi inițializat.', error);
         }
