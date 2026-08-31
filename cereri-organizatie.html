@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Învoiri - Panel</title>
+    <title>Învoiri organizație - Panel</title>
     <!-- Tailwind CSS CDN -->
     <link rel="stylesheet" href="css/tailwind.css">
     <!-- Supabase JS Client -->
@@ -16,7 +16,7 @@
     <link rel="icon" href="img/favicon.ico">
     <link rel="apple-touch-icon" href="img/logo-180.png">
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex text-sm">
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex text-sm" data-request-audience="organization">
 
             <!-- Conținut Principal -->
             <main class="flex-1 flex flex-col min-w-0">
@@ -26,7 +26,7 @@
                 <!-- Formular Creare Învoire -->
                 <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-lg">
                     <h3 class="text-base font-bold text-slate-100 mb-1">Trimite o Învoire Nouă</h3>
-                    <p class="text-xs text-slate-400 mb-6">Înregistrează o învoire pentru audiența configurată. Aceasta este informativă și nu necesită aprobare.</p>
+                    <p class="text-xs text-slate-400 mb-6">Înregistrează o învoire pentru organizație. Aceasta este informativă și nu necesită aprobare.</p>
 
                     <form id="absence-form" class="space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
