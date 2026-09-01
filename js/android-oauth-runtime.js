@@ -17,7 +17,7 @@
 
   // Discord revine pe callback-ul public, iar MainActivity îl rescrie
   // înapoi către login.html local înainte ca WebView-ul să părăsească aplicația.
-  window.PANEL_ANDROID_REDIRECT_URI = 'https://lttlmario.github.io/panel-pro/login.html';
+  window.PANEL_ANDROID_REDIRECT_URI = 'https://panel-pro.ro/login.html';
 
   const RELEASES_URL = 'https://api.github.com/repos/LttlMario/panel-android/releases?per_page=10';
   const CACHE_KEY = 'panel_android_latest_release';

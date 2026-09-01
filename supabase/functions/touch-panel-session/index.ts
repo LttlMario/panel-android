@@ -2,7 +2,7 @@ import { createClient } from 'jsr:@supabase/supabase-js@2.112.3';
 import { getPlatformSecret } from '../_shared/platform-secrets.ts';
 
 const headers = {
-  'Access-Control-Allow-Origin': 'https://lttlmario.github.io',
+  'Access-Control-Allow-Origin': 'https://panel-pro.ro',
   'Access-Control-Allow-Headers': 'authorization,apikey,content-type,x-panel-session',
   'Content-Type': 'application/json',
 };
@@ -33,7 +33,7 @@ const revokeOrganizationAccess = async (db: any, organizationId: string, discord
 
 const discordHeaders = (token: string) => ({
   Authorization: `Bot ${token}`,
-  'User-Agent': 'PanelPro/1.0 (+https://lttlmario.github.io/panel-pro/)',
+  'User-Agent': 'PanelPro/1.0 (+https://panel-pro.ro/)',
 });
 
 Deno.serve(async (request) => {
