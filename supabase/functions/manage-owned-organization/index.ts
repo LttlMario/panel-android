@@ -18,7 +18,7 @@ const webhookChannels = new Set([
   'organization', 'departments', 'pontaj', 'weekly_reports', 'requests', 'requests_organization',
   'requests_departments', 'contracts', 'contract_identity_weekly', 'marketplace', 'illegal_marketplace',
   'fines_organization', 'fines_departments', 'warnings_organization', 'warnings_departments',
-  'sanctions_organization', 'sanctions_departments', 'actions_organization', 'actions_organization_weekly', 'event_reminders', 'status_live', 'organization_expiration', 'stash', 'stash_requests', 'stash_donations'
+  'sanctions_organization', 'sanctions_departments', 'actions_organization', 'actions_organization_weekly', 'event_reminders', 'status_live', 'organization_expiration', 'stash', 'stash_requests', 'stash_donations', 'log_pontaj', 'log_requests_organization', 'log_requests_departments', 'log_announcements_organization', 'log_announcements_departments', 'log_contracts', 'contract_uploads'
 ]);
 const allowedContractPlaceholders = new Set([
   '{{COMPANY}}', '{{ADDRESS}}', '{{MANAGER}}', '{{EMPLOYEE_NAME}}', '{{CNP}}',
@@ -47,8 +47,8 @@ const allowedPages = new Map([
 const allowedAssistantPages = new Set([...allowedPages.keys()]);
 const allowedActionKeys = new Set(['anunturi.publish', 'marketplace.delete', 'cereri.organization', 'cereri.departments', 'actions.organization.read', 'actions.organization.write', 'actions.organization.delete', 'events.read', 'events.write', 'stash.write', 'stash.request', 'stash.manage_requests', 'stash.donate', 'stash.approve_donation', 'stash.log']);
 const fullOnlyWebhookChannels = new Set(['organization', 'requests_organization', 'illegal_marketplace', 'fines_organization', 'warnings_organization', 'sanctions_organization']);
-const operationsWebhookChannels = new Set(['organization', 'requests_organization', 'fines_organization', 'warnings_organization', 'sanctions_organization', 'actions_organization', 'actions_organization_weekly', 'event_reminders', 'illegal_marketplace', 'organization_expiration']);
-const standardWebhookChannels = new Set(['departments', 'pontaj', 'weekly_reports', 'event_reminders', 'contracts', 'contract_identity_weekly', 'marketplace', 'fines_departments', 'warnings_departments', 'sanctions_departments', 'status_live', 'organization_expiration']);
+const operationsWebhookChannels = new Set(['organization', 'requests_organization', 'fines_organization', 'warnings_organization', 'sanctions_organization', 'actions_organization', 'actions_organization_weekly', 'event_reminders', 'illegal_marketplace', 'organization_expiration', 'log_requests_organization', 'log_requests_departments', 'log_announcements_organization', 'log_announcements_departments']);
+const standardWebhookChannels = new Set(['departments', 'pontaj', 'weekly_reports', 'event_reminders', 'contracts', 'contract_uploads', 'contract_identity_weekly', 'marketplace', 'fines_departments', 'warnings_departments', 'sanctions_departments', 'status_live', 'organization_expiration', 'log_requests_organization', 'log_requests_departments', 'log_announcements_organization', 'log_announcements_departments', 'log_contracts']);
 const fullOnlyPageFeatures = new Map([
   ['calculatorilegal.html', 'illegal_calculator'],
   ['locatiiilegale.html', 'illegal_locations'],
@@ -349,7 +349,7 @@ Deno.serve(async (request) => {
 
     const organizationId = String(owned.organization.id);
     const loadSettings = async () => {
-      const [{ data: settings }, { data: contractSetting }, { data: roleMappings }, { data: pageSetting }, { data: guilds }, { data: accessSetting }, { data: packageSetting }, { data: actionSetting }, { data: assistantPageSetting }, { data: communicationSetting }, { data: disciplineSetting }, { data: assistantKnowledgeSetting }] = await Promise.all([
+      const [{ data: settings }, { data: contractSetting }, { data: roleMappings }, { data: pageSetting }, { data: guilds }, { data: accessSetting }, { data: packageSetting }, { data: actionSetting }, { data: globalSetting }, { data: assistantPageSetting }, { data: communicationSetting }, { data: disciplineSetting }, { data: assistantKnowledgeSetting }] = await Promise.all([
         db.from('organization_settings').select('*').eq('organization_id', organizationId).maybeSingle(),
         db.from('app_settings').select('value').eq('organization_id', organizationId).eq('key', 'contract_template').maybeSingle(),
         db.from('organization_role_mappings').select('guild_id,discord_role_id,discord_role_name,panel_role,permission_level,priority,enabled').eq('organization_id', organizationId).order('priority', { ascending: false }),
@@ -358,6 +358,7 @@ Deno.serve(async (request) => {
         db.from('app_settings').select('value').eq('organization_id', organizationId).eq('key', 'organization_access').maybeSingle(),
         db.from('app_settings').select('value').eq('organization_id', organizationId).eq('key', 'organization_package').maybeSingle(),
         db.from('app_settings').select('value').eq('organization_id', organizationId).eq('key', 'action_permissions').maybeSingle(),
+        db.from('app_settings').select('value').eq('organization_id', organizationId).eq('key', 'global_permissions').maybeSingle(),
         db.from('app_settings').select('value').eq('organization_id', organizationId).eq('key', 'assistant_page_permissions').maybeSingle(),
         db.from('app_settings').select('value').eq('organization_id', organizationId).eq('key', 'communication_permissions').maybeSingle(),
         db.from('app_settings').select('value').eq('organization_id', organizationId).eq('key', 'discipline_permissions').maybeSingle(),
@@ -372,6 +373,7 @@ Deno.serve(async (request) => {
         access: accessSetting?.value || {},
         package: packageSetting?.value || {},
         action_permissions: actionSetting?.value || {},
+        global_permissions: globalSetting?.value || {},
         assistant_page_permissions: assistantPageSetting?.value || {},
         communication_permissions: communicationSetting?.value || {},
         discipline_permissions: disciplineSetting?.value || {},
@@ -406,6 +408,7 @@ Deno.serve(async (request) => {
         access: state.access,
         package: state.package,
         action_permissions: state.action_permissions,
+        global_permissions: state.global_permissions,
         assistant_page_permissions: state.assistant_page_permissions,
         communication_permissions: state.communication_permissions,
         discipline_permissions: state.discipline_permissions,
@@ -556,6 +559,17 @@ Deno.serve(async (request) => {
     const cleanRoleIds = (value: unknown, validRoleIds: Set<string>) => [
       ...new Set((Array.isArray(value) ? value : []).map(String).filter((id) => validRoleIds.has(id)))
     ];
+    if (body.global_permissions !== undefined) {
+      const input = body.global_permissions && typeof body.global_permissions === 'object' ? body.global_permissions as Record<string, any> : {};
+      const globalRules = {
+        organization: packageAllowsFeature(currentState.package, 'announcements_organization')
+          ? { read: cleanRoleIds(input.organization?.read, savedRoleIds), write: cleanRoleIds(input.organization?.write, savedRoleIds) }
+          : { read: [], write: [] },
+        departments: { read: cleanRoleIds(input.departments?.read, savedRoleIds), write: cleanRoleIds(input.departments?.write, savedRoleIds) }
+      };
+      const { error } = await db.from('app_settings').upsert({ organization_id: organizationId, key: 'global_permissions', value: globalRules, updated_at: new Date().toISOString() }, { onConflict: 'organization_id,key' });
+      if (error) throw error;
+    }
     if (body.action_permissions !== undefined) {
       const actionRules = Object.fromEntries(
         Object.entries(body.action_permissions && typeof body.action_permissions === 'object' ? body.action_permissions : {})
@@ -635,6 +649,7 @@ Deno.serve(async (request) => {
       access: updatedState.access,
       package: updatedState.package,
       action_permissions: updatedState.action_permissions,
+      global_permissions: updatedState.global_permissions,
       assistant_page_permissions: updatedState.assistant_page_permissions,
       communication_permissions: updatedState.communication_permissions,
       discipline_permissions: updatedState.discipline_permissions,
