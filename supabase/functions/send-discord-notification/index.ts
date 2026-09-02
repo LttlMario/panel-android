@@ -1,6 +1,7 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2.112.3';
 import { requirePanelSession } from '../_shared/panel-session.ts';
 import { resolvePackageFeatures } from '../_shared/package-features.ts';
+import { deliverDiscordRoute, routeCandidates } from '../_shared/discord-delivery.ts';
 
 const cors = {
   'Access-Control-Allow-Origin': 'https://panel-pro.ro',
@@ -351,7 +352,9 @@ if (request.method === 'OPTIONS') {
 
     let config: any = null;
 
-    if (finalChannel !== 'illegal_marketplace') {
+    const globalMarketplaceChannel = ['marketplace', 'illegal_marketplace'].includes(finalChannel);
+
+    if (!globalMarketplaceChannel) {
       const {
         data: organizationConfig,
         error: configError
@@ -359,7 +362,7 @@ if (request.method === 'OPTIONS') {
     } =
       await db
         .from('organization_settings')
-        .select('webhook_routes, marketplace_webhook_url, marketplace_secondary_webhook_url')
+        .select('webhook_routes, discord_channel_routes, marketplace_webhook_url, marketplace_secondary_webhook_url')
         .eq(
           'organization_id',
           sessionOrganizationId
@@ -382,6 +385,16 @@ if (request.method === 'OPTIONS') {
       }
 
       config = organizationConfig;
+    }
+
+    // Dacă există o rută configurată pe channel_id, botul are prioritate.
+    // deliverDiscordRoute încearcă webhook-ul aceleiași destinații ca fallback.
+    const channelFallbackRoute = ['requests_organization', 'requests_departments'].includes(finalChannel) ? 'requests' : '';
+    const hasConfiguredBotRoute = Object.keys(config?.discord_channel_routes?.[finalChannel] || {}).length
+      || Object.keys(config?.discord_channel_routes?.[channelFallbackRoute] || {}).length;
+    if (!globalMarketplaceChannel && finalChannel !== 'pontaj' && hasConfiguredBotRoute) {
+      const delivery = await deliverDiscordRoute(db, config, finalChannel, forwardBody, { headers: forwardHeaders, fallbackRouteKey: channelFallbackRoute });
+      return reply({ ok: true, channel: finalChannel, organization_id: sessionOrganizationId, routes: delivery.results.length, messages: delivery.results, fallback_failures: delivery.failures });
     }
 
 
@@ -425,7 +438,7 @@ if (finalChannel === 'requests_organization') {
   .map(String);
 
 
-  if (!webhooks.length) {
+  if (!webhooks.length && !routeCandidates(config, finalChannel, [], channelFallbackRoute).some((item) => item.candidates.length)) {
 
     throw new Error(
       'Webhook-ul requests.primary nu este configurat pentru cereri organizație.'
@@ -511,7 +524,7 @@ if (finalChannel === 'requests_departments') {
   .map(String);
 
 
-  if (!webhooks.length) {
+  if (!webhooks.length && !routeCandidates(config, finalChannel, [], channelFallbackRoute).some((item) => item.candidates.length)) {
 
     throw new Error(
       'Webhook-ul requests.secondary nu este configurat pentru cereri departamente.'
@@ -586,8 +599,9 @@ if (finalChannel === 'requests_departments') {
  */
 
 let webhooks: string[];
+let globalSettingsRows: any[] = [];
 
-if (finalChannel === 'illegal_marketplace') {
+if (['marketplace', 'illegal_marketplace'].includes(finalChannel)) {
   const { data: activeOrganizations, error: organizationsError } = await db
     .from('organizations')
     .select('id')
@@ -597,28 +611,55 @@ if (finalChannel === 'illegal_marketplace') {
 
   const organizationIds = (activeOrganizations || []).map((organization: any) => organization.id);
   if (!organizationIds.length) {
-    throw new Error('Nu există organizații active pentru Marketplace ilegal.');
+    throw new Error(`Nu există organizații active pentru ${finalChannel === 'marketplace' ? 'Marketplace' : 'Marketplace ilegal'}.`);
   }
 
   const { data: settingsRows, error: settingsError } = await db
     .from('organization_settings')
-    .select('organization_id, webhook_routes, illegal_marketplace_webhook_url, illegal_marketplace_secondary_webhook_url')
+    .select('organization_id, webhook_routes, discord_channel_routes, marketplace_webhook_url, marketplace_secondary_webhook_url, illegal_marketplace_webhook_url, illegal_marketplace_secondary_webhook_url')
     .in('organization_id', organizationIds);
 
   if (settingsError) throw settingsError;
+  globalSettingsRows = settingsRows || [];
 
   webhooks = [...new Set(
-    (settingsRows || []).flatMap((settings: any) => [
-      settings.webhook_routes?.illegal_marketplace?.primary?.url,
-      settings.webhook_routes?.illegal_marketplace?.secondary?.url,
-      settings.illegal_marketplace_webhook_url,
-      settings.illegal_marketplace_secondary_webhook_url
-    ]).filter(Boolean).map(String)
+    (settingsRows || []).flatMap((settings: any) => {
+      const route = settings.webhook_routes?.[finalChannel] || {};
+      const legacy = finalChannel === 'marketplace'
+        ? [settings.marketplace_webhook_url, settings.marketplace_secondary_webhook_url]
+        : [settings.illegal_marketplace_webhook_url, settings.illegal_marketplace_secondary_webhook_url];
+      return [route.primary?.url, route.secondary?.url, ...legacy].filter(Boolean).map(String);
+    })
   )];
 
-  if (!webhooks.length) {
-    throw new Error('Nu există niciun webhook configurat pentru Marketplace ilegal.');
+  if (!webhooks.length && !globalSettingsRows.some((settings) => {
+    const legacy = finalChannel === 'marketplace'
+      ? [settings.marketplace_webhook_url, settings.marketplace_secondary_webhook_url]
+      : [settings.illegal_marketplace_webhook_url, settings.illegal_marketplace_secondary_webhook_url];
+    return routeCandidates(settings, finalChannel, legacy).some((item) => item.candidates.length);
+  })) {
+    throw new Error(`Nu există niciun canal sau webhook configurat pentru ${finalChannel === 'marketplace' ? 'Marketplace' : 'Marketplace ilegal'}.`);
   }
+
+  const globalMessages: any[] = [];
+  const globalFailures: string[] = [];
+  for (const settings of globalSettingsRows) {
+    const legacy = finalChannel === 'marketplace'
+      ? [settings.marketplace_webhook_url, settings.marketplace_secondary_webhook_url]
+      : [settings.illegal_marketplace_webhook_url, settings.illegal_marketplace_secondary_webhook_url];
+    if (!routeCandidates(settings, finalChannel, legacy).some((item) => item.candidates.length)) continue;
+    try {
+      const delivery = await deliverDiscordRoute(db, settings, finalChannel, forwardBody, { headers: forwardHeaders, legacyWebhookUrls: legacy });
+      globalMessages.push(...delivery.results.map((item) => ({ ...item, organization_id: settings.organization_id })));
+      globalFailures.push(...delivery.failures.map((failure) => `${settings.organization_id}: ${failure}`));
+    } catch (error) {
+      globalFailures.push(`${settings.organization_id}: ${error instanceof Error ? error.message : 'Eroare Discord.'}`);
+    }
+  }
+  if (globalMessages.length) {
+    return reply({ ok: true, channel: finalChannel, organization_id: sessionOrganizationId, routes: globalMessages.length, messages: globalMessages, fallback_failures: globalFailures });
+  }
+  if (globalFailures.length) throw new Error(globalFailures.join(' | '));
 } else {
   route =
       config.webhook_routes?.[finalChannel];
@@ -644,7 +685,7 @@ if (finalChannel === 'illegal_marketplace') {
 
 
 
-  if (!webhooks.length) {
+  if (!webhooks.length && !routeCandidates(config, finalChannel).some((item) => item.candidates.length)) {
 
       throw new Error(
         `Webhook-ul ${finalChannel} nu este configurat pentru organizația activă.`
@@ -686,6 +727,22 @@ if (finalChannel === 'illegal_marketplace') {
       }
     }
     const updatedMessageRefs = { ...storedMessageRefs };
+    const channelTargets = routeCandidates(config, finalChannel);
+    if (channelTargets.some((item) => item.candidates.some((candidate) => candidate.transport === 'bot'))) {
+      const messageIds: Record<string, string> = {};
+      for (const item of channelTargets) {
+        const channelId = config?.discord_channel_routes?.[finalChannel]?.[item.target]?.channel_id;
+        const legacyRef = channelId ? storedMessageRefs[String(channelId)] : '';
+        if (legacyRef) messageIds[item.target] = legacyRef;
+      }
+      const delivery = await deliverDiscordRoute(db, config, finalChannel, forwardBody, { headers: forwardHeaders, messageIds });
+      for (const result of delivery.results || []) {
+        const key = result.channel_id || result.url || result.target;
+        if (result.id) updatedMessageRefs[String(key)] = String(result.id);
+        deliveredMessages.push({ channel_id: result.channel_id || null, webhook: result.url || null, id: result.id, action: messageIds[result.target] ? 'edited' : 'created' });
+      }
+      if (!delivery.results.length) throw new Error(delivery.failures.join(' | ') || 'Discord nu a acceptat notificarea.');
+    } else {
     for (const webhook of webhooks) {
 
 
@@ -768,6 +825,7 @@ if (finalChannel === 'illegal_marketplace') {
         } catch (_) {}
       }
 
+    }
     }
 
     if (editExistingPontajMessage) {

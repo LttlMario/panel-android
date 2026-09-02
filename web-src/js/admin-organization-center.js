@@ -12,7 +12,7 @@
     const box = document.createElement('section');
     box.id = 'admin-organization-center';
     box.className = 'mt-6 rounded-2xl border border-indigo-700/60 bg-indigo-950/20 p-6';
-    box.innerHTML = `<h2 class="text-lg font-black">Centru administrare organizații</h2><p class="mt-2 text-sm text-slate-400">Status, audit, roluri, webhook-uri și operațiuni rapide.</p>
+    box.innerHTML = `<h2 class="text-lg font-black">Centru administrare organizații</h2><p class="mt-2 text-sm text-slate-400">Status, audit, roluri, canalele botului și operațiuni rapide.</p>
       <div id="org-admin-stats" class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5"></div>
       <div class="mt-4 flex flex-wrap gap-2"><button id="org-admin-refresh" class="rounded-lg bg-indigo-700 px-3 py-2 text-xs font-bold">↻ Actualizează</button><button id="org-admin-health" class="rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold">Verifică tot sistemul</button><button id="org-admin-audit" class="rounded-lg bg-violet-700 px-3 py-2 text-xs font-bold">Încarcă audit</button><button id="org-admin-export" class="rounded-lg bg-cyan-700 px-3 py-2 text-xs font-bold">Exportă organizații CSV</button><button id="org-admin-members" class="rounded-lg bg-fuchsia-700 px-3 py-2 text-xs font-bold">Exportă membri CSV</button></div>
       <div id="org-admin-health-result" class="mt-3 hidden rounded-xl border border-slate-700 bg-slate-950 p-3 text-xs"></div>
@@ -24,15 +24,15 @@
     let organizations = [];
     const load = async () => {
       const result = await invoke({action:'list'}); organizations = result.organizations || [];
-      const now = Date.now(); let active=0,draft=0,expired=0,disabled=0,incomplete=0,webhookIssues=0;
+      const now = Date.now(); let active=0,draft=0,expired=0,disabled=0,incomplete=0,botChannelIssues=0;
       document.getElementById('org-admin-list').innerHTML = organizations.map(org => {
         const expiry=org.platform_settings?.organization_access?.expires_at, isExpired=expiry&&Date.parse(expiry)<=now, isDraft=org.lifecycle_status==='draft', isActive=org.active&&!isExpired&&!isDraft;
         if(isDraft)draft++; else if(isExpired)expired++; else if(!org.active)disabled++; else if(isActive)active++;
         const settings=org.organization_settings?.[0]||{}, missing=!org.organization_guilds?.length||!settings.discord_client_id||!settings.panel_public_url||!org.organization_role_mappings?.length; if(missing)incomplete++;
-        const routes=settings.webhook_routes||{}; if(Object.values(routes).some(route=>Object.values(route||{}).some(item=>item?.enabled&&!item.url)))webhookIssues++;
+        const routes=settings.discord_channel_routes||{}; if(Object.values(routes).some(route=>Object.values(route||{}).some(item=>item?.enabled&&!item.channel_id)))botChannelIssues++;
         return `<article class="rounded-xl border border-slate-700 bg-slate-950 p-3"><div class="flex items-center justify-between gap-2"><b>${esc(org.name)}</b><span class="text-xs ${isDraft?'text-amber-300':isActive?'text-emerald-300':'text-red-300'}">${isDraft?'Draft':isActive?'Activă':isExpired?'Expirată':'Dezactivată'}</span></div><small class="text-slate-400">${org.organization_guilds?.length||0} server(e) · ${org.organization_role_mappings?.length||0} rol(uri)${missing?' · ⚠ configurație incompletă':''}</small></article>`;
       }).join('') || '<p class="text-sm text-slate-400">Nu există organizații.</p>';
-      document.getElementById('org-admin-stats').innerHTML = [['active','Active',active,'emerald'],['draft','Draft',draft,'amber'],['expired','Expirate',expired,'red'],['disabled','Dezactivate',disabled,'orange'],['incomplete','Incomplete',incomplete,'yellow'],['webhooks','Webhook-uri cu probleme',webhookIssues,'cyan']].map(x=>`<div class="rounded-xl border border-${x[3]}-700/60 bg-${x[3]}-950/30 p-3"><b class="text-2xl">${x[2]}</b><small class="block text-slate-300">${x[1]}</small></div>`).join('');
+      document.getElementById('org-admin-stats').innerHTML = [['active','Active',active,'emerald'],['draft','Draft',draft,'amber'],['expired','Expirate',expired,'red'],['disabled','Dezactivate',disabled,'orange'],['incomplete','Incomplete',incomplete,'yellow'],['bot-channels','Canale bot cu probleme',botChannelIssues,'cyan']].map(x=>`<div class="rounded-xl border border-${x[3]}-700/60 bg-${x[3]}-950/30 p-3"><b class="text-2xl">${x[2]}</b><small class="block text-slate-300">${x[1]}</small></div>`).join('');
     };
     const audit = async () => { const result=await invoke({action:'list_audit'});document.getElementById('org-admin-audit-list').textContent=(result.events||[]).map(event=>`${new Date(event.created_at).toLocaleString('ro-RO')} · ${event.action} · ${event.actor_discord_id}`).join('\n')||'Nu există evenimente.'; };
     document.getElementById('org-admin-refresh').onclick=()=>load().catch(error=>alert(error.message));

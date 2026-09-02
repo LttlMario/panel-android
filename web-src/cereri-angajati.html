@@ -12,7 +12,7 @@
     <script src="js/permissions.js?v=4.6.2"></script>
     <script src="js/panel-layout.js?v=4.28.9"></script>
     <link rel="stylesheet" href="css/global-footer.css">
-    <script src="js/project-version.js?v=3.12.0"></script>
+    <script src="js/project-version.js?v=3.13.0"></script>
     <link rel="icon" href="img/favicon.ico">
     <link rel="apple-touch-icon" href="img/logo-180.png">
 </head>
@@ -575,6 +575,7 @@ console.log(
             }
             const newAbsence = {
                 organization_id: activeOrganization.id,
+                request_audience: requestPageAudience === 'departments' ? 'departments' : 'organization',
                 discord_id: currentUser.discord_id,
                 colleague_name: `${activeName} [${activeRole}]`,
                 notice_type: noticeType,
@@ -775,6 +776,7 @@ fetchAbsences();
             const days = Math.max(1, Math.floor((getNoticeDateTime(endAt) - getNoticeDateTime(startAt)) / 86400000) + 1);
 
             const updatedData = {
+                request_audience: requestPageAudience === 'departments' ? 'departments' : 'organization',
                 notice_type: noticeType,
                 reason: reason,
                 start_date: startDate,

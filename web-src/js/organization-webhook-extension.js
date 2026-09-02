@@ -27,8 +27,14 @@
     document.querySelectorAll('[id^="wh_primary_url_"], [id^="wh_secondary_url_"]').forEach((input) => {
       const key = input.id.replace(/^wh_(?:primary|secondary)_url_/, '');
       const fieldset = input.closest('fieldset');
-      if (fieldset) fieldset.hidden = packageCode === 'full' ? false : packageCode === 'operations' ? !operationsWebhookKeys.has(key) : !standardWebhookKeys.has(key);
+      if (fieldset) fieldset.hidden = true;
     });
+    document.querySelectorAll('#webhooks details').forEach((details) => {
+      if (/webhook/i.test(details.querySelector('summary')?.textContent || '')) details.hidden = true;
+    });
+    const legacyDetails = $('webhooks')?.closest('details');
+    if (legacyDetails) legacyDetails.hidden = true;
+    document.querySelectorAll('[data-test-webhook], #test-all-webhooks').forEach((button) => { button.hidden = true; });
   }
 
   function addAnnouncementPermissions() {
@@ -94,52 +100,7 @@
     host.appendChild(card);
   }
 
-  function routeValue(target) {
-    return {
-      enabled: $(`wh_${target}_enabled_${statusChannel}`)?.checked === true,
-      url: $(`wh_${target}_url_${statusChannel}`)?.value.trim() || ''
-    };
-  }
-
-  function injectStatusWebhookFields() {
-    const host = $('webhooks');
-    if (!host || $('wh_primary_url_status_live')) return;
-    const fieldset = document.createElement('fieldset');
-    fieldset.className = 'rounded-xl border border-emerald-700/60 bg-emerald-950/10 p-3';
-    fieldset.innerHTML = `
-      <legend class="px-1 font-bold text-emerald-200">Status Live</legend>
-      <small class="mb-2 block text-slate-400">Embed Discord editat periodic cu mecanicii aflați în pontaj și în pauză.</small>
-      <label class="flex items-center gap-2 text-xs"><input type="checkbox" id="wh_primary_enabled_status_live"> Discord principal</label>
-      <input id="wh_primary_url_status_live" type="url" class="field" placeholder="Webhook Discord principal pentru Status Live">
-      <button type="button" class="mt-2 rounded-lg border border-cyan-700 px-3 py-1 text-xs font-bold text-cyan-200" data-status-test="primary">Testează webhookul</button>
-      <span class="ml-2 text-xs text-slate-400" data-status-test-result="primary"></span>
-      <label class="mt-3 flex items-center gap-2 text-xs"><input type="checkbox" id="wh_secondary_enabled_status_live"> Discord secundar</label>
-      <input id="wh_secondary_url_status_live" type="url" class="field" placeholder="Webhook Discord secundar pentru Status Live">
-      <button type="button" class="mt-2 rounded-lg border border-cyan-700 px-3 py-1 text-xs font-bold text-cyan-200" data-status-test="secondary">Testează webhookul</button>
-      <span class="ml-2 text-xs text-slate-400" data-status-test-result="secondary"></span>`;
-    host.appendChild(fieldset);
-
-    fieldset.querySelectorAll('[data-status-test]').forEach((button) => {
-      button.addEventListener('click', async () => {
-        const target = button.dataset.statusTest;
-        const url = $(`wh_${target}_url_status_live`).value.trim();
-        const result = fieldset.querySelector(`[data-status-test-result="${target}"]`);
-        if (!url) { result.textContent = 'Completează webhookul.'; result.className = 'ml-2 text-xs text-amber-300'; return; }
-        button.disabled = true; result.textContent = 'Se testează...';
-        try {
-          const response = await fetch(`${config.url}/functions/v1/manage-organizations`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', apikey: config.publishableKey, Authorization: `Bearer ${config.publishableKey}`, 'x-panel-session': localStorage.getItem('panel_session_token') || '' },
-            body: JSON.stringify({ action: 'test_webhook', url, organization_id: $('id').value })
-          });
-          const data = await response.json();
-          if (!response.ok) throw new Error(data.error || 'Testul a eșuat.');
-          result.textContent = 'Trimis cu succes.'; result.className = 'ml-2 text-xs text-emerald-300';
-        } catch (error) { result.textContent = error.message; result.className = 'ml-2 text-xs text-red-300'; }
-        finally { button.disabled = false; }
-      });
-    });
-  }
+  function injectStatusWebhookFields() { applyPackageVisibility(); }
 
   function addStatusLivePagePermission() {
     const host = $('page-permissions');
@@ -177,12 +138,7 @@
     try {
       const result = await invoke({ action: 'list' });
       const organization = (result.organizations || []).find((item) => item.id === organizationId);
-      const route = organization?.organization_settings?.[0]?.webhook_routes?.[statusChannel] || {};
-      ['primary', 'secondary'].forEach((target) => {
-        const item = route[target] || {};
-        $(`wh_${target}_url_status_live`).value = item.url || '';
-        $(`wh_${target}_enabled_status_live`).checked = item.enabled === true && Boolean(item.url);
-      });
+      return organization;
     } catch (_) { /* Lista principală gestionează deja mesajul de eroare. */ }
   }
 
@@ -192,9 +148,7 @@
       try {
         const body = JSON.parse(options.body);
         if (body.action === 'save') {
-          body.settings = body.settings || {};
-          body.settings.webhook_routes = body.settings.webhook_routes || {};
-          body.settings.webhook_routes[statusChannel] = { primary: routeValue('primary'), secondary: routeValue('secondary') };
+          if (body.settings) delete body.settings.webhook_routes;
           body.communication_permissions = communicationPermissions;
           body.discipline_permissions = disciplinePermissions;
           options.body = JSON.stringify(body);

@@ -18,7 +18,7 @@ const webhookChannels = new Set([
   'organization', 'departments', 'pontaj', 'weekly_reports', 'requests', 'requests_organization',
   'requests_departments', 'contracts', 'contract_identity_weekly', 'marketplace', 'illegal_marketplace',
   'fines_organization', 'fines_departments', 'warnings_organization', 'warnings_departments',
-  'sanctions_organization', 'sanctions_departments', 'status_live', 'organization_expiration'
+  'sanctions_organization', 'sanctions_departments', 'actions_organization', 'actions_organization_weekly', 'event_reminders', 'status_live', 'organization_expiration', 'stash', 'stash_requests', 'stash_donations'
 ]);
 const allowedContractPlaceholders = new Set([
   '{{COMPANY}}', '{{ADDRESS}}', '{{MANAGER}}', '{{EMPLOYEE_NAME}}', '{{CNP}}',
@@ -34,31 +34,50 @@ const allowedPages = new Map([
   ['bucatarie.html', 'Bucătărie'],
   ['contracte.html', 'Contracte'],
   ['calculatorilegal.html', 'Calculator ilegal'],
-  ['craftmecanics.html', 'Craft Mecanics'],
   ['locatiiilegale.html', 'Locații ilegale'],
   ['marketplace.html', 'Marketplace'],
   ['marketplace-ilegal.html', 'Marketplace ilegal'],
   ['minigames.html', 'Minigames'],
   ['rapoarte.html', 'Rapoarte'],
+  ['organizatie-evenimente.html', 'Evenimente și remindere'],
   ['status-live.html', 'Status Live'],
-  ['asistent.html', 'Asistent Panel']
+  ['asistent.html', 'Asistent Panel'],
+  ['stash.html', 'Stash organizație']
 ]);
 const allowedAssistantPages = new Set([...allowedPages.keys()]);
-const allowedActionKeys = new Set(['anunturi.publish', 'marketplace.delete', 'cereri.organization', 'cereri.departments']);
+const allowedActionKeys = new Set(['anunturi.publish', 'marketplace.delete', 'cereri.organization', 'cereri.departments', 'actions.organization.read', 'actions.organization.write', 'actions.organization.delete', 'events.read', 'events.write', 'stash.write', 'stash.request', 'stash.manage_requests', 'stash.donate', 'stash.approve_donation', 'stash.log']);
 const fullOnlyWebhookChannels = new Set(['organization', 'requests_organization', 'illegal_marketplace', 'fines_organization', 'warnings_organization', 'sanctions_organization']);
-const operationsWebhookChannels = new Set(['organization', 'requests_organization', 'fines_organization', 'warnings_organization', 'sanctions_organization', 'illegal_marketplace', 'organization_expiration']);
-const standardWebhookChannels = new Set(['departments', 'pontaj', 'weekly_reports', 'contracts', 'contract_identity_weekly', 'marketplace', 'fines_departments', 'warnings_departments', 'sanctions_departments', 'status_live', 'organization_expiration']);
+const operationsWebhookChannels = new Set(['organization', 'requests_organization', 'fines_organization', 'warnings_organization', 'sanctions_organization', 'actions_organization', 'actions_organization_weekly', 'event_reminders', 'illegal_marketplace', 'organization_expiration']);
+const standardWebhookChannels = new Set(['departments', 'pontaj', 'weekly_reports', 'event_reminders', 'contracts', 'contract_identity_weekly', 'marketplace', 'fines_departments', 'warnings_departments', 'sanctions_departments', 'status_live', 'organization_expiration']);
 const fullOnlyPageFeatures = new Map([
   ['calculatorilegal.html', 'illegal_calculator'],
   ['locatiiilegale.html', 'illegal_locations'],
   ['marketplace-ilegal.html', 'illegal_marketplace'],
-  ['minigames.html', 'illegal_minigames']
+  ['minigames.html', 'illegal_minigames'],
+  ['stash.html', 'stash']
 ]);
 const standardPackageFeatures = new Set([
   'core', 'announcements', 'requests', 'contracts', 'reports', 'legal_marketplace',
   'legal_tools', 'assistant', 'status_live', 'announcements_departments',
   'requests_departments', 'discipline_departments'
 ]);
+
+const sanitizeAssistantKnowledge = (raw: unknown) => {
+  if (!Array.isArray(raw)) return [];
+  return raw.slice(0, 100).map((item: any, index) => {
+    const question = String(item?.question || '').trim().slice(0, 500);
+    const answer = String(item?.answer || '').trim().slice(0, 3000);
+    const title = String(item?.title || question).trim().slice(0, 160);
+    const page = String(item?.page || '').trim().split('?')[0].split('#')[0];
+    return {
+      id: UUID_RE.test(String(item?.id || '')) ? String(item.id) : `assistant-${Date.now()}-${index}`,
+      title, question, answer,
+      page: allowedAssistantPages.has(page) ? page : '',
+      keywords: [...new Set((Array.isArray(item?.keywords) ? item.keywords : []).map((value: any) => String(value || '').trim().slice(0, 60)).filter(Boolean))].slice(0, 20),
+      enabled: item?.enabled !== false
+    };
+  }).filter((item) => item.question.length >= 2 && item.answer.length >= 2);
+};
 
 const packageAllowsFeature = (packageValue: any, feature: string) =>
   resolvePackageFeatures(packageValue).includes(feature);
@@ -96,6 +115,23 @@ const validWebhook = (value: unknown) => {
   } catch {
     return false;
   }
+};
+const validDiscordChannelId = (value: unknown) => /^\d{15,22}$/.test(String(value || '').trim());
+const sanitizeDiscordChannelRoutes = (raw: unknown) => {
+  if (!raw || typeof raw !== 'object') return {};
+  const result: Record<string, any> = {};
+  for (const [channel, route] of Object.entries(raw as Record<string, any>)) {
+    if (!webhookChannels.has(channel) || !route || typeof route !== 'object') continue;
+    const target = (name: 'primary' | 'secondary') => {
+      const item = (route as any)[name];
+      if (!item?.enabled || !validDiscordChannelId(item.channel_id)) return null;
+      return { enabled: true, channel_id: String(item.channel_id).trim(), ...(validDiscordChannelId(item.guild_id) ? { guild_id: String(item.guild_id).trim() } : {}), ...(validDiscordChannelId(item.message_id) ? { message_id: String(item.message_id).trim() } : {}) };
+    };
+    const primary = target('primary');
+    const secondary = target('secondary');
+    if (primary || secondary) result[channel] = { primary, secondary };
+  }
+  return result;
 };
 
 const sanitizeWebhookRoutes = (raw: unknown) => {
@@ -262,7 +298,7 @@ Deno.serve(async (request) => {
     let candidates: any[] = [];
     if (requestedOrganizationId) {
       const [{ data: organization }, { data: guild }] = await Promise.all([
-        db.from('organizations').select('id,name,slug,code,illegal_name,address,description,logo_url,active,lifecycle_status').eq('id', requestedOrganizationId).maybeSingle(),
+        db.from('organizations').select('id,name,slug,code,illegal_name,address,description,logo_url,active,lifecycle_status,deactivation_reason,deactivated_at,last_discord_check_at,last_discord_check_status').eq('id', requestedOrganizationId).maybeSingle(),
         db.from('organization_guilds').select('organization_id,guild_id,guild_name,kind,enabled').eq('organization_id', requestedOrganizationId).eq('kind', 'primary').eq('enabled', true).maybeSingle()
       ]);
       if (organization && guild) candidates = [{ organization, guild }];
@@ -274,7 +310,7 @@ Deno.serve(async (request) => {
       const ids = [...new Set((guilds || []).map((item: any) => String(item.organization_id)).filter(Boolean))];
       if (ids.length) {
         const { data: organizations, error: organizationError } = await db.from('organizations')
-          .select('id,name,slug,code,illegal_name,address,description,logo_url,active,lifecycle_status')
+          .select('id,name,slug,code,illegal_name,address,description,logo_url,active,lifecycle_status,deactivation_reason,deactivated_at,last_discord_check_at,last_discord_check_status')
           .in('id', ids);
         if (organizationError) throw organizationError;
         candidates = (guilds || []).map((guild: any) => ({
@@ -299,7 +335,7 @@ Deno.serve(async (request) => {
       const fallbackOrganizationId = requestedOrganizationId;
       if (!fallbackOrganizationId) return reply({ error: 'Administratorul platformei trebuie să selecteze o organizație.' }, 400);
       const { data: fallbackOrganization, error: fallbackError } = await db.from('organizations')
-        .select('id,name,slug,code,illegal_name,address,description,logo_url,active,lifecycle_status')
+        .select('id,name,slug,code,illegal_name,address,description,logo_url,active,lifecycle_status,deactivation_reason,deactivated_at,last_discord_check_at,last_discord_check_status')
         .eq('id', fallbackOrganizationId).maybeSingle();
       if (fallbackError) throw fallbackError;
       if (!fallbackOrganization) return reply({ error: 'Organizația selectată nu există.' }, 404);
@@ -313,7 +349,7 @@ Deno.serve(async (request) => {
 
     const organizationId = String(owned.organization.id);
     const loadSettings = async () => {
-      const [{ data: settings }, { data: contractSetting }, { data: roleMappings }, { data: pageSetting }, { data: guilds }, { data: accessSetting }, { data: packageSetting }, { data: actionSetting }, { data: assistantPageSetting }, { data: communicationSetting }, { data: disciplineSetting }] = await Promise.all([
+      const [{ data: settings }, { data: contractSetting }, { data: roleMappings }, { data: pageSetting }, { data: guilds }, { data: accessSetting }, { data: packageSetting }, { data: actionSetting }, { data: assistantPageSetting }, { data: communicationSetting }, { data: disciplineSetting }, { data: assistantKnowledgeSetting }] = await Promise.all([
         db.from('organization_settings').select('*').eq('organization_id', organizationId).maybeSingle(),
         db.from('app_settings').select('value').eq('organization_id', organizationId).eq('key', 'contract_template').maybeSingle(),
         db.from('organization_role_mappings').select('guild_id,discord_role_id,discord_role_name,panel_role,permission_level,priority,enabled').eq('organization_id', organizationId).order('priority', { ascending: false }),
@@ -324,7 +360,8 @@ Deno.serve(async (request) => {
         db.from('app_settings').select('value').eq('organization_id', organizationId).eq('key', 'action_permissions').maybeSingle(),
         db.from('app_settings').select('value').eq('organization_id', organizationId).eq('key', 'assistant_page_permissions').maybeSingle(),
         db.from('app_settings').select('value').eq('organization_id', organizationId).eq('key', 'communication_permissions').maybeSingle(),
-        db.from('app_settings').select('value').eq('organization_id', organizationId).eq('key', 'discipline_permissions').maybeSingle()
+        db.from('app_settings').select('value').eq('organization_id', organizationId).eq('key', 'discipline_permissions').maybeSingle(),
+        db.from('app_settings').select('value').eq('organization_id', organizationId).eq('key', 'assistant_knowledge').maybeSingle()
       ]);
       return {
         settings: settings || {},
@@ -337,14 +374,20 @@ Deno.serve(async (request) => {
         action_permissions: actionSetting?.value || {},
         assistant_page_permissions: assistantPageSetting?.value || {},
         communication_permissions: communicationSetting?.value || {},
-        discipline_permissions: disciplineSetting?.value || {}
+        discipline_permissions: disciplineSetting?.value || {},
+        assistant_knowledge: sanitizeAssistantKnowledge(assistantKnowledgeSetting?.value || [])
       };
     };
 
     const loadDiscordRoles = async (guilds: any[]) => {
-      const roles = await Promise.all((guilds || []).map((guild) =>
-        discordGuildRoles(String(guild.guild_id), String(guild.guild_name || guild.guild_id), botToken)
-      ));
+      const roles = await Promise.all((guilds || []).map(async (guild) => {
+        try {
+          return await discordGuildRoles(String(guild.guild_id), String(guild.guild_name || guild.guild_id), botToken);
+        } catch (error) {
+          console.warn(`Discord roles unavailable for guild ${String(guild.guild_id)}`, error);
+          return [];
+        }
+      }));
       return roles.flat();
     };
 
@@ -366,6 +409,7 @@ Deno.serve(async (request) => {
         assistant_page_permissions: state.assistant_page_permissions,
         communication_permissions: state.communication_permissions,
         discipline_permissions: state.discipline_permissions,
+        assistant_knowledge: state.assistant_knowledge,
         discord_roles: discordRoles
       });
     }
@@ -403,6 +447,9 @@ Deno.serve(async (request) => {
     const webhookRoutes = body.webhook_routes === undefined
       ? (settings.webhook_routes || {})
       : mergeWebhookRoutes(settings.webhook_routes, body.webhook_routes);
+    const channelRoutes = body.discord_channel_routes === undefined
+      ? (settings.discord_channel_routes || {})
+      : sanitizeDiscordChannelRoutes(body.discord_channel_routes);
     const packageWebhookRoutes = Object.fromEntries(Object.entries(webhookRoutes).filter(([channel]) => packageAllowsWebhook(state.package, channel)));
     const settingsPatch = {
       organization_id: organizationId,
@@ -416,6 +463,7 @@ Deno.serve(async (request) => {
       marketplace_webhook_url: settings.marketplace_webhook_url || null,
       illegal_marketplace_webhook_url: settings.illegal_marketplace_webhook_url || null,
       webhook_routes: packageWebhookRoutes,
+      discord_channel_routes: channelRoutes,
       updated_by_discord_id: discordId,
       updated_at: new Date().toISOString()
     };
@@ -433,7 +481,14 @@ Deno.serve(async (request) => {
     }
 
     const currentState = await loadSettings();
-    const availableDiscordRoles = await loadDiscordRoles(currentState.guilds);
+    const discoveredDiscordRoles = await loadDiscordRoles(currentState.guilds);
+    const savedDiscordRoles = (currentState.role_mappings || []).map((role: any) => ({
+      id: String(role.discord_role_id || ''),
+      name: String(role.discord_role_name || role.panel_role || role.discord_role_id || ''),
+      guild_id: String(role.guild_id || '')
+    }));
+    const availableDiscordRoles = [...discoveredDiscordRoles, ...savedDiscordRoles]
+      .filter((role: any, index: number, list: any[]) => role.id && list.findIndex((item: any) => String(item.id) === String(role.id) && String(item.guild_id) === String(role.guild_id)) === index);
     let savedRoleIds = new Set((currentState.role_mappings || []).map((role: any) => String(role.discord_role_id)));
 
     if (body.roles !== undefined) {
@@ -510,6 +565,15 @@ Deno.serve(async (request) => {
       if (!packageAllowsFeature(currentState.package, 'requests_organization')) {
         actionRules['cereri.organization'] = [];
       }
+      if (!packageAllowsFeature(currentState.package, 'actions_organization')) {
+        actionRules['actions.organization.read'] = [];
+        actionRules['actions.organization.write'] = [];
+        actionRules['actions.organization.delete'] = [];
+      }
+      if (!packageAllowsFeature(currentState.package, 'event_reminders')) {
+        actionRules['events.read'] = [];
+        actionRules['events.write'] = [];
+      }
       const organizationRequestRoles = new Set(actionRules['cereri.organization'] || []);
       if (!packageAllowsFeature(currentState.package, 'requests_departments')) actionRules['cereri.departments'] = [];
       actionRules['cereri.departments'] = (actionRules['cereri.departments'] || []).filter((id) => !organizationRequestRoles.has(id));
@@ -523,6 +587,11 @@ Deno.serve(async (request) => {
           .map(([page, ids]) => [page, cleanRoleIds(ids, savedRoleIds)])
       );
       const { error } = await db.from('app_settings').upsert({ organization_id: organizationId, key: 'assistant_page_permissions', value: assistantRules, updated_at: new Date().toISOString() }, { onConflict: 'organization_id,key' });
+      if (error) throw error;
+    }
+    if (body.assistant_knowledge !== undefined) {
+      const knowledge = sanitizeAssistantKnowledge(body.assistant_knowledge);
+      const { error } = await db.from('app_settings').upsert({ organization_id: organizationId, key: 'assistant_knowledge', value: knowledge, updated_at: new Date().toISOString() }, { onConflict: 'organization_id,key' });
       if (error) throw error;
     }
     if (body.communication_permissions !== undefined) {
@@ -550,7 +619,7 @@ Deno.serve(async (request) => {
     }
 
     const { data: updatedOrganization, error: updatedError } = await db.from('organizations')
-      .select('id,name,slug,code,illegal_name,address,description,logo_url,active,lifecycle_status')
+      .select('id,name,slug,code,illegal_name,address,description,logo_url,active,lifecycle_status,deactivation_reason,deactivated_at,last_discord_check_at,last_discord_check_status')
       .eq('id', organizationId).single();
     if (updatedError) throw updatedError;
     const updatedState = await loadSettings();
@@ -569,6 +638,7 @@ Deno.serve(async (request) => {
       assistant_page_permissions: updatedState.assistant_page_permissions,
       communication_permissions: updatedState.communication_permissions,
       discipline_permissions: updatedState.discipline_permissions,
+      assistant_knowledge: updatedState.assistant_knowledge,
       discord_roles: availableDiscordRoles
     });
   } catch (error) {

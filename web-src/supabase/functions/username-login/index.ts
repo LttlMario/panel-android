@@ -1,17 +1,13 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2.112.3';
+import { corsOptions, getCorsHeaders } from '../_shared/cors.ts';
 
-const headers = {
-  'Access-Control-Allow-Origin': 'https://panel-pro.ro',
-  'Access-Control-Allow-Headers': 'apikey,authorization,content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Content-Type': 'application/json',
-};
-
-const reply = (data: unknown, status = 200) =>
+const buildReply = (data: unknown, status = 200, headers = getCorsHeaders(new Request('https://panel-pro.ro'))) =>
   new Response(JSON.stringify(data), { status, headers });
 
 Deno.serve(async (request) => {
-  if (request.method === 'OPTIONS') return new Response('ok', { headers });
+  const headers = getCorsHeaders(request);
+  const reply = (data: unknown, status = 200) => buildReply(data, status, headers);
+  if (request.method === 'OPTIONS') return corsOptions(request);
   if (request.method !== 'POST') return reply({ error: 'Metodă invalidă.' }, 405);
 
   try {
@@ -25,6 +21,15 @@ Deno.serve(async (request) => {
 
     if (!serviceKey || !anonKey || !supabaseUrl) throw new Error('Configurația Supabase lipsește.');
     const db = createClient(supabaseUrl, serviceKey);
+    const { data: emailAuthSetting, error: emailAuthSettingError } = await db
+      .from('platform_settings')
+      .select('value')
+      .eq('key', 'email_password_auth')
+      .maybeSingle();
+    if (emailAuthSettingError) throw emailAuthSettingError;
+    if (emailAuthSetting?.value?.enabled === false) {
+      return reply({ error: 'Autentificarea prin email și parolă este dezactivată. Folosește conectarea rapidă cu Discord.', code: 'EMAIL_PASSWORD_AUTH_DISABLED' }, 403);
+    }
     const clientAddress = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
       || request.headers.get('cf-connecting-ip')
       || 'unknown';

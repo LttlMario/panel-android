@@ -1,10 +1,11 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2.112.3';
 import { requirePanelSession } from '../_shared/panel-session.ts';
 import { getPlatformAdminDiscordIds, isPlatformAdminAccount, PLATFORM_ADMIN_DISCORD_IDS } from '../_shared/platform-admin.ts';
-const cors={'Access-Control-Allow-Origin':'https://panel-pro.ro','Access-Control-Allow-Headers':'authorization,apikey,content-type,x-panel-session','Access-Control-Allow-Methods':'POST,OPTIONS','Content-Type':'application/json'};
-const reply=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:cors});
+import { corsOptions, getCorsHeaders } from '../_shared/cors.ts';
 Deno.serve(async request=>{
-  if(request.method==='OPTIONS')return new Response(null,{status:204,headers:cors});
+  const cors = getCorsHeaders(request);
+  const reply=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:cors});
+  if(request.method==='OPTIONS')return corsOptions(request);
   try{
     const body=await request.json();
     const keys=JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS')??'{}');
@@ -16,6 +17,273 @@ Deno.serve(async request=>{
     if(!user)return reply({error:'Utilizatorul nu este înregistrat în panel.'},403);
     const organizationId=session.organization_id,actorName=user.display_name||user.username||discordUser.id;
     const isPlatformAdmin=await isPlatformAdminAccount(db,discordUser.id);
+
+    const { data: currentMember } = await db.from('organization_members')
+      .select('panel_role,permission_level,active')
+      .eq('organization_id', organizationId)
+      .eq('discord_id', discordUser.id)
+      .eq('active', true)
+      .maybeSingle();
+    const normalizedPanelRole = String(currentMember?.panel_role || '').trim().toLocaleLowerCase('ro-RO');
+    const isOrganizationManager = isPlatformAdmin || Number(currentMember?.permission_level || 0) >= 90
+      || new Set(['owner', 'administrator', 'administrator organizație', 'administrator organizatie', 'admin']).has(normalizedPanelRole);
+    const textValue = (value: unknown, max: number) => String(value ?? '').trim().slice(0, max);
+    const safeUrl = (value: unknown) => {
+      const raw = textValue(value, 500);
+      if (!raw) return null;
+      try {
+        const url = new URL(raw);
+        return url.protocol === 'https:' ? raw : null;
+      } catch (_) { return null; }
+    };
+    const visibleNotifications = async (notes: any[]) => {
+      try {
+      const { data: permissionRows, error: permissionError } = await db.from('app_settings')
+        .select('key,value')
+        .eq('organization_id', organizationId)
+        .in('key', ['page_permissions', 'communication_permissions', 'discipline_permissions']);
+      if (permissionError) throw permissionError;
+      const settings = new Map((permissionRows || []).map((item: any) => [item.key, item.value && typeof item.value === 'object' ? item.value : {}]));
+      const pagePermissions: any = settings.get('page_permissions') || {};
+      const roleIds = (session.discord_role_ids || []).map(String);
+      const hasRole = (value: unknown) => Array.isArray(value) && value.map(String).some((roleId: string) => roleIds.includes(roleId));
+      const hasPageAccess = (page: string) => isPlatformAdmin || (Array.isArray(pagePermissions[page]) && hasRole(pagePermissions[page]));
+      const hasScopedAccess = (key: string, page: string) => {
+        if (isPlatformAdmin) return true;
+        if (key.startsWith('page:')) return hasPageAccess(page);
+        const [group, scope] = key.split(':');
+        const settingKey = group === 'communication' ? 'communication_permissions' : group === 'discipline' ? 'discipline_permissions' : group;
+        const setting: any = settings.get(settingKey);
+        if (!setting) return hasPageAccess(page);
+        const permissions = setting?.[scope];
+        return hasRole(permissions?.read) || hasRole(permissions?.write) || hasRole(permissions?.sanction);
+      };
+      return notes.filter((note: any) => {
+        const recipient = String(note.recipient_discord_id || '');
+        if (recipient === String(discordUser.id)) return true;
+        if (recipient) return false;
+        const page = String(note.required_page || '');
+        if (page && !hasPageAccess(page)) return false;
+        const accessKey = String(note.access_key || '');
+        return !accessKey || hasScopedAccess(accessKey, page);
+      });
+      } catch (error) {
+        console.error('organization hub notification filter failed', error);
+        return notes.filter((note: any) => String(note.recipient_discord_id || '') === String(discordUser.id));
+      }
+    };
+    const countRows = async (table: string, configure: (query: any) => any) => {
+      let query = db.from(table).select('id', { count: 'exact', head: true });
+      query = configure(query);
+      const result = await query;
+      if (result.error) throw result.error;
+      return Number(result.count || 0);
+    };
+    const safeCountRows = async (table: string, configure: (query: any) => any) => {
+      try { return await countRows(table, configure); }
+      catch (error) { console.error(`organization hub count failed: ${table}`, error); return 0; }
+    };
+    const safeOptionalQuery = async (query: any, fallback: any, label: string) => {
+      try {
+        const result = await query;
+        if (result.error) { console.error(`organization hub query failed: ${label}`, result.error); return { data: fallback, error: null }; }
+        return result;
+      } catch (error) { console.error(`organization hub query failed: ${label}`, error); return { data: fallback, error: null }; }
+    };
+    const buildOrganizationBackup = async () => {
+      const [organization, settings, roles, guilds, members] = await Promise.all([
+        db.from('organizations').select('id,name,slug,description,logo_url,banner_url,active,lifecycle_status').eq('id', organizationId).single(),
+        db.from('app_settings').select('key,value').eq('organization_id', organizationId).neq('key', 'organization_backup_snapshot'),
+        db.from('organization_role_mappings').select('*').eq('organization_id', organizationId),
+        db.from('organization_guilds').select('*').eq('organization_id', organizationId),
+        db.from('organization_members').select('*').eq('organization_id', organizationId),
+      ]);
+      for (const result of [organization, settings, roles, guilds, members]) if (result.error) throw result.error;
+      return { schemaVersion: 2, exportedAt: new Date().toISOString(), organization: organization.data, settings: settings.data || [], roles: roles.data || [], guilds: guilds.data || [], members: members.data || [] };
+    };
+
+    if (body.action === 'org_hub') {
+      const nowIso = new Date().toISOString();
+      const [organizationResult, brandingResult, themeResult, membersResult, auditResult, notificationsResult, readsResult, counts] = await Promise.all([
+        db.from('organizations').select('id,name,slug,description,logo_url,banner_url,active,lifecycle_status,updated_at').eq('id', organizationId).single(),
+        safeOptionalQuery(db.from('app_settings').select('value').eq('organization_id', organizationId).eq('key', 'organization_branding').maybeSingle(), null, 'branding'),
+        safeOptionalQuery(db.from('app_settings').select('value').eq('organization_id', organizationId).eq('key', 'organization_theme').maybeSingle(), null, 'seasonal theme'),
+        safeOptionalQuery(db.from('organization_members').select('discord_id,panel_role,permission_level,active,last_verified_at,created_at').eq('organization_id', organizationId).eq('active', true).order('created_at', { ascending: true }).limit(500), [], 'members'),
+        safeOptionalQuery(db.from('admin_audit_log').select('id,actor_name,actor_discord_id,action,target_type,target_id,details,created_at').eq('organization_id', organizationId).order('created_at', { ascending: false }).limit(100), [], 'audit'),
+        safeOptionalQuery(db.from('panel_notifications').select('id,title,message,level,notification_type,required_page,access_key,recipient_discord_id,link,created_at,expires_at').eq('organization_id', organizationId).order('created_at', { ascending: false }).limit(100), [], 'notifications'),
+        safeOptionalQuery(db.from('panel_notification_reads').select('notification_id').eq('organization_id', organizationId).eq('discord_id', discordUser.id), [], 'notification reads'),
+        Promise.all([
+          safeCountRows('organization_members', (q) => q.eq('organization_id', organizationId).eq('active', true)),
+          safeCountRows('shifts', (q) => q.eq('organization_id', organizationId)),
+          safeCountRows('shifts', (q) => q.eq('organization_id', organizationId).in('status', ['active', 'paused'])),
+          safeCountRows('absences', (q) => q.eq('organization_id', organizationId).gte('end_at', nowIso)),
+          safeCountRows('community_posts', (q) => q.eq('organization_id', organizationId)),
+          safeCountRows('marketplace', (q) => q.eq('organization_id', organizationId)),
+          safeCountRows('marketplace_ilegal', (q) => q.is('organization_id', null)),
+          safeCountRows('organization_stash_items', (q) => q.eq('organization_id', organizationId).neq('status', 'archived')),
+        ])
+      ]);
+      for (const result of [organizationResult, brandingResult, themeResult, membersResult, auditResult, notificationsResult, readsResult]) {
+        if (result.error) throw result.error;
+      }
+      const readIds = new Set((readsResult.data || []).map((item: any) => String(item.notification_id)));
+      const notifications = (await visibleNotifications(notificationsResult.data || [])).map((item: any) => ({ ...item, _read: readIds.has(String(item.id)) }));
+      const memberIds = (membersResult.data || []).map((member: any) => String(member.discord_id));
+      const { data: profiles } = memberIds.length
+        ? await db.from('users').select('discord_id,username,display_name,avatar,avatar_url').in('discord_id', memberIds)
+        : { data: [] };
+      const profileMap = new Map((profiles || []).map((profile: any) => [String(profile.discord_id), profile]));
+      return reply({
+        organization: organizationResult.data,
+        branding: brandingResult.data?.value || {},
+        seasonal_theme: themeResult.data?.value || {},
+        is_manager: isOrganizationManager,
+        members: (membersResult.data || []).map((member: any) => ({ ...profileMap.get(String(member.discord_id)), ...member })),
+        audit: isOrganizationManager ? (auditResult.data || []) : [],
+        notifications,
+        stats: {
+          members: counts[0], total_shifts: counts[1], active_shifts: counts[2], active_absences: counts[3],
+          announcements: counts[4], marketplace: counts[5], illegal_marketplace: counts[6], stash_items: counts[7]
+        }
+      });
+    }
+
+    if (body.action === 'org_search') {
+      const term = textValue(body.query, 80);
+      if (term.length < 2) return reply({ results: [] });
+      const pattern = `%${term}%`;
+      const [usersResult, shiftsResult, absencesResult, postsResult, marketplaceResult, illegalResult] = await Promise.all([
+        db.from('organization_members').select('discord_id,panel_role').eq('organization_id', organizationId).eq('active', true),
+        db.from('shifts').select('id,discord_id,colleague_name,status,shift_type,date,created_at').eq('organization_id', organizationId).or(`colleague_name.ilike.${pattern},discord_id.ilike.${pattern}`).order('created_at', { ascending: false }).limit(25),
+        db.from('absences').select('id,discord_id,colleague_name,notice_type,status,created_at').eq('organization_id', organizationId).or(`colleague_name.ilike.${pattern},reason.ilike.${pattern},discord_id.ilike.${pattern}`).order('created_at', { ascending: false }).limit(25),
+        db.from('community_posts').select('id,title,content,post_type,created_at').eq('organization_id', organizationId).or(`title.ilike.${pattern},content.ilike.${pattern}`).order('created_at', { ascending: false }).limit(25),
+        db.from('marketplace').select('id,nume,display_name,produse,pret,created_at,organization_id').eq('organization_id', organizationId).or(`nume.ilike.${pattern},display_name.ilike.${pattern},produse.ilike.${pattern}`).order('created_at', { ascending: false }).limit(25),
+        db.from('marketplace_ilegal').select('id,nume,produse,pret,created_at').is('organization_id', null).or(`nume.ilike.${pattern},produse.ilike.${pattern}`).order('created_at', { ascending: false }).limit(25),
+      ]);
+      const memberIds = (usersResult.data || []).map((member: any) => String(member.discord_id));
+      const { data: profiles } = memberIds.length ? await db.from('users').select('discord_id,username,display_name').in('discord_id', memberIds) : { data: [] };
+      const profileMap = new Map((profiles || []).map((profile: any) => [String(profile.discord_id), profile]));
+      return reply({ results: [
+        ...(usersResult.data || []).filter((member: any) => JSON.stringify(profileMap.get(String(member.discord_id)) || {}).toLowerCase().includes(term.toLowerCase())).map((member: any) => ({ type: 'Membru', title: profileMap.get(String(member.discord_id))?.display_name || member.discord_id, detail: member.panel_role || 'Rol neconfigurat', link: 'admin.html' })),
+        ...(shiftsResult.data || []).map((item: any) => ({ type: 'Pontaj', title: item.colleague_name || item.discord_id, detail: `${item.status} · ${item.shift_type || ''} · ${item.date || ''}`, link: `pontaj.html?shift=${item.id}` })),
+        ...(absencesResult.data || []).map((item: any) => ({ type: 'Cerere', title: item.colleague_name || item.discord_id, detail: `${item.notice_type || 'Cerere'} · ${item.status || ''}`, link: `cereri.html?absence=${item.id}` })),
+        ...(postsResult.data || []).map((item: any) => ({ type: 'Anunț', title: item.title || 'Anunț', detail: item.content || '', link: `anunturi.html?post=${item.id}` })),
+        ...(marketplaceResult.data || []).map((item: any) => ({ type: 'Marketplace', title: item.nume || item.display_name || 'Anunț', detail: item.produse || '', link: `marketplace.html?item=${item.id}` })),
+        ...(illegalResult.data || []).map((item: any) => ({ type: 'Black Market', title: item.nume || 'Anunț ilegal', detail: item.produse || '', link: `marketplace-ilegal.html?item=${item.id}` })),
+      ].slice(0, 100) });
+    }
+
+    if (body.action === 'org_export') {
+      if (!isOrganizationManager) return reply({ error: 'Exporturile sunt disponibile doar ownerului sau administratorului organizației.' }, 403);
+      const kind = textValue(body.kind, 30);
+      const queries: Record<string, Promise<any>> = {
+        members: db.from('organization_members').select('discord_id,panel_role,permission_level,active,last_verified_at,created_at').eq('organization_id', organizationId).order('created_at', { ascending: true }).limit(1000),
+        shifts: db.from('shifts').select('discord_id,colleague_name,status,shift_type,date,start_time,end_time,duration,created_at').eq('organization_id', organizationId).order('created_at', { ascending: false }).limit(5000),
+        absences: db.from('absences').select('discord_id,colleague_name,notice_type,status,reason,notes,start_at,end_at,created_at').eq('organization_id', organizationId).order('created_at', { ascending: false }).limit(2000),
+        marketplace: db.from('marketplace').select('nume,display_name,tip_actiune,produse,pret,organization_id,created_at').eq('organization_id', organizationId).order('created_at', { ascending: false }).limit(1000),
+        audit: db.from('admin_audit_log').select('actor_name,actor_discord_id,action,target_type,target_id,details,created_at').eq('organization_id', organizationId).order('created_at', { ascending: false }).limit(2000),
+      };
+      if (!queries[kind]) return reply({ error: 'Export invalid.' }, 400);
+      const result = await queries[kind];
+      if (result.error) throw result.error;
+      return reply({ kind, rows: result.data || [] });
+    }
+
+    if (body.action === 'org_update_branding') {
+      if (!isOrganizationManager) return reply({ error: 'Doar ownerul sau administratorul organizației poate modifica personalizarea.' }, 403);
+      const patch = {
+        name: textValue(body.name, 120),
+        description: textValue(body.description, 1000) || null,
+        logo_url: safeUrl(body.logo_url),
+        banner_url: safeUrl(body.banner_url),
+        updated_at: new Date().toISOString(),
+      };
+      if (patch.name.length < 2) return reply({ error: 'Numele organizației este prea scurt.' }, 400);
+      const { error: organizationError } = await db.from('organizations').update(patch).eq('id', organizationId);
+      if (organizationError) throw organizationError;
+      const branding = { accent: /^#[0-9a-f]{6}$/i.test(String(body.accent || '')) ? String(body.accent) : '#10b981', updated_at: new Date().toISOString() };
+      const { error: brandingError } = await db.from('app_settings').upsert({ organization_id: organizationId, key: 'organization_branding', value: branding, updated_at: new Date().toISOString() }, { onConflict: 'organization_id,key' });
+      if (brandingError) throw brandingError;
+      await db.from('admin_audit_log').insert({ organization_id: organizationId, actor_discord_id: discordUser.id, actor_name: actorName, action: 'organization_branding_updated', target_type: 'organization', target_id: organizationId, details: { name: patch.name } });
+      return reply({ ok: true, organization: patch, branding });
+    }
+
+    if (body.action === 'org_report_create') {
+      const table = textValue(body.table, 40);
+      const itemId = textValue(body.item_id, 80);
+      const reason = textValue(body.reason, 500);
+      if (!['marketplace', 'marketplace_ilegal'].includes(table) || !itemId || reason.length < 3) return reply({ error: 'Raportarea este incompletă.' }, 400);
+      const itemQuery = db.from(table).select('id').eq('id', itemId);
+      if (table === 'marketplace_ilegal') itemQuery.is('organization_id', null);
+      const { data: item, error: itemError } = await itemQuery.maybeSingle();
+      if (itemError) throw itemError;
+      if (!item) return reply({ error: 'Anunțul nu există sau nu este accesibil.' }, 404);
+      const { data, error } = await db.from('marketplace_reports').insert({ organization_id: organizationId, marketplace_table: table, marketplace_id: itemId, reporter_discord_id: discordUser.id, reporter_name: actorName, reason, status: 'open' }).select('*').single();
+      if (error) throw error;
+      return reply({ ok: true, report: data });
+    }
+
+    if (body.action === 'org_reports') {
+      const reportsQuery = db.from('marketplace_reports').select('*').order('created_at', { ascending: false }).limit(300);
+      if (!isPlatformAdmin) reportsQuery.eq('organization_id', organizationId);
+      const result = await reportsQuery;
+      if (result.error) throw result.error;
+      return reply({ reports: result.data || [], is_manager: isOrganizationManager });
+    }
+
+    if (body.action === 'org_report_resolve') {
+      if (!isOrganizationManager) return reply({ error: 'Doar ownerul sau administratorul poate modera raportările.' }, 403);
+      const status = ['resolved', 'dismissed', 'open'].includes(String(body.status)) ? String(body.status) : 'resolved';
+      const reportQuery = db.from('marketplace_reports').update({ status, resolved_by_discord_id: discordUser.id, resolved_at: new Date().toISOString(), resolution_note: textValue(body.note, 500) }).eq('id', textValue(body.report_id, 80));
+      if (!isPlatformAdmin) reportQuery.eq('organization_id', organizationId);
+      const result = await reportQuery.select('*').single();
+      if (result.error) throw result.error;
+      return reply({ ok: true, report: result.data });
+    }
+
+    if (body.action === 'org_member_deactivate') {
+      if (!isOrganizationManager) return reply({ error: 'Doar ownerul sau administratorul poate gestiona membrii.' }, 403);
+      const target = textValue(body.discord_id, 30);
+      if (!/^\d{15,22}$/.test(target) || target === String(discordUser.id)) return reply({ error: 'Membrul selectat este invalid.' }, 400);
+      const { error: memberError } = await db.from('organization_members').update({ active: false }).eq('organization_id', organizationId).eq('discord_id', target);
+      if (memberError) throw memberError;
+      const { error: sessionError } = await db.from('panel_sessions').update({ revoked_at: new Date().toISOString() }).eq('organization_id', organizationId).eq('discord_id', target).is('revoked_at', null);
+      if (sessionError) throw sessionError;
+      await db.from('admin_audit_log').insert({ organization_id: organizationId, actor_discord_id: discordUser.id, actor_name: actorName, action: 'organization_member_deactivated', target_type: 'organization_member', target_id: target, details: {} });
+      return reply({ ok: true });
+    }
+
+    if (body.action === 'org_member_detail') {
+      const target = textValue(body.discord_id, 30);
+      if (!/^\d{15,22}$/.test(target)) return reply({ error: 'Membrul selectat este invalid.' }, 400);
+      const { data: member, error: memberError } = await db.from('organization_members')
+        .select('discord_id,panel_role,permission_level,active,last_verified_at,created_at')
+        .eq('organization_id', organizationId).eq('discord_id', target).maybeSingle();
+      if (memberError) throw memberError;
+      if (!member) return reply({ error: 'Membrul nu aparține organizației active.' }, 404);
+      const [profileResult, shiftsResult, absencesResult, auditResult] = await Promise.all([
+        db.from('users').select('discord_id,username,display_name,avatar,avatar_url').eq('discord_id', target).maybeSingle(),
+        db.from('shifts').select('id,status,shift_type,date,start_time,end_time,duration,created_at').eq('organization_id', organizationId).eq('discord_id', target).order('created_at', { ascending: false }).limit(100),
+        db.from('absences').select('id,notice_type,reason,notes,start_at,end_at,created_at').eq('organization_id', organizationId).eq('discord_id', target).order('created_at', { ascending: false }).limit(100),
+        db.from('admin_audit_log').select('id,action,target_type,target_id,details,created_at,actor_name,actor_discord_id').eq('organization_id', organizationId).or(`actor_discord_id.eq.${target},target_id.eq.${target}`).order('created_at', { ascending: false }).limit(100),
+      ]);
+      for (const result of [profileResult, shiftsResult, absencesResult, auditResult]) if (result.error) throw result.error;
+      return reply({ member, profile: profileResult.data || {}, shifts: shiftsResult.data || [], absences: absencesResult.data || [], audit: auditResult.data || [] });
+    }
+
+    if (body.action === 'org_backup') {
+      if (!isOrganizationManager) return reply({ error: 'Backupul este disponibil doar ownerului sau administratorului organizației.' }, 403);
+      return reply(await buildOrganizationBackup());
+    }
+
+    if (body.action === 'org_backup_snapshot') {
+      if (!isOrganizationManager) return reply({ error: 'Backupul este disponibil doar ownerului sau administratorului organizației.' }, 403);
+      const snapshot = await buildOrganizationBackup();
+      const { error } = await db.from('app_settings').upsert({ organization_id: organizationId, key: 'organization_backup_snapshot', value: snapshot, updated_at: new Date().toISOString() }, { onConflict: 'organization_id,key' });
+      if (error) throw error;
+      await db.from('admin_audit_log').insert({ organization_id: organizationId, actor_discord_id: discordUser.id, actor_name: actorName, action: 'organization_backup_snapshot', target_type: 'app_settings', target_id: 'organization_backup_snapshot', details: { automatic: true } });
+      return reply({ ok: true, exportedAt: snapshot.exportedAt });
+    }
 
     if(['notifications','mark_read'].includes(String(body.action||''))){
       const {data:permissionRows,error:permissionError}=await db.from('app_settings').select('key,value').eq('organization_id',organizationId).in('key',['page_permissions','communication_permissions','discipline_permissions']);
@@ -38,6 +306,7 @@ Deno.serve(async request=>{
       const visible=(note:any)=>{
         const recipient=String(note.recipient_discord_id||'');
         if(recipient===String(discordUser.id))return true;
+        if(recipient)return false;
         const page=String(note.required_page||'');
         if(page&&!hasPageAccess(page))return false;
         const accessKey=String(note.access_key||'');
@@ -65,7 +334,21 @@ Deno.serve(async request=>{
       const {error}=await db.from('admin_audit_log').insert({organization_id:organizationId,actor_discord_id:discordUser.id,actor_name:actorName,action,target_type:'platform',target_id:target,details});
       if(error)throw error;
     };
-    if(body.action==='platform_admins'){
+ if(['platform_auth_settings','platform_auth_settings_save'].includes(String(body.action||''))){
+   if(!isPlatformAdmin)return reply({error:'Doar administratorii platformei pot modifica autentificarea globală.'},403);
+   const settingKey='email_password_auth';
+   if(body.action==='platform_auth_settings'){
+     const {data,error}=await db.from('platform_settings').select('value,updated_at').eq('key',settingKey).maybeSingle();
+     if(error)throw error;
+     return reply({email_password_enabled:data?.value?.enabled!==false,updated_at:data?.updated_at||null});
+   }
+   const enabled=body.enabled!==false;
+   const {error}=await db.from('platform_settings').upsert({key:settingKey,value:{enabled},updated_at:new Date().toISOString()},{onConflict:'key'});
+   if(error)throw error;
+   await db.from('admin_audit_log').insert({organization_id:organizationId,actor_discord_id:discordUser.id,actor_name:actorName,action:'platform_email_password_auth_changed',target_type:'platform_settings',target_id:settingKey,details:{enabled}});
+   return reply({ok:true,email_password_enabled:enabled});
+ }
+ if(body.action==='platform_admins'){
       const {data,error}=await db.from('platform_administrators').select('discord_id,display_name,active,created_at,updated_at').order('created_at',{ascending:true});
       if(error)throw error;
       const rootIds=await getPlatformAdminDiscordIds(db);

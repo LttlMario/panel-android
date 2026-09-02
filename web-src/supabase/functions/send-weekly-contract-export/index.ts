@@ -1,5 +1,6 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2.112.3';
 import { getPlatformSecret } from '../_shared/platform-secrets.ts';
+import { deliverDiscordRoute, routeCandidates } from '../_shared/discord-delivery.ts';
 
 const headers = {
   'Access-Control-Allow-Origin': 'https://panel-pro.ro',
@@ -79,11 +80,6 @@ async function refreshDiscordEmployees(db: any, organization: any, botToken: str
   }
 }
 
-function webhookUrls(settings: any) {
-  const route = settings?.webhook_routes?.contract_identity_weekly || {};
-  return [...new Set([route?.primary?.url, route?.secondary?.url].map(String).map((value) => value.trim()).filter(Boolean))];
-}
-
 function chunks(lines: string[], maxLength = 1800) {
   const result: string[] = [];
   let current = '';
@@ -135,13 +131,12 @@ Deno.serve(async (request) => {
       try {
         if (botToken) await refreshDiscordEmployees(db, organization, botToken);
         const [{ data: settings, error: settingsError }, { data: contracts, error: contractsError }] = await Promise.all([
-          db.from('organization_settings').select('webhook_routes').eq('organization_id', organization.id).maybeSingle(),
+          db.from('organization_settings').select('webhook_routes,discord_channel_routes').eq('organization_id', organization.id).maybeSingle(),
           db.from('organization_contracts').select('employee_id,created_at').eq('organization_id', organization.id).gte('created_at', period.startIso).lt('created_at', period.nextIso).order('created_at'),
         ]);
         if (settingsError) throw settingsError;
         if (contractsError) throw contractsError;
-        const webhooks = webhookUrls(settings);
-        if (!webhooks.length) throw new Error('Webhookul săptămânal pentru nume și CNP nu este configurat.');
+        if (!routeCandidates(settings, 'contract_identity_weekly').some((item) => item.candidates.length)) throw new Error('Canalul Discord săptămânal pentru nume și CNP nu este configurat.');
         const employeeIds = [...new Set((contracts || []).map((contract: any) => String(contract.employee_id)))];
         const { data: employees, error: employeesError } = employeeIds.length
           ? await db.from('organization_employees').select('id,full_name,cnp,status').in('id', employeeIds)
@@ -190,14 +185,9 @@ Deno.serve(async (request) => {
           { title: `📋 Export săptămânal · Angajați activi · ${period.start} – ${period.end}`, description: activeDescription, color: 5763719, timestamp: now.toISOString() },
           { title: `📋 Export săptămânal · Plecați / demisionați · ${period.start} – ${period.end}`, description: inactiveDescription, color: 15548997, timestamp: now.toISOString() },
         ];
-        const failures: string[] = [];
-        for (const webhook of webhooks) {
-          try {
-            const response = await fetch(webhook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ allowed_mentions: { parse: [] }, embeds }) });
-            if (!response.ok) failures.push(`Discord HTTP ${response.status}`);
-          } catch (error) { failures.push(error instanceof Error ? error.message : 'Eroare Discord.'); }
-        }
-        if (failures.length === webhooks.length) throw new Error(failures.join(' | '));
+        const delivery = await deliverDiscordRoute(db, settings, 'contract_identity_weekly', JSON.stringify({ allowed_mentions: { parse: [] }, embeds }));
+        const failures: string[] = delivery.failures || [];
+        if (!delivery.results.length) throw new Error(failures.join(' | ') || 'Discord nu a acceptat exportul.');
         await db.from('contract_export_batches').update({ status: 'completed', row_count: exportItems.length, completed_at: new Date().toISOString(), error: failures.length ? failures.join(' | ') : null }).eq('id', batch.id);
         await finishRun(db, runId, 'sent', failures.length ? failures.join(' | ') : null);
         results.push({ organization_id: organization.id, status: failures.length ? 'sent_partial' : 'sent', row_count: exportItems.length });

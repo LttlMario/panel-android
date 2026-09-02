@@ -1,5 +1,6 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2.112.3';
 import { getPlatformSecret } from '../_shared/platform-secrets.ts';
+import { deliverDiscordRoute, routeCandidates } from '../_shared/discord-delivery.ts';
 
 const headers = {
   'Access-Control-Allow-Origin': 'https://panel-pro.ro',
@@ -15,24 +16,6 @@ const DEFAULT_PANEL_URL = 'https://panel-pro.ro';
 
 function serviceKey() {
   return Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS') || '{}').default;
-}
-
-function validWebhook(value: unknown) {
-  try {
-    const url = new URL(String(value || '').trim());
-    return url.protocol === 'https:'
-      && ['discord.com', 'discordapp.com'].includes(url.hostname)
-      && url.pathname.startsWith('/api/webhooks/');
-  } catch {
-    return false;
-  }
-}
-
-function webhookUrls(settings: any) {
-  const route = settings?.webhook_routes?.organization_expiration || {};
-  return [...new Set(['primary', 'secondary']
-    .map((target) => route?.[target]?.enabled ? String(route[target].url || '').trim() : '')
-    .filter(validWebhook))];
 }
 
 function panelBaseUrl(settings: any) {
@@ -129,7 +112,7 @@ Deno.serve(async (request) => {
     const [accessResult, packageResult, settingsResult] = await Promise.all([
       db.from('app_settings').select('organization_id,value').in('organization_id', ids).eq('key', 'organization_access'),
       db.from('app_settings').select('organization_id,value').in('organization_id', ids).eq('key', 'organization_package'),
-      db.from('organization_settings').select('organization_id,panel_public_url,webhook_routes').in('organization_id', ids),
+      db.from('organization_settings').select('organization_id,panel_public_url,webhook_routes,discord_channel_routes').in('organization_id', ids),
     ]);
     for (const result of [accessResult, packageResult, settingsResult]) if (result.error) throw result.error;
 
@@ -157,9 +140,8 @@ Deno.serve(async (request) => {
       }
 
       const settings = settingsByOrg.get(organizationId) || {};
-      const urls = webhookUrls(settings);
-      if (!urls.length) {
-        results.push({ organization_id: organizationId, status: 'skipped_no_webhook', days_remaining: daysRemaining });
+      if (!routeCandidates(settings, 'organization_expiration').some((item) => item.candidates.length)) {
+        results.push({ organization_id: organizationId, status: 'skipped_no_destination', days_remaining: daysRemaining });
         skipped++;
         continue;
       }
@@ -193,18 +175,10 @@ Deno.serve(async (request) => {
           }],
         });
 
-        const failures: string[] = [];
-        for (const webhook of urls) {
-          try {
-            const response = await fetch(webhook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload });
-            if (!response.ok) failures.push(`Discord HTTP ${response.status}`);
-          } catch (error) {
-            failures.push(error instanceof Error ? error.message : 'Eroare Discord necunoscută.');
-          }
-        }
-
-        if (failures.length === urls.length) throw new Error(failures.join(' | '));
-        await finishRun(db, runId, 'sent', failures.length ? `Unele webhook-uri au eșuat: ${failures.join(' | ')}` : null);
+        const delivery = await deliverDiscordRoute(db, settings, 'organization_expiration', payload);
+        const failures: string[] = delivery.failures || [];
+        if (!delivery.results.length) throw new Error(failures.join(' | ') || 'Discord nu a acceptat notificarea.');
+        await finishRun(db, runId, 'sent', failures.length ? `Unele canale Discord au eșuat: ${failures.join(' | ')}` : null);
         sent++;
         results.push({ organization_id: organizationId, status: failures.length ? 'sent_partial' : 'sent', days_remaining: daysRemaining });
       } catch (error) {

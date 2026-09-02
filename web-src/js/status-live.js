@@ -28,7 +28,7 @@
       try { await syncLiveEmbed(); } catch (error) { console.error('Status Live Discord:', error); }
     };
     // Discord nu trebuie actualizat la fiecare secundă; acest interval evita
-    // rate-limit-ul webhookului și păstrează actualizarea suficient de rapidă.
+    // rate-limit-ul Discord și păstrează actualizarea suficient de rapidă.
     window.setInterval(() => {
       window.fetchAndRenderActiveShifts(true).catch?.((error) => console.error('Status Live:', error));
     }, 60000);

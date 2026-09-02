@@ -5,17 +5,34 @@ import { packageAllowsPage as packagePageAllowed, resolvePackageFeatures } from 
 const headers = { 'Access-Control-Allow-Origin': 'https://panel-pro.ro', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'authorization,apikey,content-type,x-panel-session', 'Access-Control-Max-Age': '86400', 'Content-Type': 'application/json' };
 const reply = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers });
 const validGuild = (value: string) => /^\d{15,22}$/.test(value);
-const webhookChannels = new Set(['organization', 'departments', 'pontaj', 'requests', 'requests_organization', 'requests_departments', 'contracts', 'contract_identity_weekly', 'marketplace', 'illegal_marketplace', 'fines_organization', 'fines_departments', 'warnings_organization', 'warnings_departments', 'sanctions_organization', 'sanctions_departments', 'status_live', 'organization_expiration']);
+const webhookChannels = new Set(['organization', 'departments', 'pontaj', 'weekly_reports', 'requests', 'requests_organization', 'requests_departments', 'contracts', 'contract_identity_weekly', 'marketplace', 'illegal_marketplace', 'fines_organization', 'fines_departments', 'warnings_organization', 'warnings_departments', 'sanctions_organization', 'sanctions_departments', 'actions_organization', 'actions_organization_weekly', 'event_reminders', 'status_live', 'organization_expiration']);
 const fullOnlyWebhookChannels = new Set(['organization', 'requests_organization', 'illegal_marketplace', 'fines_organization', 'warnings_organization', 'sanctions_organization']);
-const operationsWebhookChannels = new Set(['organization', 'requests_organization', 'fines_organization', 'warnings_organization', 'sanctions_organization', 'illegal_marketplace', 'organization_expiration']);
-const standardWebhookChannels = new Set(['departments', 'pontaj', 'weekly_reports', 'contracts', 'contract_identity_weekly', 'marketplace', 'fines_departments', 'warnings_departments', 'sanctions_departments', 'status_live', 'organization_expiration']);
-const allowedPages = new Set(['index.html', 'anunturi.html', 'pontaj.html', 'cereri.html', 'calculator.html', 'bucatarie.html', 'contracte.html', 'calculatorilegal.html', 'craftmecanics.html', 'locatiiilegale.html', 'marketplace.html', 'marketplace-ilegal.html', 'minigames.html', 'rapoarte.html', 'status-live.html', 'asistent.html']);
+const operationsWebhookChannels = new Set(['organization', 'requests_organization', 'fines_organization', 'warnings_organization', 'sanctions_organization', 'actions_organization', 'event_reminders', 'illegal_marketplace', 'organization_expiration']);
+const standardWebhookChannels = new Set(['departments', 'pontaj', 'weekly_reports', 'event_reminders', 'contracts', 'contract_identity_weekly', 'marketplace', 'fines_departments', 'warnings_departments', 'sanctions_departments', 'status_live', 'organization_expiration']);
+const allowedPages = new Set(['index.html', 'anunturi.html', 'pontaj.html', 'cereri.html', 'calculator.html', 'bucatarie.html', 'contracte.html', 'organizatie-evenimente.html', 'calculatorilegal.html', 'locatiiilegale.html', 'marketplace.html', 'marketplace-ilegal.html', 'minigames.html', 'rapoarte.html', 'status-live.html', 'asistent.html']);
 const fullOnlyPageFeatures = new Map([['calculatorilegal.html', 'illegal_calculator'], ['locatiiilegale.html', 'illegal_locations'], ['marketplace-ilegal.html', 'illegal_marketplace'], ['minigames.html', 'illegal_minigames']]);
 const validWebhook = (value: unknown) => {
   try {
     const url = new URL(String(value || ''));
     return url.protocol === 'https:' && ['discord.com', 'discordapp.com'].includes(url.hostname) && url.pathname.startsWith('/api/webhooks/');
   } catch { return false; }
+};
+const validDiscordChannelId = (value: unknown) => /^\d{15,22}$/.test(String(value || '').trim());
+const sanitizeDiscordChannelRoutes = (raw: unknown) => {
+  if (!raw || typeof raw !== 'object') return {};
+  const result: Record<string, any> = {};
+  for (const [channel, route] of Object.entries(raw as Record<string, any>)) {
+    if (!webhookChannels.has(channel) || !route || typeof route !== 'object') continue;
+    const target = (name: 'primary' | 'secondary') => {
+      const item = (route as any)[name];
+      if (!item?.enabled || !validDiscordChannelId(item.channel_id)) return null;
+      return { enabled: true, channel_id: String(item.channel_id).trim(), ...(validDiscordChannelId(item.guild_id) ? { guild_id: String(item.guild_id).trim() } : {}), ...(validDiscordChannelId(item.message_id) ? { message_id: String(item.message_id).trim() } : {}) };
+    };
+    const primary = target('primary');
+    const secondary = target('secondary');
+    if (primary || secondary) result[channel] = { primary, secondary };
+  }
+  return result;
 };
 const sanitizeWebhookRoutes = (raw: unknown, allowsWebhook: (channel: string) => boolean) => {
   if (!raw || typeof raw !== 'object') return {};
@@ -91,9 +108,9 @@ Deno.serve(async (req) => {
       const { error } = await db.from('organizations').update(patch).eq('id', id);
       if (error) throw error;
     }
-    if (body.webhook_routes) {
-      const { data: currentSettings } = await db.from('organization_settings').select('discord_client_id,panel_public_url').eq('organization_id', id).maybeSingle();
-       const { error } = await db.from('organization_settings').upsert({ organization_id: id, discord_client_id: String(body.discord_client_id || currentSettings?.discord_client_id || ''), panel_public_url: String(body.panel_public_url || currentSettings?.panel_public_url || ''), webhook_routes: sanitizeWebhookRoutes(body.webhook_routes, packageAllowsWebhook), updated_at: new Date().toISOString() }, { onConflict: 'organization_id' });
+    if (body.webhook_routes || body.discord_channel_routes) {
+      const { data: currentSettings } = await db.from('organization_settings').select('discord_client_id,panel_public_url,webhook_routes,discord_channel_routes').eq('organization_id', id).maybeSingle();
+       const { error } = await db.from('organization_settings').upsert({ organization_id: id, discord_client_id: String(body.discord_client_id || currentSettings?.discord_client_id || ''), panel_public_url: String(body.panel_public_url || currentSettings?.panel_public_url || ''), webhook_routes: body.webhook_routes ? sanitizeWebhookRoutes(body.webhook_routes, packageAllowsWebhook) : (currentSettings?.webhook_routes || {}), discord_channel_routes: body.discord_channel_routes ? sanitizeDiscordChannelRoutes(body.discord_channel_routes) : (currentSettings?.discord_channel_routes || {}), updated_at: new Date().toISOString() }, { onConflict: 'organization_id' });
       if (error) throw error;
     }
     if (body.page_permissions) {
@@ -106,8 +123,9 @@ Deno.serve(async (req) => {
       if (error) throw error;
     }
     if (body.action_permissions && typeof body.action_permissions === 'object') {
-      const allowedActions = new Set(['anunturi.publish', 'cereri.organization', 'cereri.departments']);
+      const allowedActions = new Set(['anunturi.publish', 'events.read', 'events.write', 'cereri.organization', 'cereri.departments', 'actions.organization.read', 'actions.organization.write', 'actions.organization.delete']);
       const value = Object.fromEntries(Object.entries(body.action_permissions).filter(([action]) => allowedActions.has(action)).map(([action, ids]: any) => [action, [...new Set((Array.isArray(ids) ? ids : []).map(String).filter((id) => /^\d{15,22}$/.test(id)))] ]));
+      if (!packageAllowsFeature('actions_organization')) { value['actions.organization.read'] = []; value['actions.organization.write'] = []; value['actions.organization.delete'] = []; }
       if (!packageAllowsFeature('requests_organization')) value['cereri.organization'] = [];
       const organizationRoles = new Set(value['cereri.organization'] || []);
       if (!packageAllowsFeature('requests_departments')) value['cereri.departments'] = [];

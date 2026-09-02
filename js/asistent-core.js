@@ -4,7 +4,8 @@
     'use strict';
     if (window.PanelAssistantCore) return;
 
-    const CACHE_VERSION = '11';
+    const CACHE_VERSION = '15';
+    const INDEX_TTL_MS = 120000;
     const STOP_WORDS = new Set(['a', 'ai', 'al', 'ale', 'am', 'ar', 'are', 'as', 'asta', 'ca', 'care', 'ce', 'cea', 'cel', 'cu', 'cum', 'de', 'din', 'doar', 'este', 'eu', 'fi', 'in', 'la', 'mai', 'ma', 'mi', 'o', 'pe', 'pentru', 'pot', 'sa', 'se', 'si', 'sunt', 'un', 'una', 'unde', 'vreau']);
     const SYNONYMS = {
         pontare: 'pontaj', pontat: 'pontaj', tura: 'pontaj', ture: 'pontaj', serviciu: 'pontaj',
@@ -13,7 +14,9 @@
         piata: 'marketplace', anunturi: 'anunt', vanzari: 'vanzare',
         harta: 'locatii', locatie: 'locatii', ilegal: 'ilegal', tec9: 'tec',
         sef: 'manager', coordonator: 'manager', administrare: 'admin',
-        jurnal: 'loguri', activitate: 'loguri', istoric: 'rapoarte'
+        jurnal: 'loguri', activitate: 'loguri', istoric: 'rapoarte',
+        jucatori: 'playeri', conectare: 'fivem', server: 'fivem', bzone: 'fivem',
+        croitorie: 'craft', masa: 'craft', mecanica: 'craft', mecanic: 'craft'
     };
 
     const WINDOWS1252_BYTES = Object.freeze({
@@ -117,17 +120,18 @@
     }
 
     function selectedPages() {
-        const pages = currentUser()?.allowed_pages;
+        const user = currentUser() || {};
+        const pages = user.assistant_permissions_configured === true && Array.isArray(user.assistant_allowed_pages)
+            ? user.assistant_allowed_pages
+            : user.allowed_pages;
         return Array.isArray(pages)
             ? [...new Set(pages.map((page) => String(page || '').split('?')[0].split('#')[0].split('/').pop()).filter(Boolean))]
             : [];
     }
 
     function assistantPages() {
-        // Robotul moștenește exclusiv accesul normal al organizației.
-        // Nu există o listă separată de pagini pentru asistent.
         return selectedPages().filter((page) => ![
-            'admin.html', 'logs.html', 'diagnostic.html', 'secrete-platforma.html', 'discord-configurare.html',
+            'admin.html', 'logs.html', 'diagnostic.html', 'secrete-platforma.html', 'setari-platforma.html', 'discord-configurare.html',
             'organizatii.html', 'vouchere.html', 'developer.html', 'administrare-organizatie.html'
         ].includes(page));
     }
@@ -138,7 +142,15 @@
 
         const entries = [];
         let lastMatch = null;
+        const memoryKey = `panel_assistant_recipe_${String(user.discord_id || user.id || 'user').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 80)}`;
+        let lastRecipe = null;
+        try {
+            const remembered = JSON.parse(sessionStorage.getItem(memoryKey) || 'null');
+            if (remembered?.item?.name) lastRecipe = remembered;
+        } catch (_) { /* memoria opțională */ }
         let indexPromise = null;
+        let indexUpdatedAt = 0;
+        let remoteKnowledgeLoaded = false;
 
         function roleName() {
             if (typeof getEffectiveRoleLabel === 'function') {
@@ -218,6 +230,7 @@
                 answer: repairText(entry.answer),
                 keywords: keywordVariants([
                     ...(entry.keywords || []).map(repairText),
+                    entry.question,
                     entry.title,
                     entry.category,
                     entry.answer
@@ -232,6 +245,22 @@
         }
 
         (window.PANEL_ASSISTANT_KNOWLEDGE || []).forEach((entry) => addEntry(entry));
+
+        async function loadRemoteKnowledge() {
+            if (remoteKnowledgeLoaded || typeof window.panelRequestJson !== 'function') return;
+            remoteKnowledgeLoaded = true;
+            try {
+                const payload = await window.panelRequestJson('assistant-live?mode=knowledge', { method: 'GET', timeoutMs: 8000, retry: true });
+                (Array.isArray(payload?.entries) ? payload.entries : []).forEach((entry) => addEntry({
+                    ...entry,
+                    title: entry.title || entry.question,
+                    category: entry.category || 'Întrebări personalizate',
+                    keywords: [...(Array.isArray(entry.keywords) ? entry.keywords : []), entry.question]
+                }, 'remote'));
+            } catch (_error) {
+                // Întrebările standard rămân disponibile dacă serverul nu răspunde.
+            }
+        }
 
         function elementAllowed(element) {
             // Accesul este decis la nivel de pagină, prin allowed_pages.
@@ -267,7 +296,7 @@
                 addEntry({
                     title,
                     category: page.label,
-                    page: page.file === 'craftmecanics.html' ? `${page.file}?search=${encodeURIComponent(title)}` : page.file,
+                    page: page.file,
                     keywords: [title, description, page.label],
                     answer: describe(element, description ? `${title}: ${description}` : `${title} este disponibil.`)
                 }, 'page');
@@ -298,7 +327,7 @@
                     category: page.label,
                     page: page.file,
                     keywords: [title, page.label],
-                    answer: describe(element, `opțiunea „${title}” este disponibilă.`)
+                    answer: describe(option, `opțiunea „${title}” este disponibilă.`)
                 }, 'page');
             });
 
@@ -342,13 +371,19 @@
 
         function clearIndexedPageEntries() {
             for (let index = entries.length - 1; index >= 0; index -= 1) {
-                if (entries[index].source === 'page') entries.splice(index, 1);
+                if (entries[index].source === 'page' || entries[index].source === 'remote') entries.splice(index, 1);
             }
             lastMatch = null;
+            lastRecipe = null;
+            remoteKnowledgeLoaded = false;
+            indexUpdatedAt = 0;
         }
 
         function indexLocalPages({ force = false } = {}) {
             if (indexPromise && !force) return indexPromise;
+            if (!force && indexUpdatedAt && Date.now() - indexUpdatedAt < INDEX_TTL_MS) {
+                return Promise.resolve(entries.length);
+            }
             if (indexPromise && force) {
                 return indexPromise.then(() => {
                     indexPromise = null;
@@ -357,15 +392,16 @@
             }
             if (force) clearIndexedPageEntries();
             const pages = (window.PANEL_ASSISTANT_PAGES || []).filter((page) => isPageAllowed(page.file));
-            indexPromise = Promise.allSettled(pages.map(indexPage)).then(() => {
+            indexPromise = Promise.allSettled([loadRemoteKnowledge(), ...pages.map(indexPage)]).then(() => {
+                indexUpdatedAt = Date.now();
                 options.onIndexUpdate?.(entries.length, false);
                 return entries.length;
             });
             return indexPromise;
         }
 
-        async function refreshIndex() {
-            return indexLocalPages({ force: true });
+        async function refreshIndex({ force = false } = {}) {
+            return indexLocalPages({ force });
         }
 
         function exactPageMatch(question) {
@@ -386,14 +422,17 @@
                 .sort((left, right) => right.score - left.score);
             const best = ranked[0];
             const pageMatches = new Map();
+            /* Păstrăm doar paginile realmente apropiate de rezultat. Pragul
+               vechi de 62% aducea pagini colaterale la întrebări scurte. */
+            const minimumRelatedScore = Math.max(12, Number(best?.score || 0) * 0.78);
             ranked
                 .filter((item) => {
-                    if (item.score < 8 || !item.entry.page || !isPageAllowed(item.entry.page)) return false;
+                    if (item.score < minimumRelatedScore || !item.entry.page || !isPageAllowed(item.entry.page)) return false;
                     const source = searchableText(item.entry);
                     const sourceWords = source.split(' ');
                     return source.includes(query) || queryTokens.some((token) => sourceWords.includes(token) || sourceWords.some((word) => word.startsWith(token) || token.startsWith(word)));
                 })
-                .slice(0, 60)
+                .slice(0, 30)
                 .forEach(({ entry, score }) => {
                     const page = String(entry.page).split('?')[0];
                     const manifestPage = (window.PANEL_ASSISTANT_PAGES || []).find((item) => item.file === page);
@@ -406,7 +445,7 @@
                 });
             const groups = [...pageMatches.values()]
                 .sort((left, right) => right.score - left.score)
-                .slice(0, 6);
+                .slice(0, 2);
             return {
                 best,
                 groups,
@@ -427,6 +466,162 @@
             return collectPageMatches(cleanQuestion).links;
         }
 
+        function recipeCatalog() {
+            const data = window.PANEL_ASSISTANT_CALCULATOR_DATA || {};
+            const craft = data.craft || {};
+            const result = [];
+            (craft.masa || []).forEach((recipe) => result.push({ ...recipe, category: 'Masă Crafting', page: 'calculator.html' }));
+            (craft.croitorie || []).forEach((recipe) => result.push({ ...recipe, category: 'Croitorie', page: 'calculator.html' }));
+            (craft.topitorie || []).forEach((recipe) => result.push({ ...recipe, category: 'Topitorie', page: 'calculatorilegal.html' }));
+            Object.entries(craft.chains || {}).forEach(([chain, recipes]) => recipes.forEach(([id, name, cost]) => result.push({ id, name, base: cost, category: 'Masă Crafting', page: 'calculator.html', chain })));
+            (window.PANEL_CRAFT_MECHANIC_RECIPES || []).forEach((recipe) => result.push({ ...recipe, category: 'Craft Mecanic', page: 'calculator.html' }));
+            const illegal = data.illegal || {};
+            Object.entries(illegal.weapons || {}).forEach(([name, recipe]) => result.push({ ...recipe, id: `weapon_${normalize(name).replace(/ /g, '_')}`, name, category: 'Calculator ilegal · arme', page: 'calculatorilegal.html', kind: 'weapon' }));
+            Object.entries(illegal.ammo || {}).forEach(([name, recipe]) => result.push({ id: `ammo_${normalize(name).replace(/ /g, '_')}`, name, batch: recipe[0], casing: recipe[1], fill: recipe[2], category: 'Calculator ilegal · muniții', page: 'calculatorilegal.html', kind: 'ammo' }));
+            return result;
+        }
+
+        function quantityFromQuestion(question, fallback = 1) {
+            const value = String(question || '');
+            const match = value.match(/(?:pentru|la|x|cantitate(?:a)?|vreau|fac|am nevoie de)\s*(\d{1,4})\b|\b(\d{1,4})\s*(?:buc(?:ăți|ati)?|bucati|obiecte|unit[aă]ți)\b/i);
+            const quantity = Number(match?.[1] || match?.[2] || 0);
+            return Number.isFinite(quantity) && quantity > 0 ? Math.min(10000, Math.floor(quantity)) : Math.max(1, Number(fallback) || 1);
+        }
+
+        function findRecipe(question) {
+            const query = normalize(question);
+            if (!query) return null;
+            const catalog = recipeCatalog();
+            const exact = catalog.find((item) => normalize(item.name) === query || normalize(item.id) === query);
+            if (exact) return exact;
+            const kevlar = catalog.find((item) => query.includes('kevlar') && !query.includes('fibra') && normalize(item.name) === 'armura kevlar');
+            if (kevlar) return kevlar;
+            const scored = catalog.map((item) => {
+                const name = normalize(item.name);
+                const id = normalize(item.id);
+                let score = 0;
+                if (query.includes(name) || name.includes(query)) score += 90;
+                if (query.includes(id) || id.includes(query)) score += 65;
+                tokens(question).forEach((token) => {
+                    const best = Math.max(similarity(token, name), ...name.split(' ').map((word) => similarity(token, word)));
+                    if (best >= 0.66) score += best * 20;
+                });
+                return { item, score };
+            }).sort((a, b) => b.score - a.score);
+            return scored[0]?.score >= 24 ? scored[0].item : null;
+        }
+
+        function recipeByName(name) {
+            const query = normalize(name);
+            const catalog = recipeCatalog();
+            if (query === 'cauciuc') return catalog.find((item) => item.id === 'cauciuc_1') || null;
+            return catalog.find((item) => normalize(item.name) === query)
+                || catalog.find((item) => normalize(item.name).replace(/ x\d+$/, '') === query)
+                || null;
+        }
+
+        function addMaterial(target, name, amount) {
+            if (!name || !Number.isFinite(Number(amount)) || Number(amount) <= 0) return;
+            target[name] = (target[name] || 0) + Number(amount);
+        }
+
+        function resolveCraftMaterials(item, quantity, direct, raw, stack = new Set()) {
+            const amount = Math.max(0, Number(quantity) || 0);
+            if (!item || amount <= 0) return;
+            const key = `${normalize(item.name)}|${item.chain || ''}`;
+            if (stack.has(key)) { addMaterial(raw, item.name, amount); return; }
+            const produces = Math.max(1, Number(item.produces) || 1);
+            const crafts = Math.ceil(amount / produces);
+            const base = item.base || {};
+            Object.entries(base).forEach(([material, value]) => {
+                const total = Number(value) * crafts;
+                addMaterial(direct, material, total);
+                const dependency = normalize(material) === 'cauciuc'
+                    ? ([1, 2, 3].includes(total) ? recipeCatalog().find((candidate) => candidate.id === `cauciuc_${total}`) : null)
+                    : recipeByName(material);
+                const chainDependency = recipeCatalog().find((candidate) => normalize(candidate.name) === normalize(material));
+                if (dependency) {
+                    resolveCraftMaterials(dependency, total, {}, raw, new Set([...stack, key]));
+                } else if (chainDependency) {
+                    resolveCraftMaterials(chainDependency, total, {}, raw, new Set([...stack, key]));
+                } else {
+                    addMaterial(raw, material, total);
+                }
+            });
+        }
+
+        function makeCalculatorAction(item, quantity) {
+            const page = item.page || 'calculator.html';
+            const target = page === 'calculatorilegal.html' ? `${page}#calculator` : `${page}?assistant_item=${encodeURIComponent(item.id || item.name)}&assistant_qty=${encodeURIComponent(quantity)}`;
+            return { type: 'open', label: 'Calculează', page: target };
+        }
+
+        function recipeResponse(question) {
+            const query = normalize(question);
+            let item = findRecipe(question);
+            if (!item?.name) item = null;
+            const hasRecipeWords = /\b(reteta|re[țt]et[ăa]|calculeaz|materiale|ingrediente|craft|fac|pentru|xenon|undita|kevlar|cabluri|arma|munitie|gloan[tț]e|topor|tarnacop|t[aă]rnacop)\b/.test(query);
+            const followUp = /\b(dar|si|iar|pentru|la)\b/.test(query) && (lastRecipe || /\b(kevlar|5|10|20|30)\b/.test(query));
+            if (!item && followUp && lastRecipe) item = recipeByName(lastRecipe.item.name) || lastRecipe.item;
+            if (!item || (!hasRecipeWords && !followUp)) return null;
+            if (item.page && !isPageAllowed(item.page)) return { answer: 'Nu ai permisiunea necesară pentru acest calculator.' };
+            const quantity = quantityFromQuestion(question, followUp && lastRecipe ? lastRecipe.quantity : 1);
+            lastRecipe = { item, quantity };
+            try {
+                sessionStorage.setItem(memoryKey, JSON.stringify({ item: { id: item.id, name: item.name, page: item.page, category: item.category }, quantity }));
+            } catch (_) { /* memoria opțională */ }
+            if (item.kind === 'weapon') return weaponRecipeResponse(item, quantity);
+            if (item.kind === 'ammo') return ammoRecipeResponse(item, quantity);
+            const direct = {};
+            const raw = {};
+            resolveCraftMaterials(item, quantity, direct, raw);
+            const directText = Object.entries(direct).filter(([, value]) => value > 0).map(([name, value]) => `${name} x${value}`).join(', ') || '—';
+            const rawText = Object.entries(raw).filter(([, value]) => value > 0).map(([name, value]) => `${name} x${value}`).join(', ') || '—';
+            const page = item.page || 'calculator.html';
+            const actions = [makeCalculatorAction(item, quantity), { type: 'open', label: 'Vezi rețeta', page }];
+            return {
+                answer: `Pentru ${quantity} × ${item.name}:\n\nMateriale directe: ${directText}\nMateriale brute: ${rawText}\n\nAceste cantități sunt calculate după rețeta și randamentul din calculator.`,
+                page, title: item.name, links: [{ page, title: item.name }], actions
+            };
+        }
+
+        function weaponRecipeResponse(item, quantity) {
+            const data = window.PANEL_ASSISTANT_CALCULATOR_DATA?.illegal || {};
+            const counts = {};
+            (item.components || []).forEach((component) => addMaterial(counts, component, quantity));
+            const parts = (Number(item.parts) || 0) * quantity;
+            const componentParts = (item.components || []).reduce((sum, component) => sum + (data.componentCost?.[component] || 0), 0) * quantity;
+            const partCrafts = Math.ceil((parts + componentParts) / 2);
+            addMaterial(counts, 'Blueprint', (item.blueprint || 0) * quantity);
+            addMaterial(counts, 'Piese', parts + componentParts);
+            addMaterial(counts, 'Arc', partCrafts); addMaterial(counts, 'Oțel', partCrafts); addMaterial(counts, 'Plastic', partCrafts); addMaterial(counts, 'Scrap', partCrafts * 2);
+            ['gold', 'diamonds', 'rubies', 'emeralds'].forEach((key) => addMaterial(counts, key === 'gold' ? 'Aur' : key === 'diamonds' ? 'Diamante' : key === 'rubies' ? 'Rubine' : 'Emeralde', (item[key] || 0) * quantity));
+            return { answer: `Pentru ${quantity} × ${item.name}:\n\n${Object.entries(counts).filter(([, value]) => value > 0).map(([name, value]) => `${name} x${value}`).join(', ')}\n\nAm păstrat separat componentele și materialele brute, exact ca în Calculator Ilegal.`, page: item.page, title: item.name, links: [{ page: item.page, title: item.name }], actions: [makeCalculatorAction(item, quantity), { type: 'open', label: 'Vezi rețeta', page: item.page }] };
+        }
+
+        function ammoRecipeResponse(item, quantity) {
+            const batches = Math.ceil(quantity / Math.max(1, Number(item.batch) || 1));
+            const materials = {};
+            Object.entries(item.casing || {}).forEach(([name, value]) => addMaterial(materials, name, Number(value) * batches));
+            Object.entries(item.fill || {}).forEach(([name, value]) => addMaterial(materials, name, Number(value) * batches));
+            return { answer: `Pentru ${quantity} × ${item.name} ai nevoie de ${batches} lot${batches === 1 ? '' : 'uri'}:\n\n${Object.entries(materials).map(([name, value]) => `${name} x${value}`).join(', ')}.`, page: item.page, title: item.name, links: [{ page: item.page, title: item.name }], actions: [makeCalculatorAction(item, quantity), { type: 'open', label: 'Vezi rețeta', page: item.page }] };
+        }
+
+        async function liveShiftResponse(question) {
+            const query = normalize(question);
+            if (!/\b(cine.*(pontat|lucreaza|tura)|pontaje active|ture active|status.*live|cine este in tura)\b/.test(query)) return null;
+            if (!isPageAllowed('status-live.html') && !isPageAllowed('rapoarte.html')) return { answer: 'Nu ai permisiunea necesară pentru a vedea pontajele live.' };
+            try {
+                const payload = await window.panelRequestJson('assistant-live?mode=shifts', { method: 'GET', timeoutMs: 8000, retry: true });
+                const shifts = Array.isArray(payload?.shifts) ? payload.shifts : [];
+                const text = shifts.length ? shifts.map((shift) => `• ${shift.colleague_name || shift.discord_id} — ${shift.status === 'paused' ? 'în pauză' : 'în tură'}`).join('\n') : 'Nu există pontaje active în acest moment.';
+                return { answer: `Pontaje live:\n\n${text}`, page: 'status-live.html', title: 'Pontaje live', actions: [{ type: 'open', label: 'Deschide pagina', page: 'status-live.html' }] };
+            } catch (error) {
+                if (Number(error?.status) === 403) return { answer: 'Nu ai permisiunea necesară pentru a vedea pontajele live.' };
+                return { answer: 'Nu pot citi pontajele live chiar acum. Încearcă din nou în câteva secunde.' };
+            }
+        }
+
         function specialResponse(question) {
             const query = normalize(question);
             const restrictedTopics = [
@@ -444,8 +639,37 @@
             if (/\b(multumesc|mersi|ms|super|perfect)\b/.test(query)) return { answer: 'Cu plăcere! Poți continua cu orice întrebare despre paginile și funcțiile panelului.' };
             if (/\b(ce rol|rolul meu|ce functie|functia mea)\b/.test(query)) return { answer: `Rolul disponibil în sesiunea ta este „${roleName()}”. Rezultatele sunt filtrate exact după paginile permise organizației tale.` };
             if (/^(cat e ceasul|cat este ceasul|cat e ora|ce ora este|ce ora e|ora acum)$/.test(query)) return { answer: `Ora României este ${new Intl.DateTimeFormat('ro-RO', { timeZone: 'Europe/Bucharest', hour: '2-digit', minute: '2-digit' }).format(new Date())}.` };
-            if (/^(unde|deschide|du ma|pagina)$/i.test(query) && lastMatch?.page) return { answer: `Informația anterioară se află în ${lastMatch.category || lastMatch.title}.`, page: lastMatch.page, title: lastMatch.title };
+            if (/^(unde|deschide|du ma|du ma|arata mi|mai multe|detalii|care pagina|pagina)\b/i.test(query) && lastMatch?.page) return { answer: `Informația anterioară se află în ${lastMatch.category || lastMatch.title}.`, page: lastMatch.page, title: lastMatch.title, actions: [{ type: 'open', label: 'Deschide pagina', page: lastMatch.page }] };
             return null;
+        }
+
+        async function liveServerResponse(question) {
+            const query = normalize(question);
+            if (!/\b(fivem|b zone|bzone|jucatori online|playeri online|server)\b/.test(query) || !isPageAllowed('index.html')) return null;
+
+            lastMatch = { page: 'index.html', title: 'Dashboard', category: 'Dashboard' };
+            try {
+                if (typeof window.panelRequestJson !== 'function') throw new Error('Statusul live nu este disponibil.');
+                const status = await window.panelRequestJson('fivem-status', {
+                    method: 'GET',
+                    timeoutMs: 8000,
+                    retry: true
+                });
+                const players = Number(status.players);
+                const maxPlayers = Number(status.maxPlayers);
+                if (status.online !== true || !Number.isFinite(players) || !Number.isFinite(maxPlayers)) throw new Error('Răspuns live invalid.');
+                return {
+                    answer: `B-Zone are acum ${Math.max(0, Math.round(players))} din ${Math.max(0, Math.round(maxPlayers))} jucători conectați. Poți apăsa butonul de pe Dashboard pentru conectare directă în FiveM.`,
+                    page: 'index.html',
+                    title: 'Dashboard'
+                };
+            } catch (_error) {
+                return {
+                    answer: 'Pe Dashboard găsești butonul de conectare directă la serverul B-Zone și indicatorul live cu numărul de jucători conectați din limita serverului.',
+                    page: 'index.html',
+                    title: 'Dashboard'
+                };
+            }
         }
 
         async function answer(question) {
@@ -453,6 +677,12 @@
             if (!cleanQuestion) return { answer: 'Scrie o întrebare despre panel și încerc să găsesc informația potrivită.' };
             const special = specialResponse(cleanQuestion);
             if (special) return special;
+            const live = await liveServerResponse(cleanQuestion);
+            if (live) return live;
+            const liveShifts = await liveShiftResponse(cleanQuestion);
+            if (liveShifts) return liveShifts;
+            const recipe = recipeResponse(cleanQuestion);
+            if (recipe) return recipe;
 
             await refreshIndex();
             const pageMatch = exactPageMatch(cleanQuestion);
@@ -467,9 +697,10 @@
                     : '';
                 return {
                     answer: `Am găsit pagina „${pageMatch.label}”. Acestea sunt câteva informații disponibile acolo, în funcție de accesul rolului tău:${pageSummary}`,
-                    page: pageMatch.file,
+                    page: pageMatch.file !== 'asistent.html' ? pageMatch.file : '',
                     title: pageMatch.label,
-                    links: [{ page: pageMatch.file, title: pageMatch.label }]
+                    links: pageMatch.file !== 'asistent.html' ? [{ page: pageMatch.file, title: pageMatch.label }] : [],
+                    actions: pageMatch.file !== 'asistent.html' ? [{ type: 'open', label: 'Deschide pagina', page: pageMatch.file }] : []
                 };
             }
 
@@ -491,10 +722,38 @@
                 : best.entry.answer;
             return {
                 answer: response,
-                page: isPageAllowed(best.entry.page) ? best.entry.page : '',
+                page: isPageAllowed(best.entry.page) && best.entry.page !== 'asistent.html' ? best.entry.page : '',
                 title: best.entry.title,
-                links
+                links: links.filter((item) => item?.page !== 'asistent.html'),
+                actions: isPageAllowed(best.entry.page) && best.entry.page !== 'asistent.html' ? [{ type: 'open', label: 'Deschide pagina', page: best.entry.page }] : []
             };
+        }
+
+        async function sendFeedback(payload) {
+            if (typeof window.panelRequestJson !== 'function') return false;
+            try {
+                await window.panelRequestJson('assistant-feedback', {
+                    method: 'POST',
+                    timeoutMs: 8000,
+                    retry: false,
+                    body: JSON.stringify({
+                        question: String(payload?.question || '').slice(0, 500),
+                        answer: String(payload?.answer || '').slice(0, 3000),
+                        helpful: Boolean(payload?.helpful),
+                        page: String(payload?.page || '').slice(0, 120)
+                    })
+                });
+                return true;
+            } catch (_error) { return false; }
+        }
+
+        async function loadFeedback() {
+            if (typeof window.panelRequestJson !== 'function') return null;
+            try {
+                return await window.panelRequestJson('assistant-live?mode=feedback', {
+                    method: 'GET', timeoutMs: 8000, retry: false
+                });
+            } catch (_error) { return null; }
         }
 
         return {
@@ -505,6 +764,8 @@
             refreshIndex,
             findPageMatches,
             isPageAllowed,
+            sendFeedback,
+            loadFeedback,
             repairText,
             getEntryCount: () => entries.length
         };

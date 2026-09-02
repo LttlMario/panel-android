@@ -10,7 +10,16 @@ verify_jwt = true
 [functions.manage-discord-config]
 verify_jwt = false
 
+[functions.discover-discord-channels]
+verify_jwt = false
+
 [functions.manage-community-posts]
+verify_jwt = false
+
+[functions.manage-public-feedback]
+verify_jwt = false
+
+[functions.manage-stash]
 verify_jwt = false
 
 [functions.send-discord-notification]
@@ -25,13 +34,25 @@ verify_jwt = false
 [functions.send-weekly-contract-export]
 verify_jwt = false
 
+[functions.send-weekly-action-report]
+verify_jwt = false
+
 [functions.send-organization-expiry-notifications]
+verify_jwt = false
+
+[functions.send-organization-event-reminders]
+verify_jwt = false
+
+[functions.manage-organization-events]
 verify_jwt = false
 
 [functions.manage-admin-center]
 verify_jwt = false
 
 [functions.manage-platform-secrets]
+verify_jwt = false
+
+[functions.manage-platform-settings]
 verify_jwt = false
 
 [functions.manage-organizations]
@@ -47,6 +68,15 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.status-live-sync]
+verify_jwt = false
+
+[functions.fivem-status]
+verify_jwt = false
+
+[functions.assistant-live]
+verify_jwt = false
+
+[functions.assistant-feedback]
 verify_jwt = false
 
 [functions.mark-tutorial-read]

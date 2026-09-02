@@ -9,10 +9,11 @@
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3" integrity="sha384-l8ah+VgaWtk1mvOe9VC+OirC6qHFF4yH7l7mKRidV9MSti3E9F463bMp6ZVN4kuC" crossorigin="anonymous"></script>
     <script src="js/supabase-config.js?v=20260820-session-date-fix"></script>
-    <script src="js/permissions.js?v=4.6.0"></script>
-    <script src="js/panel-layout.js?v=4.23.0"></script>
+    <script src="js/permissions.js?v=4.6.2"></script>
+    <script src="js/panel-layout.js?v=4.28.9"></script>
+    <script src="js/marketplace-comments.js?v=20260824-market-comments-emoji"></script>
     <link rel="stylesheet" href="css/global-footer.css">
-    <script src="js/project-version.js?v=3.11.5"></script>
+    <script src="js/project-version.js?v=3.13.0"></script>
     <link rel="icon" href="img/favicon.ico">
     <link rel="apple-touch-icon" href="img/logo-180.png">
 </head>
@@ -473,6 +474,7 @@
                 container.innerHTML += `
                     <div data-marketplace-id="${escapeHtml(item.id)}" class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-lg flex flex-col justify-between space-y-4">
                         <div class="space-y-2">
+                            <div class="text-[10px] font-mono text-slate-500 break-all">ID anunț: ${escapeHtml(item.id)}</div>
                             <div class="flex items-start justify-between">
                                 <div>
                                     <span class="font-bold text-slate-100 text-sm">${escapeHtml(item.nume || '')}</span>
@@ -494,6 +496,7 @@
                                 <div>
                                     ${dataFormatata ? `<div class="text-[10px] text-slate-500">Publicat: ${dataFormatata}</div>` : ''}
                                     <a href="marketplace.html?anunt=${encodeURIComponent(item.id)}" class="mt-2 inline-block px-2.5 py-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 text-[10px] font-bold">Mergi la anunț</a>
+                                    <button type="button" data-marketplace-comments-open data-marketplace-table="marketplace" data-marketplace-id="${escapeHtml(item.id)}" data-marketplace-title="${escapeHtml(item.nume || 'Anunț')}" class="mt-2 ml-1 px-2.5 py-1 rounded-lg border border-sky-500/30 bg-sky-500/10 text-sky-300 hover:bg-sky-500/20 text-[10px] font-bold">💬 Comentarii</button>
                                     ${poateSterge ? `<button type="button" onclick="stergeAnuntMarketplace('${item.id}')" class="mt-2 px-2.5 py-1 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 text-[10px] font-bold">Șterge</button>` : ''}
                                 </div>
                             </div>
@@ -707,3 +710,4 @@
     <script src="js/global-footer.js"></script>
 </body>
 </html>
+

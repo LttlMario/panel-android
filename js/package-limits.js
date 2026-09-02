@@ -11,7 +11,7 @@
       help.innerHTML = select.value === 'full'
         ? '<b class="text-emerald-300">Full/Premium:</b> include Standard, partea de organizație/mafia, modulele ilegale, servere multiple, roluri nelimitate și webhook-uri dedicate.'
         : select.value === 'operations'
-          ? '<b class="text-indigo-300">Operations:</b> module specializate pentru activități interne, calculator, locații, marketplace și minigames configurabile.'
+          ? '<b class="text-indigo-300">Operations:</b> anunțuri, avertismente și sancțiuni pentru organizație, cereri și rapoarte organizaționale, plus modulele și resursele ilegale.'
           : '<b class="text-cyan-300">Standard:</b> partea legală a firmei și angajaților, inclusiv avertismentele și sancțiunile pentru angajați, un server și maximum 10 roluri Discord.';
     };
     select.parentElement?.appendChild(help);

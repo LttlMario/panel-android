@@ -121,11 +121,22 @@
     </div>
     `;
 
-    const androidDevice = /Android/i.test(navigator.userAgent);
-    if (androidDevice) footer.querySelector('.pgf-ios-badge')?.remove();
-
     const standalone = window.matchMedia?.('(display-mode: standalone)')?.matches || navigator.standalone === true;
-    const iosDevice = /iPad|iPhone|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const userAgent = navigator.userAgent || '';
+    const androidDevice = /Android/i.test(userAgent);
+    const iosDevice = /iPad|iPhone|iPod/i.test(userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const nativeCapacitor = window.Capacitor?.isNativePlatform?.() === true;
+    const androidNative = androidDevice && (nativeCapacitor || /;\s*wv\)/i.test(userAgent));
+    if (androidNative) {
+      footer.querySelector('.pgf-android-badge')?.remove();
+      footer.querySelector('.pgf-ios-badge')?.remove();
+      document.getElementById('dashboard-fivem-launcher')?.remove();
+    } else if (androidDevice) {
+      footer.querySelector('.pgf-ios-badge')?.remove();
+    } else if (iosDevice) {
+      footer.querySelector('.pgf-android-badge')?.remove();
+      document.getElementById('dashboard-fivem-launcher')?.remove();
+    }
     if (standalone && iosDevice) footer.classList.add('pgf-ios-installed');
 
     findFooterHost().appendChild(footer);
@@ -253,6 +264,7 @@
     if (location.pathname.endsWith('creare-organizatie-voucher.html')) {
       const draftFetch=window.fetch;window.fetch=async(...args)=>{const response=await draftFetch(...args);if(String(args[0]).includes('create-voucher-organization')){try{const copy=response.clone(),json=await copy.json();if(json.organization?.id){window.draftOrganizationId=json.organization.id;window.setDraftOrganizationId?.(json.organization.id);}}catch(_){}}return response;};
       const draftScript=document.createElement('script');draftScript.src='js/draft-config-ui.js?v=20260818-voucher-flow';document.head.appendChild(draftScript);
+      const channelScript=document.createElement('script');channelScript.src='js/discord-channel-config.js?v=20260902-bot-routing-roles';document.head.appendChild(channelScript);
       if (!document.querySelector('[data-voucher-extra-fields]')) { const form=document.querySelector('#create'), address=document.querySelector('#address'); const box=document.createElement('div'); box.dataset.voucherExtraFields='true'; box.className='space-y-4'; box.innerHTML='<label class="block text-sm">Logo organizație (link, opțional)<input id="draft-logo" type="url" class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 p-3" placeholder="https://..."></label>'; if(form) form.insertBefore(box,address?.parentElement?.nextElementSibling||form.lastElementChild); const originalFetch=window.fetch; window.fetch=(url,options)=>{try{if(String(url).includes('create-voucher-organization')&&options?.body){const body=JSON.parse(options.body);body.logo_url=document.getElementById('draft-logo')?.value.trim()||null;options.body=JSON.stringify(body);}}catch(_){}return originalFetch(url,options)}; }
       if (!document.getElementById('panel-header-host')) {
         const headerHost = document.createElement('div'); headerHost.id = 'panel-header-host'; document.body.prepend(headerHost);

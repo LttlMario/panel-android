@@ -1,6 +1,7 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2.112.3';
 import { requirePanelSession } from '../_shared/panel-session.ts';
 import { getPlatformSecret } from '../_shared/platform-secrets.ts';
+import { requestDiscordTarget, routeCandidates } from '../_shared/discord-delivery.ts';
 
 const headers = {
   'Access-Control-Allow-Origin': 'https://panel-pro.ro',
@@ -56,12 +57,6 @@ function elapsed(shift: any, now: number) {
   return `${hours}:${minutes}:${secs}`;
 }
 
-function discordUrl(value: string) {
-  const parsed = new URL(value);
-  if (parsed.protocol !== 'https:' || !['discord.com', 'discordapp.com'].includes(parsed.hostname) || !parsed.pathname.startsWith('/api/webhooks/')) throw new Error('Webhook Discord invalid.');
-  return parsed;
-}
-
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers });
   if (request.method !== 'POST') return reply({ error: 'Metodă invalidă.' }, 405);
@@ -78,12 +73,6 @@ Deno.serve(async (request) => {
     const isCronRequest: boolean =
       cronSecret.length > 0 &&
       receivedCronSecret === cronSecret;
-
-    const directWebhookUrl = String(body.webhook_url || '').trim();
-    const persistDirectWebhook = directWebhookUrl && body.persist_direct === true;
-    if (directWebhookUrl && !isCronRequest) {
-      return reply({ error: 'Webhookul direct poate fi folosit doar pentru testarea autorizată.' }, 403);
-    }
 
     console.log('STATUS LIVE AUTH DEBUG', {
       hasCronSecret: Boolean(cronSecret),
@@ -128,7 +117,7 @@ Deno.serve(async (request) => {
       .select('name,live_status_message_id,live_status_last_update')
       .eq('id', organizationId)
       .maybeSingle(),      
-      db.from('organization_settings').select('webhook_routes').eq('organization_id', organizationId).maybeSingle(),
+      db.from('organization_settings').select('webhook_routes,discord_channel_routes').eq('organization_id', organizationId).maybeSingle(),
       db.from('shifts').select('*').eq('organization_id', organizationId).in('status', ['active', 'paused']).is('end_time', null),
     ]);
     if (shiftsError) throw shiftsError;
@@ -145,128 +134,65 @@ Deno.serve(async (request) => {
     const section = (title: string, items: any[], icon: string) => `${title} (${items.length})\n${items.length ? items.map((shift) => line(shift, icon)).join('\n') : '_Nimeni_'}`;
     const description = `${section('🟢 În pontaj', active, '🟢')}\n\n${section('☕ În pauză', paused, '☕')}\n\n📊 **Total:** ${rows.length}\n⏱️ **Actualizat:** <t:${Math.floor(now / 1000)}:R>`;
     const payload = { embeds: [{ title: `📡 STATUS LIVE · ${organization?.name || 'Organizație'}`, description, color: 3066993, timestamp: new Date(now).toISOString(), footer: { text: 'Panel · actualizare live' } }] };
-    const route = directWebhookUrl
-      ? { direct: { enabled: true, url: directWebhookUrl } }
-      : settings?.webhook_routes?.status_live || {};
+    const configuredTargets = routeCandidates(settings, 'status_live');
+    if (!configuredTargets.some((destination) => destination.candidates.length)) {
+      throw new Error('Canalul Discord pentru Status Live nu este configurat.');
+    }
     const storedMessageId = String(
       organization?.live_status_message_id || ''
     ).trim();
 
     const messageIds: Record<string, string> = {};
 
-    const targets = directWebhookUrl ? ['direct'] : ['primary', 'secondary'];
-    for (const target of targets) {
-      const configured = route[target];
-      if (!configured?.enabled || !configured.url) continue;
-      const webhook = discordUrl(String(configured.url));
-      const existingId = target === 'primary'
-        ? storedMessageId
-        : target === 'secondary'
-          ? String(configured.message_id || '').trim()
-          : '';
-      let response: Response;
-
-      if (existingId && /^\d{15,22}$/.test(existingId)) {
-          const patchUrl =
-              `${webhook.origin}${webhook.pathname}/messages/${existingId}`;
-
-          console.log('Status Live PATCH:', {
-              organizationId,
-              organizationName: organization?.name,
-              target,
-              existingId,
-              patchUrl
-          });
-
-          response = await fetch(
-              patchUrl,
-              {
-                  method: 'PATCH',
-                  headers: {
-                      'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify(payload)
-              }
-          );
-
-          console.log(
-              'Status Live PATCH response:',
-              response.status,
-              await response.clone().text()
-          );
+    const usedTargets: Record<string, any> = {};
+    for (const destination of configuredTargets) {
+      const target = destination.target;
+      if (!destination.candidates.length) continue;
+      let response: Response | null = null;
+      let selectedMessageId = '';
+      for (const candidate of destination.candidates) {
+        // ID-ul de pe ruta canalului aparține mesajului creat de bot. ID-ul
+        // vechi din organizations nu este reutilizat, deoarece poate fi al
+        // unui webhook dezactivat.
+        const existingId = String(candidate.message_id || '').trim();
+        selectedMessageId = existingId;
+        response = await requestDiscordTarget(db, candidate, JSON.stringify(payload), { messageId: existingId });
+        if (!response.ok && existingId && response.status === 404) response = await requestDiscordTarget(db, { ...candidate, message_id: '' }, JSON.stringify(payload));
+        if (response.ok) { usedTargets[target] = candidate; break; }
       }
-
-      else {
-        webhook.searchParams.set('wait', 'true');
-        response = await fetch(webhook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-      }
-      if (response.status === 404 && existingId) {
-        webhook.searchParams.set('wait', 'true');
-        response = await fetch(webhook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-      }
-      if (!response.ok) throw new Error(`Discord a răspuns cu HTTP ${response.status}.`);
+      if (!response?.ok) throw new Error(`Discord a răspuns cu HTTP ${response?.status || 500}.`);
       const data = await response.json().catch(() => ({}));
-      if (data.id) messageIds[target] = String(data.id); else if (existingId) messageIds[target] = existingId;
+      if (data.id) messageIds[target] = String(data.id); else if (selectedMessageId) messageIds[target] = selectedMessageId;
     }
         const primaryMessageId = messageIds.primary || storedMessageId || null;
 
-        // Pentru webhookul secundar păstrăm ID-ul în configurația organizației,
-        // astfel încât actualizările viitoare să editeze primul embed.
-        if (!directWebhookUrl && messageIds.secondary && route.secondary) {
-          route.secondary = {
-            ...route.secondary,
-            message_id: messageIds.secondary
-          };
-          const { error: secondaryRouteError } = await db
-            .from('organization_settings')
-            .update({
-              webhook_routes: {
-                ...settings?.webhook_routes,
-                status_live: route
-              },
-              updated_at: new Date(now).toISOString()
-            })
-            .eq('organization_id', organizationId);
-          if (secondaryRouteError) throw secondaryRouteError;
-        }
-
-        if (persistDirectWebhook && messageIds.direct) {
-          const currentRoutes = settings?.webhook_routes && typeof settings.webhook_routes === 'object'
-            ? settings.webhook_routes
+        if (Object.keys(messageIds).length) {
+          const channelRoutes = settings?.discord_channel_routes && typeof settings.discord_channel_routes === 'object'
+            ? settings.discord_channel_routes
             : {};
-          const { error: directRouteError } = await db
+          const statusRoute = { ...(channelRoutes.status_live || {}) };
+          for (const target of ['primary', 'secondary']) {
+            if (usedTargets[target] && messageIds[target]) {
+              statusRoute[target] = { ...(statusRoute[target] || {}), enabled: true, message_id: messageIds[target] };
+            }
+          }
+          const { error: channelRouteError } = await db
             .from('organization_settings')
-            .update({
-              webhook_routes: {
-                ...currentRoutes,
-                status_live: {
-                  ...(currentRoutes.status_live || {}),
-                  primary: currentRoutes.status_live?.primary || null,
-                  secondary: {
-                    enabled: true,
-                    url: directWebhookUrl,
-                    message_id: messageIds.direct
-                  }
-                }
-              },
-              updated_at: new Date(now).toISOString()
-            })
+            .update({ discord_channel_routes: { ...channelRoutes, status_live: statusRoute }, updated_at: new Date(now).toISOString() })
             .eq('organization_id', organizationId);
-          if (directRouteError) throw directRouteError;
+          if (channelRouteError) throw channelRouteError;
         }
 
-        if (!directWebhookUrl) {
-          const { error: updateOrganizationError } = await db
-            .from('organizations')
-            .update({
-              live_status_message_id: primaryMessageId,
-              live_status_last_update: new Date(now).toISOString()
-            })
-            .eq('id', organizationId);
+        const { error: updateOrganizationError } = await db
+          .from('organizations')
+          .update({
+            live_status_message_id: primaryMessageId,
+            live_status_last_update: new Date(now).toISOString()
+          })
+          .eq('id', organizationId);
 
-          if (updateOrganizationError) {
-            throw updateOrganizationError;
-          }
+        if (updateOrganizationError) {
+          throw updateOrganizationError;
         }
     return reply({ ok: true, organization: organization?.name || '', active: active.length, paused: paused.length, message_ids: messageIds, updated_at: new Date(now).toISOString() });
   } catch (error) {

@@ -1,12 +1,41 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2.112.3';
 import { requirePanelSession } from '../_shared/panel-session.ts';
 import { getPlatformAdminDiscordIds, isPlatformAdminAccount } from '../_shared/platform-admin.ts';
-import { FULL_PACKAGE_FEATURES, PACKAGE_FEATURES, packageCatalogForClient, resolvePackageFeatures, STANDARD_PACKAGE_FEATURES } from '../_shared/package-features.ts';
+import { FULL_PACKAGE_FEATURES, OPERATIONS_PACKAGE_FEATURES, PACKAGE_FEATURES, packageAllowsPage as packagePageAllowed, packageCatalogForClient, resolvePackageFeatures, STANDARD_PACKAGE_FEATURES } from '../_shared/package-features.ts';
 import { getPlatformSecret } from '../_shared/platform-secrets.ts';
+import { corsOptions, getCorsHeaders } from '../_shared/cors.ts';
 
-const headers={'Access-Control-Allow-Origin':'https://panel-pro.ro','Access-Control-Allow-Headers':'authorization,apikey,content-type,x-panel-session','Access-Control-Allow-Methods':'POST,OPTIONS','Access-Control-Max-Age':'86400','Content-Type':'application/json'};
-const reply=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers});
+const buildReply=(data:unknown,status=200,headers=getCorsHeaders(new Request('https://panel-pro.ro')))=>new Response(JSON.stringify(data),{status,headers});
 const audit=async(db:any,session:any,action:string,targetId:string,details:unknown={})=>{await db.from('admin_audit_log').insert({organization_id:targetId,actor_discord_id:session.discord_id,action,target_type:'organization',target_id:targetId,details});};
+const synchronizePackageExpiration=async(db:any,organizationId:string,expiresAt:string|null)=>{
+  const {data:packageSetting,error:packageError}=await db.from('app_settings').select('value').eq('organization_id',organizationId).eq('key','organization_package').maybeSingle();
+  if(packageError)throw packageError;
+  if(!packageSetting||packageSetting.value?.unlimited===true)return;
+  const packageValue={...(packageSetting.value||{}),expires_at:expiresAt};
+  const {error}=await db.from('app_settings').upsert({organization_id:organizationId,key:'organization_package',value:packageValue,updated_at:new Date().toISOString()},{onConflict:'organization_id,key'});
+  if(error)throw error;
+};
+const updateOrganizationAccess=async(db:any,session:any,organizationId:string,expiresAt:string|null,requestedActive:boolean,action='organization_access_changed')=>{
+  const {data:previousAccess,error:previousAccessError}=await db.from('app_settings').select('value').eq('organization_id',organizationId).eq('key','organization_access').maybeSingle();
+  if(previousAccessError)throw previousAccessError;
+  const now=new Date().toISOString();
+  const expired=Boolean(expiresAt&&Date.parse(expiresAt)<=Date.now());
+  const effectiveActive=requestedActive&&!expired;
+  const {data:organization,error:organizationError}=await db.from('organizations').update({
+    active:effectiveActive,
+    deactivation_reason:effectiveActive?null:expired?'expired':'manual',
+    deactivated_at:effectiveActive?null:now,
+    deactivated_by_discord_id:effectiveActive?null:session.discord_id,
+    updated_at:now
+  }).eq('id',organizationId).select('id').maybeSingle();
+  if(organizationError)throw organizationError;
+  if(!organization)throw new Error('Organizația nu există.');
+  const {error:accessError}=await db.from('app_settings').upsert({organization_id:organizationId,key:'organization_access',value:{expires_at:expiresAt},updated_at:now},{onConflict:'organization_id,key'});
+  if(accessError)throw accessError;
+  await synchronizePackageExpiration(db,organizationId,expiresAt);
+  await audit(db,session,action,organizationId,{active:effectiveActive,expires_at:expiresAt,previous_expires_at:previousAccess?.value?.expires_at||null});
+  return {active:effectiveActive,expires_at:expiresAt};
+};
 const slugify=(value:string)=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60);
 const webhookChannels=new Set([
   'organization',
@@ -26,12 +55,19 @@ const webhookChannels=new Set([
   'warnings_departments',
   'sanctions_organization',
   'sanctions_departments',
+  'actions_organization',
+  'actions_organization_weekly',
+  'event_reminders',
   'status_live',
-  'organization_expiration'
+  'organization_expiration',
+  'stash',
+  'stash_requests',
+  'stash_donations'
 ]);
 const discordBotHeaders=(bot:string)=>({Authorization:`Bot ${bot}`,'User-Agent':'PanelManagement/1.0 (+https://panel-management.netlify.app)'});
 const organizationIdPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const validOrganizationId=(value:unknown)=>organizationIdPattern.test(String(value||'').trim());
+const seasonalThemeCodes=new Set(['none','winter','christmas','easter','autumn','halloween','summer','spring']);
 const nowIso=()=>new Date().toISOString();
 const getClientIp=(request:Request)=>String(request.headers.get('cf-connecting-ip')||request.headers.get('x-forwarded-for')?.split(',')[0]||'unknown').trim().slice(0,120);
 const webhookFeature=(channel:string)=>{
@@ -41,11 +77,21 @@ const webhookFeature=(channel:string)=>{
   if(channel==='requests_departments')return 'requests_departments';
   if(['warnings_organization','sanctions_organization','fines_organization'].includes(channel))return 'discipline_organization';
   if(['warnings_departments','sanctions_departments','fines_departments'].includes(channel))return 'discipline_departments';
+  if(channel==='actions_organization')return 'actions_organization';
   if(channel==='illegal_marketplace')return 'illegal_marketplace';
   return null;
 };
 const filterWebhookRoutesForPackage=(routes:any,features:string[])=>Object.fromEntries(Object.entries(routes&&typeof routes==='object'?routes:{}).filter(([channel])=>{const feature=webhookFeature(channel);return !feature||features.includes(feature);}));
-const summarizeWebhooks=(routes:any)=>{
+const validDiscordChannelId=(value:any)=>/^\d{15,22}$/.test(String(value||'').trim());
+const sanitizeDiscordChannelRoutes=(routes:any)=>Object.fromEntries(Object.entries(routes&&typeof routes==='object'?routes:{}).filter(([channel,route]:any)=>webhookChannels.has(channel)&&route&&typeof route==='object').map(([channel,route]:any)=>{
+  const target=(name:'primary'|'secondary')=>{
+    const item=route?.[name];
+    if(!item?.enabled||!validDiscordChannelId(item.channel_id))return null;
+    return {enabled:true,channel_id:String(item.channel_id).trim(),...(validDiscordChannelId(item.guild_id)?{guild_id:String(item.guild_id).trim()}:{}),...(validDiscordChannelId(item.message_id)?{message_id:String(item.message_id).trim()}: {})};
+  };
+  return [channel,{primary:target('primary'),secondary:target('secondary')}];
+}));
+const summarizeBotChannels=(routes:any)=>{
   const source=routes&&typeof routes==='object'?routes:{};
   const channels=[...webhookChannels];
   let configured=0,missing=0,invalid=0;
@@ -54,10 +100,9 @@ const summarizeWebhooks=(routes:any)=>{
     for(const target of ['primary','secondary']){
       const item=route[target]&&typeof route[target]==='object'?route[target]:null;
       if(!item?.enabled)continue;
-      const value=String(item.url||'').trim();
+      const value=String(item.channel_id||'').trim();
       if(!value){missing++;continue;}
-      try{const parsed=new URL(value);if(parsed.protocol!=='https:'||!['discord.com','discordapp.com'].includes(parsed.hostname)||!parsed.pathname.startsWith('/api/webhooks/'))invalid++;else configured++;}
-      catch{invalid++;}
+      if(validDiscordChannelId(value))configured++;else invalid++;
     }
   }
   return {configured,missing,invalid,total:channels.length*2};
@@ -67,7 +112,9 @@ const countRows=(db:any,table:string,organizationId:string,filters:((query:any)=
   })();
 
 Deno.serve(async request=>{
-  if(request.method==='OPTIONS')return new Response('ok',{headers});
+  const headers=getCorsHeaders(request);
+  const reply=(data:unknown,status=200)=>buildReply(data,status,headers);
+  if(request.method==='OPTIONS')return corsOptions(request);
   if(request.method!=='POST')return reply({error:'Metodă invalidă.'},405);
   let transientCreatedOrganizationId='',cleanupDb:any=null;
   try{
@@ -81,17 +128,7 @@ Deno.serve(async request=>{
     if(rateError)throw new Error(`Protecția anti-abuz nu este disponibilă: ${rateError.message}`);
     if(rateAllowed!==true)return reply({error:'Prea multe operațiuni administrative într-un timp scurt. Încearcă din nou peste câteva minute.'},429);
 
-    if(body.action==='test_webhook'){
-      const webhookUrl=String(body.url||'').trim();
-      const organizationId=String(body.organization_id||'').trim();
-      if(!organizationId)return reply({error:'Organizația selectată lipsește.'},400);
-      let parsedWebhook:URL;
-      try{parsedWebhook=new URL(webhookUrl);}catch{return reply({error:'Adresa webhookului este invalidă.'},400);}
-      if(parsedWebhook.protocol!=='https:'||!['discord.com','discordapp.com'].includes(parsedWebhook.hostname)||!parsedWebhook.pathname.startsWith('/api/webhooks/'))return reply({error:'Adresa trebuie să fie un webhook Discord valid.'},400);
-      const response=await fetch(webhookUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:'✅ Test webhook Panel — conexiunea funcționează.',allowed_mentions:{parse:[]}})});
-      if(!response.ok)return reply({error:`Discord a răspuns cu HTTP ${response.status}.`},400);
-      return reply({ok:true,message:'Webhookul a răspuns cu succes.'});
-    }
+    if(body.action==='test_webhook') return reply({error:'Testarea webhookurilor a fost dezactivată. Selectează un canal Discord pentru bot.'},410);
 
     if(body.action === 'list'){
       const { data, error } = await db
@@ -150,14 +187,14 @@ Deno.serve(async request=>{
       });
     }
     if(body.action==='platform_overview'){
-      const {data:organizations,error:organizationsError}=await db.from('organizations').select('id,name,slug,code,lifecycle_status,active,grace_until,created_at,updated_at').order('name');
+      const {data:organizations,error:organizationsError}=await db.from('organizations').select('id,name,illegal_name,slug,code,lifecycle_status,active,grace_until,deactivation_reason,deactivated_at,deactivated_by_discord_id,last_discord_check_at,last_discord_check_status,created_at,updated_at').order('name');
       if(organizationsError)throw organizationsError;
       const ids=(organizations||[]).map((organization:any)=>organization.id);
       const [{data:guildRows,error:guildError},{data:roleRows,error:roleError},{data:settingsRows,error:settingsError},{data:appRows,error:appError}]=await Promise.all([
         ids.length?db.from('organization_guilds').select('organization_id,guild_id,guild_name,kind,enabled').in('organization_id',ids):Promise.resolve({data:[],error:null}),
         ids.length?db.from('organization_role_mappings').select('organization_id,guild_id,discord_role_id,discord_role_name,panel_role,enabled').in('organization_id',ids):Promise.resolve({data:[],error:null}),
-        ids.length?db.from('organization_settings').select('organization_id,discord_client_id,panel_public_url,webhook_routes,updated_at').in('organization_id',ids):Promise.resolve({data:[],error:null}),
-        ids.length?db.from('app_settings').select('organization_id,key,value,updated_at').in('organization_id',ids).in('key',['organization_access','organization_package','page_permissions','action_permissions','discipline_permissions']):Promise.resolve({data:[],error:null})
+        ids.length?db.from('organization_settings').select('organization_id,discord_client_id,panel_public_url,discord_channel_routes,updated_at').in('organization_id',ids):Promise.resolve({data:[],error:null}),
+        ids.length?db.from('app_settings').select('organization_id,key,value,updated_at').in('organization_id',ids).in('key',['organization_access','organization_package','organization_theme','page_permissions','action_permissions','discipline_permissions']):Promise.resolve({data:[],error:null})
       ]);
       if(guildError||roleError||settingsError||appError)throw guildError||roleError||settingsError||appError;
       const now=Date.now();
@@ -179,24 +216,26 @@ Deno.serve(async request=>{
         if(lastAudit.error)throw lastAudit.error;
         const access=app.organization_access&&typeof app.organization_access==='object'?app.organization_access:{};
         const packageValue=app.organization_package&&typeof app.organization_package==='object'?app.organization_package:{};
+        const themeValue=app.organization_theme&&typeof app.organization_theme==='object'?app.organization_theme:{};
         const expiresAt=String(access.expires_at||'').trim()||null;
         const isExpired=Boolean(expiresAt&&Date.parse(expiresAt)<=now);
         const isDraft=organization.lifecycle_status==='draft';
         const isActive=Boolean(organization.active&&!isExpired&&!isDraft);
-        const webhookSummary=summarizeWebhooks(settings.webhook_routes);
+        const botChannelSummary=summarizeBotChannels(settings.discord_channel_routes);
         const health={
           guildsConfigured:guilds.filter((guild:any)=>guild.enabled!==false).length,
           rolesConfigured:roles.filter((role:any)=>role.enabled!==false).length,
           hasClientId:/^\d{15,22}$/.test(String(settings.discord_client_id||'')),
           hasPublicUrl:Boolean(settings.panel_public_url),
           pagePermissionCount:Object.values(app.page_permissions||{}).reduce((total:any,ids:any)=>total+(Array.isArray(ids)?ids.length:0),0),
-          webhooks:webhookSummary
+          bot_channels:botChannelSummary
         };
-        const issueCount=(health.guildsConfigured===0?1:0)+(health.rolesConfigured===0?1:0)+(health.hasClientId?0:1)+(health.hasPublicUrl?0:1)+webhookSummary.missing+webhookSummary.invalid;
+        const issueCount=(health.guildsConfigured===0?1:0)+(health.rolesConfigured===0?1:0)+(health.hasClientId?0:1)+(health.hasPublicUrl?0:1)+botChannelSummary.missing+botChannelSummary.invalid;
         organizationsWithDetails.push({
           ...organization,
           access:{expires_at:expiresAt},
-          package:{code:['standard','full'].includes(String(packageValue.code))?String(packageValue.code):'standard',unlimited:packageValue.unlimited===true,expires_at:packageValue.expires_at||null,features:resolvePackageFeatures(packageValue)},
+          package:{code:['standard','operations','full'].includes(String(packageValue.code))?String(packageValue.code):'standard',unlimited:packageValue.unlimited===true,expires_at:packageValue.expires_at||null,features:resolvePackageFeatures(packageValue)},
+          theme:{enabled:themeValue.enabled===true,code:seasonalThemeCodes.has(String(themeValue.code||''))?String(themeValue.code):'none',intensity:['discreet','normal','intense'].includes(String(themeValue.intensity||''))?String(themeValue.intensity):'normal',updated_at:themeValue.updated_at||null},
           guilds:guilds.map((guild:any)=>({guild_id:guild.guild_id,guild_name:guild.guild_name,kind:guild.kind,enabled:guild.enabled!==false})),
           roles:roles.map((role:any)=>({guild_id:role.guild_id,discord_role_id:role.discord_role_id,discord_role_name:role.discord_role_name,panel_role:role.panel_role,enabled:role.enabled!==false})),
           metrics:{members,active_sessions:activeSessions,active_shifts:activeShifts,active_absences:activeAbsences,audit_events:auditCount,last_audit:lastAudit.data||null},
@@ -212,7 +251,7 @@ Deno.serve(async request=>{
         db.from('organizations').select('id,name,active,lifecycle_status,updated_at').eq('id',organizationId).maybeSingle(),
         db.from('organization_guilds').select('guild_id,guild_name,kind,enabled').eq('organization_id',organizationId),
         db.from('organization_role_mappings').select('guild_id,discord_role_id,discord_role_name,enabled').eq('organization_id',organizationId),
-        db.from('organization_settings').select('discord_client_id,panel_public_url,webhook_routes,updated_at').eq('organization_id',organizationId).maybeSingle(),
+        db.from('organization_settings').select('discord_client_id,panel_public_url,discord_channel_routes,updated_at').eq('organization_id',organizationId).maybeSingle(),
         db.from('app_settings').select('key,value').eq('organization_id',organizationId).in('key',['organization_access','organization_package','page_permissions'])
       ]);
       if(organizationError||guildError||roleError||settingsError||appsError)throw organizationError||guildError||roleError||settingsError||appsError;
@@ -228,8 +267,8 @@ Deno.serve(async request=>{
         discordGuilds.push({guild_id:guild.guild_id,guild_name:guild.guild_name,kind:guild.kind,enabled:true,status:'ok',role_count:Array.isArray(discordRoles)?discordRoles.filter((role:any)=>!role.managed&&String(role.id)!==String(guild.guild_id)).length:0});
       }
       const app=Object.fromEntries((apps||[]).map((item:any)=>[item.key,item.value]));
-      const health={guilds:discordGuilds,roles_configured:(roles||[]).filter((role:any)=>role.enabled!==false).length,has_client_id:/^\d{15,22}$/.test(String(settings?.discord_client_id||'')),has_public_url:Boolean(settings?.panel_public_url),webhooks:summarizeWebhooks(settings?.webhook_routes),access:app.organization_access||null,package:app.organization_package||null,page_permission_count:Object.values(app.page_permissions||{}).reduce((total:any,ids:any)=>total+(Array.isArray(ids)?ids.length:0),0)};
-      await audit(db,session,'organization_health_check',organizationId,{guilds:discordGuilds.map((guild:any)=>({guild_id:guild.guild_id,status:guild.status})),webhook_summary:health.webhooks});
+      const health={guilds:discordGuilds,roles_configured:(roles||[]).filter((role:any)=>role.enabled!==false).length,has_client_id:/^\d{15,22}$/.test(String(settings?.discord_client_id||'')),has_public_url:Boolean(settings?.panel_public_url),bot_channels:summarizeBotChannels(settings?.discord_channel_routes),access:app.organization_access||null,package:app.organization_package||null,page_permission_count:Object.values(app.page_permissions||{}).reduce((total:any,ids:any)=>total+(Array.isArray(ids)?ids.length:0),0)};
+      await audit(db,session,'organization_health_check',organizationId,{guilds:discordGuilds.map((guild:any)=>({guild_id:guild.guild_id,status:guild.status})),bot_channel_summary:health.bot_channels});
       return reply({ok:true,organization:{id:organization.id,name:organization.name,active:organization.active,lifecycle_status:organization.lifecycle_status},health,checked_at:nowIso()});
     }
     if(body.action==='revoke_organization_sessions'){
@@ -256,7 +295,7 @@ Deno.serve(async request=>{
       if(name.length<2)return reply({error:'Introdu cel puțin numele organizației pentru draft.'},400);
       const draftId=String(draft.id||'').trim(),baseSlug=slugify(String(draft.slug||name));
       if(!baseSlug)return reply({error:'Numele organizației nu poate genera un slug valid.'},400);
-      const draftRow={slug:baseSlug,name,code:String(draft.code||'').trim()||null,address:String(draft.address||'').trim()||null,logo_url:String(draft.logo_url||'').trim()||null,banner_url:String(draft.banner_url||'').trim()||null,lifecycle_status:'draft',active:false,updated_at:new Date().toISOString()};
+      const draftRow={slug:baseSlug,name,illegal_name:String(draft.illegal_name||'').trim()||null,code:String(draft.code||'').trim()||null,address:String(draft.address||'').trim()||null,logo_url:String(draft.logo_url||'').trim()||null,banner_url:String(draft.banner_url||'').trim()||null,lifecycle_status:'draft',active:false,updated_at:new Date().toISOString()};
       if(draftId){const {data,error}=await db.from('organizations').update(draftRow).eq('id',draftId).select('id').maybeSingle();if(error)throw error;if(!data)return reply({error:'Organizația nu mai există.'},404);return reply({ok:true,organization_id:draftId,lifecycle_status:'draft'});}
       const {data,error}=await db.from('organizations').insert(draftRow).select('id').single();if(error)throw error;
       await db.from('organization_lifecycle_events').insert({organization_id:data.id,event_type:'draft_created',actor_discord_id:session.discord_id,details:{name}});
@@ -284,12 +323,23 @@ Deno.serve(async request=>{
       const guild=await guildResponse.json(),roles=await rolesResponse.json();
       return reply({guild:{id:guild.id,name:guild.name,icon:guild.icon},roles:(roles||[]).filter((r:any)=>!r.managed&&String(r.id)!==guildId).map((r:any)=>({id:String(r.id),name:String(r.name),position:Number(r.position)})).sort((a:any,b:any)=>b.position-a.position)});
     }
+    if(body.action==='discover_channels'){
+      const guildId=String(body.guild_id||'').trim();if(!/^\d{15,22}$/.test(guildId))return reply({error:'Guild ID invalid.'},400);
+      const bot=await getPlatformSecret(db,'discord_bot_token');if(!bot)throw new Error('DISCORD_BOT_TOKEN lipsește.');
+      const [guildResponse,channelsResponse]=await Promise.all([
+        fetch(`https://discord.com/api/v10/guilds/${guildId}`,{headers:discordBotHeaders(bot)}),
+        fetch(`https://discord.com/api/v10/guilds/${guildId}/channels`,{headers:discordBotHeaders(bot)}),
+      ]);
+      if(!guildResponse.ok||!channelsResponse.ok)return reply({error:`Botul nu poate accesa canalele serverului (HTTP ${!guildResponse.ok?guildResponse.status:channelsResponse.status}). Invită botul și acordă-i View Channel.`},400);
+      const guild=await guildResponse.json(),channels=await channelsResponse.json();
+      return reply({guild:{id:guild.id,name:guild.name},channels:(Array.isArray(channels)?channels:[]).filter((channel:any)=>[0,5].includes(Number(channel.type))&&/^\d{15,22}$/.test(String(channel.id))).map((channel:any)=>({id:String(channel.id),name:String(channel.name||channel.id),type:Number(channel.type),parent_id:/^\d{15,22}$/.test(String(channel.parent_id||''))?String(channel.parent_id):null}))});
+    }
     if(body.action==='save'){
       const org=body.organization||{},name=String(org.name||'').trim();if(name.length<2)throw new Error('Numele organizației este obligatoriu.');
       let slug=slugify(String(org.slug||name));if(!slug)throw new Error('Slug invalid.');
       const requestedOrganizationId=String(org.id||'').trim();
       if(requestedOrganizationId){const {data:existingOrganization,error:existingError}=await db.from('organizations').select('slug').eq('id',requestedOrganizationId).maybeSingle();if(existingError)throw existingError;if(existingOrganization?.slug)slug=String(existingOrganization.slug);}
-      const row={slug,name,code:String(org.code||'').trim()||null,address:String(org.address||'').trim()||null,description:String(org.description||'').trim()||null,logo_url:String(org.logo_url||'').trim()||null,banner_url:String(org.banner_url||'').trim()||null,active:org.active!==false,updated_at:new Date().toISOString()};
+      const row={slug,name,illegal_name:String(org.illegal_name||'').trim()||null,code:String(org.code||'').trim()||null,address:String(org.address||'').trim()||null,description:String(org.description||'').trim()||null,logo_url:String(org.logo_url||'').trim()||null,banner_url:String(org.banner_url||'').trim()||null,active:org.active!==false,updated_at:new Date().toISOString()};
       let organizationId=String(org.id||'').trim();
       if(organizationId){const {data,error}=await db.from('organizations').update(row).eq('id',organizationId).select('id').maybeSingle();if(error)throw error;if(!data)throw new Error('Organizația nu mai există. Reîncarcă lista.');}
       else{const {data,error}=await db.from('organizations').insert(row).select('id').single();if(error)throw error;organizationId=data.id;transientCreatedOrganizationId=organizationId;}
@@ -322,7 +372,7 @@ const validWebhook = (value:any) => {
 const { data: currentOrganizationSettings, error: currentOrganizationSettingsError } =
   await db
     .from('organization_settings')
-    .select('webhook_routes')
+    .select('webhook_routes,discord_channel_routes')
     .eq('organization_id', organizationId)
     .maybeSingle();
 
@@ -421,6 +471,11 @@ const webhook_routes = {
   ...existingWebhookRoutes,
   ...submittedWebhookRoutes
 };
+const rawChannelRoutes = settings.discord_channel_routes && typeof settings.discord_channel_routes === 'object' ? settings.discord_channel_routes : {};
+const existingChannelRoutes = currentOrganizationSettings?.discord_channel_routes && typeof currentOrganizationSettings.discord_channel_routes === 'object' ? currentOrganizationSettings.discord_channel_routes : {};
+const discord_channel_routes = settings.discord_channel_routes === undefined
+  ? existingChannelRoutes
+  : sanitizeDiscordChannelRoutes(rawChannelRoutes);
 const { error: settingsError } =
   await db
     .from('organization_settings')
@@ -431,6 +486,7 @@ const { error: settingsError } =
       // Pachetul controlează accesul la canale, nu șterge configurația
       // webhook-urilor când formularul este salvat sau pachetul se schimbă.
       webhook_routes,
+      discord_channel_routes,
       updated_by_discord_id: session.discord_id,
       updated_at: new Date().toISOString()
     }, {
@@ -441,7 +497,7 @@ if (settingsError) {
   throw settingsError;
 }
       await db.from('app_settings').upsert({organization_id:organizationId,key:'pontaj_config',value:{maxHours:12,dayEndTime:'19:59',nightEndTime:'23:00',excludeBreaks:false}},{onConflict:'organization_id,key'});
-      if(body.access){const expiresAt=String(body.access.expires_at||'').trim();if(expiresAt&&Number.isNaN(Date.parse(expiresAt)))throw new Error('Data expirării este invalidă.');const {error}=await db.from('app_settings').upsert({organization_id:organizationId,key:'organization_access',value:{expires_at:expiresAt||null},updated_at:new Date().toISOString()},{onConflict:'organization_id,key'});if(error)throw error;if(!expiresAt||Date.parse(expiresAt)>Date.now())await db.from('organizations').update({active:true,updated_at:new Date().toISOString()}).eq('id',organizationId);}
+      if(body.access){const expiresAt=String(body.access.expires_at||'').trim()||null;if(expiresAt&&Number.isNaN(Date.parse(expiresAt)))throw new Error('Data expirării este invalidă.');await updateOrganizationAccess(db,session,organizationId,expiresAt,true);}
       if(body.contract_template){const title=String(body.contract_template.title||'').trim(),template=String(body.contract_template.template||'').trim();if(title.length<2)throw new Error('Numele contractului este obligatoriu.');if(template.length<20)throw new Error('Textul contractului este prea scurt.');const allowed=['{{COMPANY}}','{{ADDRESS}}','{{MANAGER}}','{{EMPLOYEE_NAME}}','{{CNP}}','{{PHONE}}','{{POSITION}}','{{SALARY}}','{{PROGRAM}}','{{START_DATE}}','{{CONTRACT_NUMBER}}'];const unknown=[...template.matchAll(/{{[A-Z0-9_]+}}/g)].map(match=>match[0]).filter(value=>!allowed.includes(value));if(unknown.length)throw new Error(`Câmpuri necunoscute în contract: ${[...new Set(unknown)].join(', ')}`);const defaults=body.contract_template.defaults&&typeof body.contract_template.defaults==='object'?body.contract_template.defaults:{};const {error}=await db.from('app_settings').upsert({organization_id:organizationId,key:'contract_template',value:{title,template,defaults:{salary:String(defaults.salary||'').trim()||null}},updated_at:new Date().toISOString()},{onConflict:'organization_id,key'});if(error)throw error;}
       if(body.page_permissions && typeof body.page_permissions === 'object'){
   const allowedPages = new Set([
@@ -453,14 +509,15 @@ if (settingsError) {
     'bucatarie.html',
     'contracte.html',
     'calculatorilegal.html',
-    'craftmecanics.html',
     'locatiiilegale.html',
     'marketplace.html',
     'marketplace-ilegal.html',
     'minigames.html',
     'rapoarte.html',
+    'organizatie-evenimente.html',
     'status-live.html',
-    'asistent.html'
+    'asistent.html',
+    'stash.html'
   ]);
 
 
@@ -517,7 +574,18 @@ if(
     'anunturi.publish',
     'marketplace.delete',
     'cereri.organization',
-    'cereri.departments'
+    'cereri.departments',
+    'actions.organization.read',
+    'actions.organization.write',
+    'actions.organization.delete',
+    'events.read',
+    'events.write',
+    'stash.write',
+    'stash.request',
+    'stash.manage_requests',
+    'stash.donate',
+    'stash.approve_donation',
+    'stash.log'
   ]);
 
   const actionRules = Object.fromEntries(
@@ -534,6 +602,15 @@ if(
         ]
       ])
   );
+  if (!policyPackageFeatures.includes('actions_organization')) {
+    actionRules['actions.organization.read'] = [];
+    actionRules['actions.organization.write'] = [];
+    actionRules['actions.organization.delete'] = [];
+  }
+  if (!policyPackageFeatures.includes('event_reminders')) {
+    actionRules['events.read'] = [];
+    actionRules['events.write'] = [];
+  }
   if (!policyPackageFeatures.includes('requests_organization')) actionRules['cereri.organization'] = [];
 
   // Un rol de cereri poate avea o singură destinație. Păstrăm aceeași
@@ -562,7 +639,7 @@ if(
 if(body.assistant_page_permissions && typeof body.assistant_page_permissions === 'object'){
   const allowedAssistantPages = new Set([
     'index.html','anunturi.html','pontaj.html','cereri.html','bucatarie.html',
-    'contracte.html','calculatorilegal.html','craftmecanics.html',
+    'contracte.html','calculatorilegal.html',
     'locatiiilegale.html','marketplace.html','marketplace-ilegal.html','minigames.html',
     'rapoarte.html','status-live.html','asistent.html'
   ]);
@@ -644,7 +721,7 @@ if (Array.isArray(body.roles)) {
     .maybeSingle();
   if (packageError) throw packageError;
   if (organizationPackage?.value?.code !== 'full' && body.roles.length > 10) {
-    throw new Error('Pachetul Standard permite maximum 10 roluri.');
+    throw new Error('Pachetele Standard și Operations permit maximum 10 roluri.');
   }
 
   /*
@@ -810,29 +887,49 @@ if (Array.isArray(body.roles)) {
     if(body.action==='set_package'){
       const organizationId=String(body.organization_id||'').trim();
       const code=String(body.package_code||'standard');
-      if(!validOrganizationId(organizationId)||!['standard','full'].includes(code))return reply({error:'Organizația sau pachetul este invalidă.'},400);
+      if(!validOrganizationId(organizationId)||!['standard','operations','full'].includes(code))return reply({error:'Organizația sau pachetul este invalidă.'},400);
       const unlimited=body.unlimited===true;
       const expiresAt=unlimited?null:String(body.expires_at||'').trim()||null;
       if(expiresAt&&Number.isNaN(Date.parse(expiresAt)))return reply({error:'Data expirării pachetului este invalidă.'},400);
-      const features=code==='full'?[...FULL_PACKAGE_FEATURES]:[...STANDARD_PACKAGE_FEATURES];
+      const features=code==='full'?[...FULL_PACKAGE_FEATURES]:code==='operations'?[...OPERATIONS_PACKAGE_FEATURES]:[...STANDARD_PACKAGE_FEATURES];
       const {error}=await db.from('app_settings').upsert({organization_id:organizationId,key:'organization_package',value:{code,unlimited,expires_at:expiresAt,features},updated_at:nowIso()},{onConflict:'organization_id,key'});
       if(error)throw error;
-      if(code!=='full'){
-        const restricted=[['action_permissions',{...(body.action_permissions||{}),'cereri.organization':[]}],['communication_permissions',{organization:{read:[],write:[]}}],['discipline_permissions',{organization:{read:[],write:[],sanction:[]}}]] as any[];
+      if(code==='standard'){
+        const restricted=[['action_permissions',{...(body.action_permissions||{}),'cereri.organization':[],'actions.organization.read':[],'actions.organization.write':[],'actions.organization.delete':[],'stash.write':[],'stash.request':[],'stash.manage_requests':[],'stash.donate':[],'stash.approve_donation':[],'stash.log':[]}],['communication_permissions',{organization:{read:[],write:[]}}],['discipline_permissions',{organization:{read:[],write:[],sanction:[]}}]] as any[];
         for(const [key,value] of restricted){
           const {data:existing}=await db.from('app_settings').select('value').eq('organization_id',organizationId).eq('key',key).maybeSingle();
           if(!existing)continue;
-          const next=key==='action_permissions'?{...(existing.value||{}),'cereri.organization':[]}:{...(existing.value||{}),organization:value.organization};
+          const next=key==='action_permissions'?{...(existing.value||{}),'cereri.organization':[],'actions.organization.read':[],'actions.organization.write':[],'actions.organization.delete':[],'stash.write':[],'stash.request':[],'stash.manage_requests':[],'stash.donate':[],'stash.approve_donation':[],'stash.log':[]}:{...(existing.value||{}),organization:value.organization};
           const {error:permissionError}=await db.from('app_settings').update({value:next,updated_at:nowIso()}).eq('organization_id',organizationId).eq('key',key);
           if(permissionError)throw permissionError;
         }
       }
-      if(code!=='full'){
-        const fullOnlyPages=new Set(['calculatorilegal.html','locatiiilegale.html','marketplace-ilegal.html']);
+      if(code==='operations'){
+        const restricted=[['action_permissions',{'cereri.departments':[]}],['communication_permissions',{departments:{read:[],write:[]}}],['discipline_permissions',{departments:{read:[],write:[],sanction:[]}}]] as any[];
+        for(const [key,value] of restricted){
+          const {data:existing}=await db.from('app_settings').select('value').eq('organization_id',organizationId).eq('key',key).maybeSingle();
+          if(!existing)continue;
+          const next={...(existing.value||{}),...(key==='action_permissions'?{'cereri.departments':[]}:{departments:value.departments})};
+          const {error:permissionError}=await db.from('app_settings').update({value:next,updated_at:nowIso()}).eq('organization_id',organizationId).eq('key',key);
+          if(permissionError)throw permissionError;
+        }
+      }
+      if(code==='standard'){
+        const fullOnlyPages=new Set(['calculatorilegal.html','locatiiilegale.html','marketplace-ilegal.html','minigames.html','stash.html']);
         for(const key of ['page_permissions','assistant_page_permissions']){
           const {data:existing}=await db.from('app_settings').select('value').eq('organization_id',organizationId).eq('key',key).maybeSingle();
           if(!existing||!existing.value||typeof existing.value!=='object')continue;
           const value=Object.fromEntries(Object.entries(existing.value).filter(([page])=>!fullOnlyPages.has(page)));
+          const {error:permissionError}=await db.from('app_settings').update({value,updated_at:nowIso()}).eq('organization_id',organizationId).eq('key',key);
+          if(permissionError)throw permissionError;
+        }
+      }
+      if(code!=='full'){
+        const visiblePages=new Set(['index.html','pontaj.html']);
+        for(const key of ['page_permissions','assistant_page_permissions']){
+          const {data:existing}=await db.from('app_settings').select('value').eq('organization_id',organizationId).eq('key',key).maybeSingle();
+          if(!existing||!existing.value||typeof existing.value!=='object')continue;
+          const value=Object.fromEntries(Object.entries(existing.value).filter(([page])=>visiblePages.has(page)||packagePageAllowed(page,{code})));
           const {error:permissionError}=await db.from('app_settings').update({value,updated_at:nowIso()}).eq('organization_id',organizationId).eq('key',key);
           if(permissionError)throw permissionError;
         }
@@ -853,18 +950,28 @@ if (Array.isArray(body.roles)) {
       const id=String(body.voucher_id||'').trim();const reason=String(body.reason||'Revocat de administrator').trim().slice(0,200);if(!id)return reply({error:'Voucherul lipsește.'},400);const {data,error}=await db.from('organization_vouchers').update({revoked_at:nowIso(),revoked_by_discord_id:session.discord_id,revoked_reason:reason||'Revocat de administrator'}).eq('id',id).is('redeemed_at',null).is('revoked_at',null).select('id,code,revoked_at').maybeSingle();if(error)throw error;if(!data)return reply({error:'Voucherul nu există, a fost folosit sau a fost deja revocat.'},404);if(validOrganizationId(String(session.organization_id||'')))await db.from('admin_audit_log').insert({organization_id:session.organization_id,actor_discord_id:session.discord_id,action:'organization_voucher_revoked',target_type:'voucher',target_id:String(data.id),details:{code:data.code,reason,operation:'revoke_voucher'}});return reply({ok:true,revoked:data});
     }
     if(body.action==='generate_vouchers'){
-      const packageCode=String(body.package_code||'standard');const count=Math.max(1,Math.min(100,Number(body.count)||1));const duration=Math.max(1,Math.min(3650,Number(body.duration_days)||30));const guildId=String(body.guild_id||'').trim();if(!['standard','full'].includes(packageCode))return reply({error:'Pachet invalid.'},400);if(guildId&&!/^\d{15,22}$/.test(guildId))return reply({error:'Guild ID invalid.'},400);const features=packageCode==='full'?[...FULL_PACKAGE_FEATURES]:[...STANDARD_PACKAGE_FEATURES];const redemptionDeadline=new Date(Date.now()+365*86400000).toISOString();const rows:any[]=[];for(let i=0;i<count;i++){const bytes=crypto.getRandomValues(new Uint8Array(9));const code=`${packageCode.toUpperCase()}-${Array.from(bytes).map(value=>value.toString(36).padStart(2,'0')).join('').slice(0,12).toUpperCase()}`;rows.push({code,package_code:packageCode,features,duration_days:duration,expires_at:redemptionDeadline,guild_id:guildId||null,created_by_discord_id:session.discord_id});}const {data,error}=await db.from('organization_vouchers').insert(rows).select('code,package_code,features,duration_days,guild_id,expires_at,created_at');if(error)throw error;if(validOrganizationId(String(session.organization_id||''))){await db.from('admin_audit_log').insert({organization_id:session.organization_id,actor_discord_id:session.discord_id,action:'organization_vouchers_generated',target_type:'voucher_batch',target_id:null,details:{package_code:packageCode,count:rows.length,duration_days:duration,guild_id:guildId||null,redemption_deadline:redemptionDeadline}});}return reply({ok:true,vouchers:data||[]});
+      const packageCode=String(body.package_code||'standard');const count=Math.max(1,Math.min(100,Number(body.count)||1));const duration=Math.max(1,Math.min(3650,Number(body.duration_days)||30));const guildId=String(body.guild_id||'').trim();if(!['standard','operations','full'].includes(packageCode))return reply({error:'Pachet invalid.'},400);if(guildId&&!/^\d{15,22}$/.test(guildId))return reply({error:'Guild ID invalid.'},400);const features=packageCode==='full'?[...FULL_PACKAGE_FEATURES]:packageCode==='operations'?[...OPERATIONS_PACKAGE_FEATURES]:[...STANDARD_PACKAGE_FEATURES];const redemptionDeadline=new Date(Date.now()+365*86400000).toISOString();const rows:any[]=[];for(let i=0;i<count;i++){const bytes=crypto.getRandomValues(new Uint8Array(9));const code=`${packageCode.toUpperCase()}-${Array.from(bytes).map(value=>value.toString(36).padStart(2,'0')).join('').slice(0,12).toUpperCase()}`;rows.push({code,package_code:packageCode,features,duration_days:duration,expires_at:redemptionDeadline,guild_id:guildId||null,created_by_discord_id:session.discord_id});}const {data,error}=await db.from('organization_vouchers').insert(rows).select('code,package_code,features,duration_days,guild_id,expires_at,created_at');if(error)throw error;if(validOrganizationId(String(session.organization_id||''))){await db.from('admin_audit_log').insert({organization_id:session.organization_id,actor_discord_id:session.discord_id,action:'organization_vouchers_generated',target_type:'voucher_batch',target_id:null,details:{package_code:packageCode,count:rows.length,duration_days:duration,guild_id:guildId||null,redemption_deadline:redemptionDeadline}});}return reply({ok:true,vouchers:data||[]});
     }
     if(body.action==='extend'){
       const organizationId=String(body.organization_id||'').trim(),expiresAt=String(body.expires_at||'').trim();if(!validOrganizationId(organizationId)||Number.isNaN(Date.parse(expiresAt))||Date.parse(expiresAt)<=Date.now())return reply({error:'Alege o dată viitoare pentru prelungire.'},400);
-      const {data,error}=await db.from('organizations').update({active:true,updated_at:new Date().toISOString()}).eq('id',organizationId).select('id').maybeSingle();if(error)throw error;if(!data)return reply({error:'Organizația nu există.'},404);
-      const {error:settingError}=await db.from('app_settings').upsert({organization_id:organizationId,key:'organization_access',value:{expires_at:expiresAt},updated_at:nowIso()},{onConflict:'organization_id,key'});if(settingError)throw settingError;await audit(db,session,'organization_access_extended',organizationId,{expires_at:expiresAt});return reply({ok:true,expires_at:expiresAt});
+      const result=await updateOrganizationAccess(db,session,organizationId,expiresAt,true,'organization_access_extended');return reply({ok:true,active:result.active,expires_at:expiresAt});
     }
     if(body.action==='set_access'){
-      const organizationId=String(body.organization_id||'').trim(),expiresAt=String(body.expires_at||'').trim(),active=body.active!==false;
+      const organizationId=String(body.organization_id||'').trim(),expiresAt=String(body.expires_at||'').trim()||null,active=body.active!==false;
       if(!validOrganizationId(organizationId))return reply({error:'ID-ul organizației este invalid.'},400);if(expiresAt&&Number.isNaN(Date.parse(expiresAt)))return reply({error:'Data expirării este invalidă.'},400);
-      const effectiveActive=active&&(!expiresAt||Date.parse(expiresAt)>Date.now());const {data,error}=await db.from('organizations').update({active:effectiveActive,updated_at:new Date().toISOString()}).eq('id',organizationId).select('id').maybeSingle();if(error)throw error;if(!data)return reply({error:'Organizația nu există.'},404);
-      const {error:settingError}=await db.from('app_settings').upsert({organization_id:organizationId,key:'organization_access',value:{expires_at:expiresAt||null},updated_at:nowIso()},{onConflict:'organization_id,key'});if(settingError)throw settingError;await audit(db,session,'organization_access_changed',organizationId,{active:effectiveActive,expires_at:expiresAt||null});return reply({ok:true,active:effectiveActive,expires_at:expiresAt||null});
+      const result=await updateOrganizationAccess(db,session,organizationId,expiresAt,active);return reply({ok:true,active:result.active,expires_at:expiresAt});
+    }
+    if(body.action==='set_theme'){
+      const organizationId=String(body.organization_id||'').trim(),enabled=body.enabled===true,requestedCode=String(body.theme||'none').trim().toLowerCase(),intensity=['discreet','normal','intense'].includes(String(body.intensity||''))?String(body.intensity):'normal';
+      if(!validOrganizationId(organizationId))return reply({error:'ID-ul organizației este invalid.'},400);
+      if(!seasonalThemeCodes.has(requestedCode))return reply({error:'Tema aleasă nu este disponibilă.'},400);
+      const theme={enabled,code:enabled&&requestedCode!=='none'?requestedCode:'none',intensity,updated_at:nowIso()};
+      const {data:organization,error:organizationError}=await db.from('organizations').select('id').eq('id',organizationId).maybeSingle();
+      if(organizationError)throw organizationError;if(!organization)return reply({error:'Organizația nu există.'},404);
+      const {error}=await db.from('app_settings').upsert({organization_id:organizationId,key:'organization_theme',value:theme,updated_at:theme.updated_at},{onConflict:'organization_id,key'});
+      if(error)throw error;
+      await audit(db,session,'organization_theme_changed',organizationId,{enabled:theme.enabled,theme:theme.code,intensity:theme.intensity});
+      return reply({ok:true,theme});
     }
     if(body.action==='delete'){
       const organizationId=String(body.organization_id||'').trim();

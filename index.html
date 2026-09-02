@@ -2,7 +2,7 @@
 <html lang="ro" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' https: data: blob:; connect-src 'self' https://vkvsabbbawyiurnaiugo.supabase.co wss://vkvsabbbawyiurnaiugo.supabase.co https://discord.com; font-src 'self' https: data:; form-action 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' https: data: blob:; connect-src 'self' http://127.0.0.1:8787 http://localhost:8787 ws://127.0.0.1:8787 ws://localhost:8787 https://vkvsabbbawyiurnaiugo.supabase.co wss://vkvsabbbawyiurnaiugo.supabase.co https://discord.com; font-src 'self' https: data:; form-action 'self';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Panel</title>
     <!-- Tailwind CSS CDN -->
@@ -10,10 +10,11 @@
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3" integrity="sha384-l8ah+VgaWtk1mvOe9VC+OirC6qHFF4yH7l7mKRidV9MSti3E9F463bMp6ZVN4kuC" crossorigin="anonymous"></script>
     <script src="js/supabase-config.js?v=20260820-session-date-fix"></script>
-    <script src="js/permissions.js?v=4.6.0"></script>
-    <script src="js/panel-layout.js?v=4.23.0"></script>
+    <script src="js/permissions.js?v=4.6.2"></script>
+    <script src="js/panel-layout.js?v=4.28.9"></script>
     <link rel="stylesheet" href="css/global-footer.css">
-    <script src="js/project-version.js?v=3.11.5"></script>
+    <link rel="stylesheet" href="css/dashboard.css">
+    <script src="js/project-version.js?v=3.13.0"></script>
     <link rel="icon" href="img/favicon.ico">
     <link rel="apple-touch-icon" href="img/logo-180.png">
 </head>
@@ -51,10 +52,38 @@
                     </div>
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <article data-pontaj-only class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6"><div class="flex items-center justify-between gap-3"><div><p class="text-xs uppercase tracking-wider text-slate-500">Tura curentă</p><h3 id="active-shift-title" class="text-lg font-bold mt-1">Nicio tură activă</h3></div><span id="active-shift-badge" class="px-3 py-1 rounded-lg border text-[10px] font-bold bg-slate-800 text-slate-400 border-slate-700">OPRIT</span></div><div class="mt-7 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5"><div><p id="active-shift-timer" class="text-4xl font-black font-mono text-emerald-400">00:00:00</p><p id="active-shift-note" class="text-xs text-slate-500 mt-2">Pornește o tură când ești pregătit.</p></div><a href="pontaj.html" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold transition text-center">Gestionează pontajul →</a></div></article>
-                        <article class="bg-slate-900 border border-slate-800 rounded-2xl p-6"><p class="text-xs uppercase tracking-wider text-slate-500">Acces rapid</p><div class="mt-4 grid gap-2"><a href="cereri.html" class="p-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs font-semibold transition">📋 Trimite o învoire</a><a href="craftmecanics.html" class="p-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs font-semibold transition">🔨 Craft Mecanic</a><a href="marketplace.html" class="p-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs font-semibold transition">🛒 Vezi marketplace-ul</a></div></article>
+                        <article class="bg-slate-900 border border-slate-800 rounded-2xl p-6"><p class="text-xs uppercase tracking-wider text-slate-500">Acces rapid</p><div class="mt-4 grid gap-2"><a href="cereri.html" class="p-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs font-semibold transition">📋 Trimite o învoire</a><a href="calculator.html" class="p-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs font-semibold transition">🧮 Calculator &amp; Craft Mecanic</a><a href="marketplace.html" class="p-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs font-semibold transition">🛒 Vezi marketplace-ul</a></div></article>
                     </div>
 
                 </section>
+                <div id="dashboard-fivem-launcher" class="dashboard-fivem-wrap">
+                    <div class="dashboard-fivem-row">
+                        <a href="descarca-fivem-pure.html" aria-label="Vezi detaliile launcherului B-Zone Pure Mode 1" class="dashboard-fivem-download">
+                            <span class="dashboard-fivem-download-icon" aria-hidden="true">⬇</span>
+                            <span class="dashboard-fivem-download-copy">
+                                <strong>Launcher Pure 1</strong>
+                                <span>Instalare și descărcare</span>
+                            </span>
+                        </a>
+                        <a href="fivem://connect/cfx.re/join/zjv8ko4" aria-label="Deschide FiveM și conectează-te la serverul B-Zone" class="dashboard-fivem-card" data-bzone-fivem-launcher>
+                            <span class="dashboard-fivem-icon" aria-hidden="true">
+                                <img src="img/fivem-launcher.svg" alt="">
+                                <span class="dashboard-fivem-status"></span>
+                            </span>
+                            <span class="dashboard-fivem-copy">
+                                <span class="dashboard-fivem-eyebrow">Conectare rapidă</span>
+                                <strong>Intră pe B-Zone</strong>
+                                <span>Pornește FiveM direct cu Pure Mode 1</span>
+                            </span>
+                            <span class="dashboard-fivem-arrow" aria-hidden="true">↗</span>
+                        </a>
+                        <div id="dashboard-fivem-stats" class="dashboard-fivem-stats" aria-live="polite">
+                            <span class="dashboard-fivem-stats-label"><span class="dashboard-fivem-stats-dot" aria-hidden="true"></span>B-Zone live</span>
+                            <strong id="dashboard-fivem-players" class="dashboard-fivem-stats-value">Se verifică…</strong>
+                            <span id="dashboard-fivem-stats-detail" class="dashboard-fivem-stats-detail">Jucători conectați</span>
+                        </div>
+                    </div>
+                </div>
         </main>
     </div>
 
@@ -71,6 +100,60 @@
         let dashboardOrganizationId = null;
         let dashboardRefreshTimeout = null;
         let dashboardHasPontajAccess = true;
+        let dashboardFivemRefreshTimer = null;
+
+        async function loadDashboardFivemStatus() {
+            const stats = document.getElementById('dashboard-fivem-stats');
+            const players = document.getElementById('dashboard-fivem-players');
+            const detail = document.getElementById('dashboard-fivem-stats-detail');
+            if (!stats || !players || !detail || typeof window.panelRequestJson !== 'function') return;
+
+            try {
+                const status = await window.panelRequestJson('fivem-status', {
+                    method: 'GET',
+                    timeoutMs: 8000,
+                    retry: true
+                });
+                const onlinePlayers = Number(status.players);
+                const maxPlayers = Number(status.maxPlayers);
+                if (status.online !== true || !Number.isFinite(onlinePlayers) || !Number.isFinite(maxPlayers)) {
+                    throw new Error('Statusul FiveM nu este disponibil.');
+                }
+
+                stats.classList.remove('is-offline');
+                players.textContent = `${onlinePlayers} / ${maxPlayers}`;
+                detail.textContent = 'jucători conectați';
+            } catch (error) {
+                console.warn('Status FiveM indisponibil:', error);
+                stats.classList.add('is-offline');
+                players.textContent = 'Indisponibil';
+                detail.textContent = 'status live indisponibil';
+            }
+        }
+
+        function startDashboardFivemStatus() {
+            clearInterval(dashboardFivemRefreshTimer);
+            loadDashboardFivemStatus();
+            dashboardFivemRefreshTimer = setInterval(loadDashboardFivemStatus, 60000);
+        }
+
+        function setupDashboardFivemLauncher() {
+            const launcher = document.querySelector('[data-bzone-fivem-launcher]');
+            if (!launcher || launcher.dataset.pureLauncherReady === 'true') return;
+
+            launcher.dataset.pureLauncherReady = 'true';
+            launcher.addEventListener('click', event => {
+                event.preventDefault();
+
+                const pureConnectUrl = 'bzonepure://connect/cfx.re/join/zjv8ko4';
+
+                try {
+                    window.location.href = pureConnectUrl;
+                } catch (error) {
+                    console.warn('Launcherul Pure 1 nu a putut fi deschis:', error);
+                }
+            });
+        }
 
         function configureDashboardAccess() {
             const allowedPages = typeof getAllowedPages === 'function' ? getAllowedPages() : null;
@@ -88,7 +171,6 @@
 
             const resources = [
                 ['cereri.html', '📋 Cereri / Învoiri'],
-                ['craftmecanics.html', '🔨 Craft Mecanic'],
                 ['marketplace.html', '🛒 Marketplace'],
                 ['anunturi.html', '📣 Anunțuri'],
                 ['asistent.html', '✦ Asistent Panel']
@@ -139,6 +221,8 @@
 
                 localStorage.setItem('discord_user', JSON.stringify(activeUser));
                 configureDashboardAccess();
+                startDashboardFivemStatus();
+                setupDashboardFivemLauncher();
                 function scheduleDashboardRefresh() {
                     if (!dashboardDiscordId) return;
 
@@ -382,3 +466,4 @@
     <script src="js/global-footer.js"></script>
 </body>
 </html>
+

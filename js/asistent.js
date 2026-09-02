@@ -32,6 +32,39 @@
                 link.textContent = `Deschide ${engine.repairText(item.title || 'pagina')} →`;
                 bubble.appendChild(link);
             });
+        if (sender === 'assistant') {
+            const actions = document.createElement('div');
+            actions.className = 'mt-2 flex flex-wrap gap-2';
+            (Array.isArray(result.actions) ? result.actions : [])
+                .filter((item) => item?.page && item.page !== 'asistent.html' && engine?.isPageAllowed(item.page))
+                .slice(0, 4)
+                .forEach((item) => {
+                    const link = document.createElement('a');
+                    link.href = item.page;
+                    link.className = 'inline-flex items-center rounded-lg border border-sky-500/30 bg-sky-500/10 px-3 py-1.5 text-xs font-semibold text-sky-300 hover:bg-sky-500/20';
+                    link.textContent = item.label || 'Deschide';
+                    actions.appendChild(link);
+                });
+            if (result.answer && !/^Salut!|^Cu plăcere!/.test(result.answer)) {
+                const feedback = document.createElement('div');
+                feedback.className = 'mt-2 flex items-center gap-2 text-[11px] text-slate-500';
+                feedback.textContent = 'Te-a ajutat răspunsul?';
+                ['Da', 'Nu'].forEach((label, index) => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'rounded-md border border-slate-700 px-2 py-1 text-slate-400 hover:border-emerald-500/50 hover:text-emerald-300';
+                    button.textContent = index === 0 ? 'Răspuns util' : 'Nu m-a ajutat';
+                    button.addEventListener('click', async () => {
+                        button.disabled = true;
+                        const sent = await engine.sendFeedback({ question: result.question, answer: result.answer, helpful: index === 0, page: result.page });
+                        feedback.textContent = sent ? 'Mulțumesc pentru feedback!' : 'Feedbackul nu a putut fi trimis.';
+                    });
+                    feedback.appendChild(button);
+                });
+                actions.appendChild(feedback);
+            }
+            if (actions.childNodes.length) bubble.appendChild(actions);
+        }
         wrapper.appendChild(bubble);
         chat.appendChild(wrapper);
         chat.scrollTop = chat.scrollHeight;
@@ -56,8 +89,14 @@
         const typingId = showTyping();
         await new Promise((resolve) => setTimeout(resolve, 220));
         document.getElementById(typingId)?.remove();
-        const result = await engine.answer(question);
-        createMessage(result.answer, 'assistant', result);
+        try {
+            const result = await engine.answer(question);
+            result.question = question;
+            createMessage(result.answer, 'assistant', result);
+        } catch (error) {
+            console.warn('Asistent: întrebarea nu a putut fi procesată.', error);
+            createMessage('Nu am putut căuta informația chiar acum. Încearcă din nou sau deschide pagina sugerată din meniu.', 'assistant');
+        }
     }
 
     function queueQuestion(value) {
@@ -68,12 +107,33 @@
     function quickQuestions() {
         return [
             ['Cum pornesc pontajul?', 'pontaj.html'],
-            ['Unde găsesc Runflat?', 'craftmecanics.html'],
+            ['Unde găsesc Runflat?', 'calculator.html'],
             ['Cum trimit o învoire?', 'cereri.html'],
             ['Ce găsesc la locații ilegale?', 'locatiiilegale.html'],
             ['Cum văd pontajele active?', 'rapoarte.html'],
             ['Cum schimb ora de închidere?', 'admin.html']
         ].filter(([, page]) => engine?.isPageAllowed(page)).map(([question]) => question);
+    }
+
+    function escapeHtml(value) {
+        return String(value || '').replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
+    }
+
+    function renderAdminFeedback(payload) {
+        const panel = document.getElementById('assistant-feedback-admin');
+        const list = document.getElementById('assistant-feedback-list');
+        const summary = document.getElementById('assistant-feedback-summary');
+        const rows = Array.isArray(payload?.feedback) ? payload.feedback : [];
+        if (!panel || !list || !summary) return;
+        panel.hidden = false;
+        const useful = rows.filter((item) => item.helpful).length;
+        summary.textContent = `${rows.length} răspunsuri · ${useful} utile · ${rows.length - useful} neconvingătoare`;
+        list.innerHTML = rows.length ? rows.map((item) => `<article class="rounded-xl border border-slate-800 bg-slate-950/60 p-3"><div class="flex flex-wrap items-center justify-between gap-2"><span class="text-xs font-semibold text-slate-200">${escapeHtml(item.author)}</span><span class="text-[10px] ${item.helpful ? 'text-emerald-400' : 'text-rose-300'}">${item.helpful ? 'Răspuns util' : 'Nu a ajutat'}</span></div><p class="mt-2 text-xs text-slate-300"><span class="text-slate-500">Întrebare:</span> ${escapeHtml(item.question)}</p><p class="mt-1 whitespace-pre-wrap text-xs text-slate-400"><span class="text-slate-500">Răspuns:</span> ${escapeHtml(item.answer)}</p><p class="mt-2 text-[10px] text-slate-600">${escapeHtml(item.page || 'fără pagină')} · ${item.created_at ? new Date(item.created_at).toLocaleString('ro-RO') : ''}</p></article>`).join('') : '<p class="text-xs text-slate-500">Nu există feedback încă.</p>';
+    }
+
+    async function loadAdminFeedback() {
+        const payload = await engine?.loadFeedback();
+        if (payload) renderAdminFeedback(payload);
     }
 
     function initialize() {
@@ -118,6 +178,9 @@
             if (input) input.value = '';
             queueQuestion(value);
         });
+
+        loadAdminFeedback();
+        document.getElementById('assistant-feedback-refresh')?.addEventListener('click', loadAdminFeedback);
 
         document.getElementById('assistant-clear')?.addEventListener('click', () => {
             const messages = document.getElementById('assistant-messages');

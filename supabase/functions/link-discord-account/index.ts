@@ -1,17 +1,13 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2.112.3';
+import { corsOptions, getCorsHeaders } from '../_shared/cors.ts';
 
-const headers = {
-  'Access-Control-Allow-Origin': 'https://panel-pro.ro',
-  'Access-Control-Allow-Headers': 'authorization,apikey,content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Content-Type': 'application/json',
-};
-
-const reply = (data: unknown, status = 200) =>
+const buildReply = (data: unknown, status = 200, headers = getCorsHeaders(new Request('https://panel-pro.ro'))) =>
   new Response(JSON.stringify(data), { status, headers });
 
 Deno.serve(async (request) => {
-  if (request.method === 'OPTIONS') return new Response('ok', { headers });
+  const headers = getCorsHeaders(request);
+  const reply = (data: unknown, status = 200) => buildReply(data, status, headers);
+  if (request.method === 'OPTIONS') return corsOptions(request);
   if (request.method !== 'POST') return reply({ error: 'Metodă invalidă.' }, 405);
 
   try {

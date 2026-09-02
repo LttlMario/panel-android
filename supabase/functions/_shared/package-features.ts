@@ -1,19 +1,22 @@
 export const PACKAGE_FEATURES = Object.freeze({
   core: { label: 'Dashboard și Pontaj', pages: ['index.html', 'pontaj.html'] },
   announcements: { label: 'Anunțuri și sondaje', pages: ['anunturi.html'] },
-  announcements_departments: { label: 'Anunțuri · Angajați', pages: ['anunturi.html'] },
-  announcements_organization: { label: 'Anunțuri · Organizație', pages: ['anunturi.html'] },
-  requests: { label: 'Cereri și absențe', pages: ['cereri.html'] },
-  requests_departments: { label: 'Cereri · Angajați', pages: ['cereri.html'] },
-  requests_organization: { label: 'Cereri · Organizație', pages: ['cereri.html'] },
+  announcements_departments: { label: 'Anunțuri · Angajați', pages: ['anunturi.html', 'anunturi-angajati.html'] },
+  announcements_organization: { label: 'Anunțuri · Organizație', pages: ['anunturi.html', 'anunturi-organizatie.html'] },
+  requests: { label: 'Învoiri', pages: ['cereri.html'] },
+  requests_departments: { label: 'Învoiri · Angajați', pages: ['cereri.html', 'cereri-angajati.html'] },
+  requests_organization: { label: 'Învoiri · Organizație', pages: ['cereri.html', 'cereri-organizatie.html'] },
   contracts: { label: 'Contracte', pages: ['contracte.html'] },
   reports: { label: 'Rapoarte', pages: ['rapoarte.html'] },
+  event_reminders: { label: 'Evenimente și remindere', pages: ['organizatie-evenimente.html'] },
   legal_marketplace: { label: 'Marketplace legal', pages: ['marketplace.html'] },
-  legal_tools: { label: 'Resurse legale', pages: ['calculator.html', 'bucatarie.html', 'craftmecanics.html'] },
+  legal_tools: { label: 'Resurse legale', pages: ['calculator.html', 'bucatarie.html'] },
   assistant: { label: 'Asistentul panelului', pages: ['asistent.html'] },
   status_live: { label: 'Status Live', pages: ['status-live.html'] },
-  discipline_departments: { label: 'Avertismente și sancțiuni · Angajați', pages: ['anunturi.html'] },
-  discipline_organization: { label: 'Avertismente și sancțiuni · Organizație', pages: ['anunturi.html'] },
+  discipline_departments: { label: 'Avertismente și sancțiuni · Angajați', pages: ['anunturi.html', 'anunturi-angajati.html'] },
+  discipline_organization: { label: 'Avertismente și sancțiuni · Organizație', pages: ['anunturi.html', 'anunturi-organizatie.html'] },
+  actions_organization: { label: 'Acțiuni · Organizație', pages: ['anunturi.html', 'anunturi-organizatie.html'] },
+  stash: { label: 'Stash organizație', pages: ['stash.html'] },
   illegal_calculator: { label: 'Calculator ilegal', pages: ['calculatorilegal.html'] },
   illegal_locations: { label: 'Locații ilegale', pages: ['locatiiilegale.html'] },
   illegal_marketplace: { label: 'Marketplace ilegal', pages: ['marketplace-ilegal.html'] },
@@ -22,12 +25,13 @@ export const PACKAGE_FEATURES = Object.freeze({
 
 export const STANDARD_PACKAGE_FEATURES = Object.freeze([
   'core', 'contracts', 'reports', 'legal_marketplace', 'legal_tools',
-  'announcements_departments', 'discipline_departments'
+  'announcements_departments', 'requests_departments', 'discipline_departments', 'event_reminders'
 ]);
 
 export const FULL_PACKAGE_FEATURES = Object.freeze(Object.keys(PACKAGE_FEATURES));
 export const OPERATIONS_PACKAGE_FEATURES = Object.freeze([
   'core', 'announcements_organization', 'requests_organization', 'reports', 'discipline_organization',
+  'actions_organization', 'event_reminders',
   'illegal_calculator', 'illegal_locations', 'illegal_marketplace', 'illegal_minigames'
 ]);
 

@@ -1,6 +1,7 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2.112.3';
 import { requirePanelSession } from '../_shared/panel-session.ts';
 import { getPlatformSecret } from '../_shared/platform-secrets.ts';
+import { deliverDiscordRoute, routeCandidates } from '../_shared/discord-delivery.ts';
 
 const headers = {
   'Access-Control-Allow-Origin': 'https://panel-pro.ro',
@@ -19,18 +20,6 @@ function validateCnp(value: unknown) {
   const cnp = normalizeCnp(value);
   if (!cnp) throw new Error('CNP-ul sau identificatorul angajatului este obligatoriu.');
   return cnp;
-}
-
-function contractIdentityWebhookUrls(settings: any) {
-  const route = settings?.webhook_routes?.contract_identity_weekly || {};
-  return [...new Set(['primary', 'secondary']
-    .map((target) => route?.[target]?.enabled === false ? '' : clean(route?.[target]?.url, 500))
-    .filter((value) => {
-      try {
-        const url = new URL(value);
-        return url.protocol === 'https:' && /^(discord(?:app)?\.com)$/.test(url.hostname) && url.pathname.includes('/api/webhooks/');
-      } catch (_) { return false; }
-    }))];
 }
 
 function contractExportChunks(lines: string[], maxLength = 1800) {
@@ -250,7 +239,7 @@ async function manualDiscordExport(db: any, session: any, body: any) {
 
   const [{ data: employees, error: employeesError }, { data: settings, error: settingsError }, { data: organization, error: organizationError }] = await Promise.all([
     db.from('organization_employees').select('id,full_name,cnp,status').eq('organization_id', session.organization_id).is('archived_at', null).in('id', ids).order('full_name'),
-    db.from('organization_settings').select('webhook_routes').eq('organization_id', session.organization_id).maybeSingle(),
+    db.from('organization_settings').select('webhook_routes,discord_channel_routes').eq('organization_id', session.organization_id).maybeSingle(),
     db.from('organizations').select('name').eq('id', session.organization_id).maybeSingle(),
   ]);
   if (employeesError) throw employeesError;
@@ -258,8 +247,7 @@ async function manualDiscordExport(db: any, session: any, body: any) {
   if (organizationError) throw organizationError;
   if ((employees || []).length !== ids.length) throw new Error('Unul dintre angajații selectați nu aparține organizației active.');
 
-  const webhooks = contractIdentityWebhookUrls(settings);
-  if (!webhooks.length) throw new Error('Webhook-ul pentru exportul nume + CNP nu este configurat sau nu este activ.');
+  if (!routeCandidates(settings, 'contract_identity_weekly').some((item) => item.candidates.length)) throw new Error('Canalul Discord sau webhook-ul pentru exportul nume + CNP nu este configurat sau nu este activ.');
 
   const now = new Date();
   const { data: batch, error: batchError } = await db.from('contract_export_batches').insert({
@@ -280,26 +268,18 @@ async function manualDiscordExport(db: any, session: any, body: any) {
   const chunks = contractExportChunks((employees || []).map((employee: any) => `${employee.full_name}\t${employee.cnp}`));
   const failures: string[] = [];
   let successfulPosts = 0;
-  for (const webhook of webhooks) {
-    for (const content of chunks) {
-      try {
-        const response = await fetch(webhook, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            allowed_mentions: { parse: [] },
-            embeds: [{
-              title: '📋 Export manual angajați',
-              description: `Organizație: **${organization?.name || ''}**\n\n\`\`\`text\n${content}\n\`\`\``,
-              color: 3447003,
-              timestamp: now.toISOString(),
-            }],
-          }),
-        });
-        if (!response.ok) failures.push(`Discord HTTP ${response.status}`);
-        else successfulPosts += 1;
-      } catch (error) { failures.push(error instanceof Error ? error.message : 'Eroare Discord.'); }
-    }
+  for (const content of chunks) {
+    const delivery = await deliverDiscordRoute(db, settings, 'contract_identity_weekly', JSON.stringify({
+      allowed_mentions: { parse: [] },
+      embeds: [{
+        title: '📋 Export manual angajați',
+        description: `Organizație: **${organization?.name || ''}**\n\n\`\`\`text\n${content}\n\`\`\``,
+        color: 3447003,
+        timestamp: now.toISOString(),
+      }],
+    }));
+    if (delivery.results.length) successfulPosts += delivery.results.length;
+    failures.push(...(delivery.failures || []));
   }
 
   if (!successfulPosts) {

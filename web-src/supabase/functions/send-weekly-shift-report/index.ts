@@ -1,5 +1,6 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2.112.3';
 import { getPlatformSecret } from '../_shared/platform-secrets.ts';
+import { deliverDiscordRoute, routeCandidates } from '../_shared/discord-delivery.ts';
 
 const headers = {
   'Access-Control-Allow-Origin': 'https://panel-pro.ro',
@@ -52,15 +53,6 @@ function getWeeklyPeriod(now = new Date()) {
     start: start.toISOString().slice(0, 10),
     end: end.toISOString().slice(0, 10),
   };
-}
-
-function getWeeklyReportWebhookUrls(settings: Record<string, any> | null) {
-  // Rapoartele folosesc configurarea organizației; nu depind de un fallback global opțional.
-  const route = settings?.webhook_routes?.weekly_reports || {};
-  return [...new Set([
-    route?.primary?.url,
-    route?.secondary?.url,
-  ].map((value) => String(value || '').trim()).filter(Boolean))];
 }
 
 function formatDuration(seconds: number) {
@@ -216,7 +208,7 @@ Deno.serve(async (request) => {
             .order('date', { ascending: false })
             .order('created_at', { ascending: false }),
           db.from('organization_settings')
-            .select('webhook_routes')
+            .select('webhook_routes,discord_channel_routes')
             .eq('organization_id', organization.id)
             .maybeSingle(),
         ]);
@@ -229,8 +221,7 @@ Deno.serve(async (request) => {
           continue;
         }
 
-        const webhooks = getWeeklyReportWebhookUrls(settings);
-        if (!webhooks.length) throw new Error('Webhook-ul pentru rapoarte săptămânale nu este configurat.');
+        if (!routeCandidates(settings, 'weekly_reports').some((item) => item.candidates.length)) throw new Error('Canalul Discord al botului pentru rapoarte săptămânale nu este configurat.');
 
         const dayShifts = shifts.filter((shift: any) => String(shift.shift_type || '').toLowerCase() !== 'noapte');
         const nightShifts = shifts.filter((shift: any) => String(shift.shift_type || '').toLowerCase() === 'noapte');
@@ -249,25 +240,10 @@ Deno.serve(async (request) => {
           },
         ];
 
-        const failures: string[] = [];
-        for (const webhook of webhooks) {
-          try {
-            const response = await fetch(webhook, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ allowed_mentions: { parse: [] }, embeds }),
-            });
-            if (!response.ok) {
-              const details = (await response.text()).slice(0, 300);
-              failures.push(`Discord HTTP ${response.status}${details ? `: ${details}` : ''}`);
-            }
-          } catch (error) {
-            failures.push(error instanceof Error ? error.message : 'Eroare Discord necunoscută.');
-          }
-        }
-
-        if (failures.length === webhooks.length) throw new Error(failures.join(' | '));
-        await finishRun(db, runId, 'sent', failures.length ? `Unele webhook-uri au eșuat: ${failures.join(' | ')}` : null);
+        const delivery = await deliverDiscordRoute(db, settings, 'weekly_reports', JSON.stringify({ allowed_mentions: { parse: [] }, embeds }));
+        const failures: string[] = delivery.failures || [];
+        if (!delivery.results.length) throw new Error(failures.join(' | ') || 'Discord nu a acceptat raportul.');
+        await finishRun(db, runId, 'sent', failures.length ? `Unele canale Discord au eșuat: ${failures.join(' | ')}` : null);
         results.push({ organization_id: organization.id, status: failures.length ? 'sent_partial' : 'sent' });
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Eroare necunoscută.';
