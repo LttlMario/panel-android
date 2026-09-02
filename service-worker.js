@@ -1,4 +1,4 @@
-const CACHE_NAME = 'panel-android-v13-navigation-fix';
+const CACHE_NAME = 'panel-pro-android-v14-domain-sync';
 const APP_SHELL = [
   './login.html',
   './organizatie-bun-venit.html',

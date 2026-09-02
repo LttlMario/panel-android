@@ -1205,22 +1205,10 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
             header = null;
         }
 
-        if (!header && currentPage !== 'anunturi.html') return;
+        const communityPages = new Set(['anunturi.html', 'anunturi-angajati.html', 'anunturi-organizatie.html']);
+        if (!header && !communityPages.has(currentPage)) return;
 
-        if (currentPage === 'anunturi.html') {
-            const hero = main.querySelector('.community-hero');
-            hero?.querySelector(':scope > div')?.remove();
-            hero?.classList.add('community-toolbar');
-            return;
-        }
-
-        if (currentPage === 'anunturi.html') {
-            if (!header) {
-                header = document.createElement('header');
-                header.innerHTML = '<div class="panel-global-title"><h2>📣 Anunțuri & Sondaje</h2><p>Comunicare pentru Familie și Mecanici.</p></div>';
-                main.prepend(header);
-            }
-            header.className = 'panel-global-header';
+        if (communityPages.has(currentPage)) {
             const hero = main.querySelector('.community-hero');
             hero?.querySelector(':scope > div')?.remove();
             hero?.classList.add('community-toolbar');
@@ -1371,10 +1359,13 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
         const sections = [
             ['management', 'Operațiuni', [
                 ['index.html', '📊', 'Dashboard'],
-                ['anunturi.html', '📣', 'Anunțuri & Sondaje'],
+                ['anunturi-angajati.html', '📣', 'Anunțuri angajați'],
+                ['anunturi-organizatie.html', '🏢', 'Anunțuri organizație'],
                 ['pontaj.html', '⏱️', 'Pontaj'],
-                ['cereri.html', '📋', 'Cereri / Absențe'],
+                ['cereri-angajati.html', '📋', 'Învoiri angajați'],
+                ['cereri-organizatie.html', '🏢', 'Învoiri organizație'],
                 ['contracte.html', '📜', 'Contracte'],
+                ['organizatie-evenimente.html', '🗓️', 'Evenimente și remindere'],
                 ['rapoarte.html', '📈', 'Rapoarte']
             ]],
             ['resurse', 'Resurse', [
@@ -1794,7 +1785,7 @@ if (location.pathname.endsWith('organizatii.html') && !window.__organizationFetc
 })();
 
 // În pagina Anunțuri, toate citirile comunității sunt limitate la organizația activă.
-if (window.location.pathname.endsWith('anunturi.html') && window.createPanelSupabaseClient) {
+if (['anunturi.html', 'anunturi-angajati.html', 'anunturi-organizatie.html'].includes(window.location.pathname.split('/').pop()) && window.createPanelSupabaseClient) {
     const createClient = window.createPanelSupabaseClient;
     window.createPanelSupabaseClient = function scopedPanelSupabaseClient() {
         const client = createClient();

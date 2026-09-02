@@ -30,8 +30,9 @@ MG.register('keypad', {
             for (let i = 0; i < len; i++) {
                 const d = document.createElement('div');
                 d.style.cssText = `flex:1;height:46px;border:1px solid var(--line);border-radius:6px;
-                    display:grid;place-items:center;font-size:22px;font-family:var(--mono);transition:opacity .22s ease,transform .22s ease,background .22s ease,box-shadow .22s ease;
-                    color:var(--accent);${guess[i] !== undefined ? 'border-color:var(--accent);' : ''}`;
+                    display:grid;place-items:center;font-size:22px;font-family:var(--mono);
+                    color:var(--accent);transition:opacity .22s ease,transform .22s ease,background .22s ease,box-shadow .22s ease;
+                    ${guess[i] !== undefined ? 'border-color:var(--accent);' : ''}`;
                 d.textContent = guess[i] !== undefined ? guess[i] : '·';
                 entryEl.appendChild(d);
             }

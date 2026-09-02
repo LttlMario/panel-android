@@ -5,7 +5,8 @@
   "server": {
     "url": "https://panel-pro.ro/",
     "allowNavigation": [
-      "lttlmario.github.io",
+      "panel-pro.ro",
+      "www.panel-pro.ro",
       "discord.com",
       "*.discord.com",
       "discordapp.com",
